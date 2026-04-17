@@ -1,0 +1,920 @@
+/* ============================================
+   ADMIN PAGES COMPLETE CSS
+   Products, Farmers, Settings, Contact Pages
+============================================ */
+
+/* Container Styles */
+.products-management,
+.farmers-management,
+.settings-management,
+.contact-management {
+  padding: 20px;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Section */
+.management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.management-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.management-header h2 i {
+  color: #ff9800;
+  font-size: 28px;
+}
+
+/* Search Box */
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  padding: 8px 15px;
+  border-radius: 25px;
+  gap: 10px;
+  transition: all 0.3s;
+}
+
+.search-box:hover {
+  background: #eee;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.search-box i {
+  color: #999;
+  font-size: 18px;
+}
+
+.search-box input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  width: 250px;
+}
+
+/* Add Button */
+.add-btn {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 87, 34, 0.3);
+}
+
+.add-btn i {
+  font-size: 18px;
+}
+
+/* ============================================
+   PRODUCTS GRID STYLES
+============================================ */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+  position: relative;
+  animation: cardFadeIn 0.5s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+  height: 200px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  color: white;
+  position: relative;
+}
+
+.product-status {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.product-status.active {
+  background: #4caf50;
+  color: white;
+  box-shadow: 0 2px 5px rgba(76, 175, 80, 0.3);
+}
+
+.product-status.inactive {
+  background: #f44336;
+  color: white;
+  box-shadow: 0 2px 5px rgba(244, 67, 54, 0.3);
+}
+
+.product-info {
+  padding: 20px;
+}
+
+.product-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: 600;
+}
+
+.product-category {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #ff9800;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 15px;
+  margin-bottom: 10px;
+}
+
+.product-description {
+  color: #666;
+  font-size: 13px;
+  margin: 12px 0;
+  line-height: 1.5;
+}
+
+.product-price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff5722;
+  margin: 10px 0;
+}
+
+.product-price::before {
+  content: '$';
+  font-size: 16px;
+}
+
+.product-stock {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.product-stock i {
+  color: #4caf50;
+}
+
+.product-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-edit, .btn-delete {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.3s;
+}
+
+.btn-edit {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #1976d2;
+  transform: scale(1.02);
+}
+
+.btn-delete {
+  background: #f44336;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #d32f2f;
+  transform: scale(1.02);
+}
+
+/* ============================================
+   FARMERS GRID STYLES
+============================================ */
+.farmers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+.farmer-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+  display: flex;
+  padding: 20px;
+  gap: 20px;
+  animation: cardFadeIn 0.5s ease-out;
+}
+
+.farmer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.farmer-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.farmer-details {
+  flex: 1;
+}
+
+.farmer-details h3 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.farmer-email, .farmer-phone {
+  color: #666;
+  font-size: 13px;
+  margin: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.farmer-email i, .farmer-phone i {
+  color: #ff9800;
+  width: 20px;
+}
+
+.farmer-stats {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0;
+  padding: 10px 0;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ff9800;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #999;
+}
+
+.farmer-rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+.stars {
+  color: #ffc107;
+  letter-spacing: 2px;
+}
+
+.farmer-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-approve {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+}
+
+.btn-approve:hover {
+  background: #45a049;
+}
+
+.btn-suspend {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+}
+
+.btn-suspend:hover {
+  background: #f57c00;
+}
+
+/* ============================================
+   SETTINGS PAGE STYLES
+============================================ */
+.settings-section {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+}
+
+.settings-section:hover {
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section h3 {
+  margin: 0 0 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-section h3 i {
+  color: #ff9800;
+  font-size: 22px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-item label {
+  font-weight: 500;
+  color: #555;
+  font-size: 14px;
+}
+
+.setting-item input,
+.setting-item select,
+.setting-item textarea {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 250px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.setting-item input:focus,
+.setting-item select:focus,
+.setting-item textarea:focus {
+  border-color: #ff9800;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 26px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #ff9800;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Settings Actions */
+.settings-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  justify-content: flex-end;
+}
+
+.btn-save-settings {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-save-settings:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 87, 34, 0.3);
+}
+
+.btn-reset {
+  background: #f5f5f5;
+  color: #666;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.btn-reset:hover {
+  background: #e0e0e0;
+}
+
+/* ============================================
+   CONTACT PAGE STYLES
+============================================ */
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.contact-card {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+}
+
+.contact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.contact-card h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.contact-card h3 i {
+  color: #ff9800;
+  font-size: 24px;
+}
+
+.contact-detail {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.contact-detail:last-child {
+  border-bottom: none;
+}
+
+.contact-detail i {
+  font-size: 20px;
+  color: #ff9800;
+  width: 30px;
+}
+
+.contact-detail div {
+  flex: 1;
+}
+
+.contact-detail strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.contact-detail a {
+  color: #2196f3;
+  text-decoration: none;
+}
+
+.contact-detail a:hover {
+  text-decoration: underline;
+}
+
+.contact-form-section {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.contact-form-section h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+}
+
+.contact-form .form-group {
+  margin-bottom: 20px;
+}
+
+.contact-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #555;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+  box-sizing: border-box;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-color: #ff9800;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ============================================
+   MODAL STYLES
+============================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-content h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-content h3 i {
+  color: #ff9800;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 25px;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 87, 34, 0.3);
+}
+
+/* ============================================
+   ALERT MESSAGES
+============================================ */
+.alert {
+  padding: 12px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-left: 4px solid #4caf50;
+}
+
+.alert-error {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border-left: 4px solid #f44336;
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fff3cd, #ffeeba);
+  color: #856404;
+  border-left: 4px solid #ff9800;
+}
+
+/* ============================================
+   LOADING STATES
+============================================ */
+.loading-spinner {
+  text-align: center;
+  padding: 50px;
+  font-size: 18px;
+  color: #999;
+}
+
+.loading-spinner::before {
+  content: '';
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+============================================ */
+@media (max-width: 768px) {
+  .products-grid,
+  .farmers-grid,
+  .contact-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .management-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-box {
+    width: 100%;
+  }
+  
+  .search-box input {
+    width: 100%;
+  }
+  
+  .farmer-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .farmer-avatar {
+    margin: 0 auto;
+  }
+  
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .setting-item input,
+  .setting-item select {
+    width: 100%;
+  }
+  
+  .modal-content {
+    margin: 20px;
+    padding: 20px;
+  }
+  
+  .product-actions {
+    flex-direction: column;
+  }
+  
+  .farmer-stats {
+    justify-content: center;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ff9800;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
