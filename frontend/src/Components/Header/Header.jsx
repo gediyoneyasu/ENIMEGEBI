@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import './Header.css';
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useLanguage } from '../../context/LanguageContext.jsx';
-import { useCart } from '../../context/CartContext.jsx';
+import { useLanguage } from '../../main';
+import { useCart } from '../../main';
+import './Header.css';
 
 function Header() {
+  const { language, changeLanguage } = useLanguage();
+  const { cartCount } = useCart();
   const [showMenu, setShowMenu] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
-  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { language, changeLanguage } = useLanguage();
-  const { cartCount } = useCart();
 
   useEffect(() => {
     const token = localStorage.getItem('enimegebiToken');
@@ -26,23 +26,14 @@ function Header() {
         setUserRole(userData.role || 'user');
       } catch {
         setIsLoggedIn(false);
-        setUserName('');
-        setUserRole('');
       }
     } else {
       setIsLoggedIn(false);
-      setUserName('');
-      setUserRole('');
     }
   }, [location.pathname]);
 
-  const toggleMenu = () => {
-    setShowMenu(!showMenu);
-  };
-
-  const closeMenu = () => {
-    setShowMenu(false);
-  };
+  const toggleMenu = () => setShowMenu(!showMenu);
+  const closeMenu = () => setShowMenu(false);
 
   const handleLogout = () => {
     localStorage.removeItem('enimegebiToken');
@@ -57,9 +48,7 @@ function Header() {
     setShowLangDropdown(false);
   };
 
-  const toggleLangDropdown = () => {
-    setShowLangDropdown(!showLangDropdown);
-  };
+  const toggleLangDropdown = () => setShowLangDropdown(!showLangDropdown);
 
   const translations = {
     en: {
@@ -95,34 +84,20 @@ function Header() {
   return (
     <header className="nav_wrapper">
       <div className="nav_logo">
-        <Link to="/">
-          <span>Enimegebi</span>
-        </Link>
+        <Link to="/"><span>Enimegebi</span></Link>
       </div>
 
       <ul className={showMenu ? "showNav" : ""} onClick={closeMenu}>
         <li><Link to="/">{t.home}</Link></li>
         <li><Link to="/products">{t.products}</Link></li>
         <li><Link to="/categories">{t.categories}</Link></li>
-        <li><Link to="/orders">{t.orders}</Link></li>
         <li><Link to="/about">{t.about}</Link></li>
         <li><Link to="/contact">{t.contact}</Link></li>
-        
-        {/* Show Admin Panel link only for admin users */}
-        {isLoggedIn && userRole === 'admin' && (
-          <li><Link to="/admin" className="admin-nav-link">{t.admin}</Link></li>
-        )}
-        
-        {isLoggedIn && (
-          <>
-            <li><Link to="/profile" className="mobile-profile">{t.profile}</Link></li>
-            <li><button onClick={handleLogout} className="mobile-logout">{t.logout}</button></li>
-          </>
-        )}
+        {isLoggedIn && userRole === 'admin' && <li><Link to="/admin">{t.admin}</Link></li>}
+        {isLoggedIn && <li><button onClick={handleLogout} className="mobile-logout">{t.logout}</button></li>}
       </ul>
 
       <div className="nav_btn">
-        {/* Language Dropdown */}
         <div className="language-dropdown">
           <button className="lang-btn" onClick={toggleLangDropdown}>
             <span>{language === 'en' ? 'EN' : 'አማ'}</span>
@@ -130,23 +105,12 @@ function Header() {
           </button>
           {showLangDropdown && (
             <div className="lang-dropdown-menu">
-              <button 
-                className={`lang-option ${language === 'en' ? 'active' : ''}`}
-                onClick={() => selectLanguage('en')}
-              >
-                English (EN)
-              </button>
-              <button 
-                className={`lang-option ${language === 'am' ? 'active' : ''}`}
-                onClick={() => selectLanguage('am')}
-              >
-                አማርኛ (AM)
-              </button>
+              <button className={`lang-option ${language === 'en' ? 'active' : ''}`} onClick={() => selectLanguage('en')}>English (EN)</button>
+              <button className={`lang-option ${language === 'am' ? 'active' : ''}`} onClick={() => selectLanguage('am')}>አማርኛ (AM)</button>
             </div>
           )}
         </div>
 
-        {/* Cart Icon */}
         <Link to="/cart" className="cart-btn" aria-label={t.cart}>
           <i className="ri-shopping-cart-line"></i>
           {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
@@ -154,31 +118,14 @@ function Header() {
         
         {isLoggedIn ? (
           <>
-            {/* Admin Icon for admin users */}
-            {userRole === 'admin' && (
-              <Link to="/admin" className="admin-icon" aria-label={t.admin}>
-                <i className="ri-shield-star-line"></i>
-              </Link>
-            )}
-            
-            <Link to="/profile" className="nav-profile-icon" aria-label={t.profile}>
-              <i className="ri-user-line"></i>
-            </Link>
+            <Link to="/profile" className="nav-profile-icon"><i className="ri-user-line"></i></Link>
             <div className="user-menu">
-              <Link to="/profile" className="user-btn">
-                <i className="ri-user-line"></i>
-                <span>{userName.split(' ')[0]}</span>
-              </Link>
-              <button type="button" onClick={handleLogout} className="logout-icon">
-                <i className="ri-logout-box-line"></i>
-              </button>
+              <Link to="/profile" className="user-btn"><i className="ri-user-line"></i><span>{userName.split(' ')[0]}</span></Link>
+              <button type="button" onClick={handleLogout} className="logout-icon"><i className="ri-logout-box-line"></i></button>
             </div>
           </>
         ) : (
-          <Link to="/auth" className="auth-btn">
-            <i className="ri-user-line"></i>
-            <span>{t.login}</span>
-          </Link>
+          <Link to="/auth" className="auth-btn"><i className="ri-user-line"></i><span>{t.login}</span></Link>
         )}
         
         <i className="ri-menu-4-line" id="bars" onClick={toggleMenu}></i>

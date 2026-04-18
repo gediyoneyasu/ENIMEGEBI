@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useLanguage } from '../../context/LanguageContext.jsx';
+import { useLanguage } from '../../main'
 import './Profile.css';
 
 function Profile() {

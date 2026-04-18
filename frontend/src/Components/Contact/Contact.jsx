@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useLanguage } from '../../context/LanguageContext.jsx';
+import { useLanguage } from '../../main'
 import './Contact.css';
 
 const Contact = () => {

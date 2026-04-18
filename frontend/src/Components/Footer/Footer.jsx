@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useLanguage } from '../../context/LanguageContext.jsx';
+import { useLanguage } from '../../main';
 import './Footer.css';
 
 const Footer = () => {
@@ -95,7 +95,6 @@ const Footer = () => {
   return (
     <footer className="footer">
       <div className="footer-container">
-        {/* About Section */}
         <div className="footer-section">
           <h3>Enimegebi</h3>
           <p>{t.aboutText}</p>
@@ -107,7 +106,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Quick Links */}
         <div className="footer-section">
           <h3>{t.quickLinks}</h3>
           <ul>
@@ -119,18 +117,15 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* My Account Links */}
         <div className="footer-section">
           <h3>{t.myAccount}</h3>
           <ul>
             <li><Link to="/profile">{t.profile}</Link></li>
             <li><Link to="/orders">{t.orders}</Link></li>
-            <li><Link to="/wishlist">{t.wishlist}</Link></li>
             <li><Link to="/auth">{t.login}</Link></li>
           </ul>
         </div>
 
-        {/* Contact Info */}
         <div className="footer-section">
           <h3>{t.contactUs}</h3>
           <div className="contact-info">
@@ -145,7 +140,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Newsletter */}
         <div className="footer-section">
           <h3>{t.newsletter}</h3>
           <p>{t.newsletterText}</p>
@@ -156,7 +150,6 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Copyright */}
       <div className="footer-bottom">
         <div className="footer-bottom-container">
           <p>&copy; {currentYear} Enimegebi. {t.rights}.</p>

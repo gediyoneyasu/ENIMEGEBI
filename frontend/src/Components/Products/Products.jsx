@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext.jsx';
-import { useCart } from '../../context/CartContext.jsx';
 import axios from 'axios';
+import { useLanguage } from '../../main';
+import { useCart } from '../../main';
 import './Products.css';
 
 function Products() {
@@ -25,6 +25,7 @@ function Products() {
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -41,6 +42,7 @@ function Products() {
 
   const handleAddToCart = (product) => {
     addToCart(product);
+    alert(`${product.name} added to cart!`);
   };
 
   const translations = {
@@ -67,7 +69,6 @@ function Products() {
   };
 
   const t = translations[language];
-
   const categories = ['all', 'Coffee', 'Grains', 'Honey', 'Dairy', 'Fruits', 'Vegetables', 'Spices', 'Beverages'];
 
   const filteredProducts = products.filter(product => {
@@ -131,14 +132,11 @@ function Products() {
                     {imageUrl ? (
                       <img src={imageUrl} alt={product.name} />
                     ) : (
-                      <div className="no-image">
-                        <i className="ri-image-line"></i>
-                      </div>
+                      <div className="no-image"><i className="ri-image-line"></i></div>
                     )}
                   </div>
                   <div className="product-info">
                     <h3>{product.name}</h3>
-                    {product.nameAm && <p className="product-name-am">{product.nameAm}</p>}
                     <div className="product-price">{t.price} {product.price}</div>
                     <div className="product-stock">{product.stock > 0 ? t.inStock : t.outOfStock}</div>
                     <button className="add-to-cart-btn" onClick={() => handleAddToCart(product)} disabled={product.stock === 0}>

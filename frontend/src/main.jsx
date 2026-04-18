@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
-// Create contexts directly here to avoid import issues
+// Create contexts
 const LanguageContext = React.createContext();
 const CartContext = React.createContext();
 
@@ -54,11 +54,21 @@ const CartProvider = ({ children }) => {
     setCart(prev => prev.filter(i => (i.id !== id && i._id !== id)));
   };
 
+  const updateQuantity = (id, qty) => {
+    if (qty <= 0) {
+      removeFromCart(id);
+      return;
+    }
+    setCart(prev => prev.map(i => (i.id === id || i._id === id) ? { ...i, quantity: qty } : i));
+  };
+
   const clearCart = () => setCart([]);
   const getCartTotal = () => cart.reduce((t, i) => t + ((i.price || 0) * (i.quantity || 1)), 0);
 
   return (
-    <CartContext.Provider value={{ cart, cartCount, addToCart, removeFromCart, clearCart, getCartTotal }}>
+    <CartContext.Provider value={{ 
+      cart, cartCount, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotal 
+    }}>
       {children}
     </CartContext.Provider>
   );
@@ -77,4 +87,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 );
 
-export { useLanguage, useCart };
+export { useLanguage, useCart, LanguageContext, CartContext };

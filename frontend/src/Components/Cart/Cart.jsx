@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../../context/CartContext.jsx';
+import { useCart } from '../../main';
 import './Cart.css';
 
 const Cart = () => {
@@ -58,18 +58,8 @@ const Cart = () => {
           {cart.map((item) => (
             <div key={item.id || item._id} className="cart-item">
               <div className="cart-item-info">
-                <div className="cart-item-image">
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} />
-                  ) : (
-                    <div className="no-image">
-                      <i className="ri-image-line"></i>
-                    </div>
-                  )}
-                </div>
                 <div className="cart-item-details">
                   <h3>{item.name}</h3>
-                  {item.category && <p className="item-category">{item.category}</p>}
                 </div>
               </div>
               
@@ -78,17 +68,11 @@ const Cart = () => {
               </div>
               
               <div className="cart-item-quantity">
-                <button 
-                  onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) - 1)}
-                  className="qty-btn"
-                >
+                <button onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) - 1)} className="qty-btn">
                   <i className="ri-subtract-line"></i>
                 </button>
                 <span className="qty-value">{item.quantity || 1}</span>
-                <button 
-                  onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) + 1)}
-                  className="qty-btn"
-                >
+                <button onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) + 1)} className="qty-btn">
                   <i className="ri-add-line"></i>
                 </button>
               </div>
@@ -98,10 +82,7 @@ const Cart = () => {
               </div>
               
               <div className="cart-item-remove">
-                <button 
-                  onClick={() => removeFromCart(item.id || item._id)}
-                  className="remove-btn"
-                >
+                <button onClick={() => removeFromCart(item.id || item._id)} className="remove-btn">
                   <i className="ri-delete-bin-line"></i>
                 </button>
               </div>
@@ -122,29 +103,15 @@ const Cart = () => {
         
         <div className="cart-summary">
           <h2>Order Summary</h2>
-          
           <div className="summary-row">
             <span>Subtotal:</span>
             <span>${cartTotal.toFixed(2)}</span>
           </div>
-          
-          <div className="summary-row">
-            <span>Shipping:</span>
-            <span>{cartTotal > 500 ? 'Free' : '$5.00'}</span>
-          </div>
-          
-          <div className="summary-row">
-            <span>Tax (15%):</span>
-            <span>${(cartTotal * 0.15).toFixed(2)}</span>
-          </div>
-          
           <div className="summary-divider"></div>
-          
           <div className="summary-row total">
             <span>Total:</span>
-            <span>${(cartTotal + (cartTotal > 500 ? 0 : 5) + (cartTotal * 0.15)).toFixed(2)}</span>
+            <span>${cartTotal.toFixed(2)}</span>
           </div>
-          
           <button onClick={handleCheckout} className="checkout-btn">
             Proceed to Checkout
             <i className="ri-arrow-right-line"></i>
