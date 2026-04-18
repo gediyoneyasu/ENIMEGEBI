@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../../context/CartContext.jsx';
 import './Checkout.css';
 
 const Checkout = () => {

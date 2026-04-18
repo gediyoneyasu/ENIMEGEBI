@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useLanguage } from '../../context/LanguageContext';
-import { useCart } from '../../context/CartContext';
+import { useLanguage } from '../../context/LanguageContext.jsx';
+import { useCart } from '../../context/CartContext.jsx';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
 import 'swiper/css';

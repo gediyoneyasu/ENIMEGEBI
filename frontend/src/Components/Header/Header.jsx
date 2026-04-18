@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Header.css';
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useLanguage } from '../../context/LanguageContext';
-import { useCart } from '../../context/CartContext';
+import { useLanguage } from '../../context/LanguageContext.jsx';
+import { useCart } from '../../context/CartContext.jsx';
 
 function Header() {
   const [showMenu, setShowMenu] = useState(false);

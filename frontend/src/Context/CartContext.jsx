@@ -14,7 +14,6 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [cartCount, setCartCount] = useState(0);
 
-  // Load cart from localStorage on mount
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('enimegebiCart');
@@ -29,7 +28,6 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem('enimegebiCart', JSON.stringify(cart));
@@ -58,9 +56,6 @@ export const CartProvider = ({ children }) => {
         }];
       }
     });
-    
-    // Optional: Show a toast notification
-    console.log(`${product.name} added to cart!`);
   };
 
   const removeFromCart = (productId) => {
