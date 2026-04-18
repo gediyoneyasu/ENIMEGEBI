@@ -20,7 +20,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/admin/dashboard', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/dashboard', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data.stats);

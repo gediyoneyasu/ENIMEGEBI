@@ -29,8 +29,8 @@ const Auth = () => {
     
     try {
       const url = isLogin 
-        ? 'http://localhost:5001/api/auth/login'
-        : 'http://localhost:5001/api/auth/register';
+        ? 'import.meta.env.VITE_API_URL/api/auth/login'
+        : 'import.meta.env.VITE_API_URL/api/auth/register';
       
       const dataToSend = isLogin 
         ? { email: formData.email, password: formData.password }

@@ -12,7 +12,7 @@ const ContactMessages = () => {
   const fetchMessages = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/admin/contacts', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/contacts', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessages(response.data.contacts);

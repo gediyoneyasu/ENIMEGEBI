@@ -32,7 +32,7 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/admin/products', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/products', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProducts(response.data);
@@ -72,7 +72,7 @@ const Products = () => {
       const token = localStorage.getItem('enimegebiToken');
       
       if (editingProduct) {
-        await axios.put(`http://localhost:5001/api/admin/products/${editingProduct._id}`, submitData, {
+        await axios.put(`import.meta.env.VITE_API_URL/api/admin/products/${editingProduct._id}`, submitData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -80,7 +80,7 @@ const Products = () => {
         });
         setAlert({ type: 'success', message: 'Product updated successfully!' });
       } else {
-        await axios.post('http://localhost:5001/api/admin/products', submitData, {
+        await axios.post('import.meta.env.VITE_API_URL/api/admin/products', submitData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -102,7 +102,7 @@ const Products = () => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         const token = localStorage.getItem('enimegebiToken');
-        await axios.delete(`http://localhost:5001/api/admin/products/${id}`, {
+        await axios.delete(`import.meta.env.VITE_API_URL/api/admin/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchProducts();
@@ -129,7 +129,7 @@ const Products = () => {
       rating: product.rating || 0,
       status: product.status
     });
-    setImagePreview(product.imageUrl || (product.image ? `http://localhost:5001${product.image}` : ''));
+    setImagePreview(product.imageUrl || (product.image ? `import.meta.env.VITE_API_URL${product.image}` : ''));
     setImageFile(null);
     setShowModal(true);
   };
@@ -163,7 +163,7 @@ const Products = () => {
 
   const getImageUrl = (product) => {
     if (product.imageUrl) return product.imageUrl;
-    if (product.image) return `http://localhost:5001${product.image}`;
+    if (product.image) return `import.meta.env.VITE_API_URL${product.image}`;
     return null;
   };
 

@@ -38,7 +38,7 @@ function Categories() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/admin/public-products');
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/public-products');
       const products = response.data;
       
       const categoryMap = new Map();

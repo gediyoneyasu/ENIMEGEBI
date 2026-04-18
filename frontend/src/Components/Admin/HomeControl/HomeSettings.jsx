@@ -14,7 +14,7 @@ const HomeSettings = () => {
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/home/settings', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/home/settings', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSettings(response.data.settings);
@@ -33,7 +33,7 @@ const HomeSettings = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('enimegebiToken');
-      await axios.put('http://localhost:5001/api/home/settings', settings, {
+      await axios.put('import.meta.env.VITE_API_URL/api/home/settings', settings, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAlert({ type: 'success', message: 'Settings saved successfully!' });

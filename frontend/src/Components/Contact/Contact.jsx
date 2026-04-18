@@ -83,7 +83,7 @@ const Contact = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:5001/api/admin/contacts', formData);
+      const response = await axios.post('import.meta.env.VITE_API_URL/api/admin/contacts', formData);
       setSuccess(t.successMsg);
       setFormData({ name: '', email: '', subject: '', message: '' });
       setTimeout(() => setSuccess(''), 5000);

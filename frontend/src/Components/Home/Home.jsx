@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
+import API_URL from '../../config/api';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -20,8 +21,6 @@ function Home() {
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
-
-  const API_URL = 'http://localhost:5001';
 
   useEffect(() => {
     fetchHomeData();

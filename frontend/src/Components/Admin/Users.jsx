@@ -12,7 +12,7 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/admin/users', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(response.data.users);

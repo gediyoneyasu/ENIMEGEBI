@@ -15,7 +15,7 @@ const Footer = () => {
 
   const fetchFooterData = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/home/public-data');
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/home/public-data');
       if (response.data.success) {
         setSettings(response.data.settings || {});
         const categoryList = (response.data.categories || []).slice(0, 6).map(cat => cat._id);

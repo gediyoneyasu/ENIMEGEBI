@@ -175,7 +175,7 @@ function Profile() {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/users/profile', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -215,7 +215,7 @@ function Profile() {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/users/orders', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/users/orders', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrders(response.data.orders || []);
@@ -244,7 +244,7 @@ function Profile() {
 
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.post('http://localhost:5001/api/users/avatar', formDataImg, {
+      const response = await axios.post('import.meta.env.VITE_API_URL/api/users/avatar', formDataImg, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -267,7 +267,7 @@ function Profile() {
   const handleSaveProfile = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.put('http://localhost:5001/api/users/profile', formData, {
+      const response = await axios.put('import.meta.env.VITE_API_URL/api/users/profile', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -292,7 +292,7 @@ function Profile() {
 
     try {
       const token = localStorage.getItem('enimegebiToken');
-      await axios.put('http://localhost:5001/api/users/password', {
+      await axios.put('import.meta.env.VITE_API_URL/api/users/password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       }, {
@@ -312,7 +312,7 @@ function Profile() {
     if (window.confirm(t.deleteConfirm)) {
       try {
         const token = localStorage.getItem('enimegebiToken');
-        await axios.delete('http://localhost:5001/api/users/account', {
+        await axios.delete('import.meta.env.VITE_API_URL/api/users/account', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -330,7 +330,7 @@ function Profile() {
   const handleSaveSettings = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      await axios.put('http://localhost:5001/api/users/settings', notificationSettings, {
+      await axios.put('import.meta.env.VITE_API_URL/api/users/settings', notificationSettings, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert(t.settingsSaved);

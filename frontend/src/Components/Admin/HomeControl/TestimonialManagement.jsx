@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../AdminPages.css';
 
-const API_URL = 'http://localhost:5001';
+const API_URL = 'import.meta.env.VITE_API_URL';
 
 const TestimonialManagement = () => {
   const [testimonials, setTestimonials] = useState([]);

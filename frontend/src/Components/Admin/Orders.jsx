@@ -12,7 +12,7 @@ const Orders = () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('http://localhost:5001/api/admin/orders', {
+      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/orders', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrders(response.data.orders);
@@ -26,7 +26,7 @@ const Orders = () => {
   const updateOrderStatus = async (orderId, status) => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      await axios.put(`http://localhost:5001/api/admin/orders/${orderId}/status`, { status }, {
+      await axios.put(`import.meta.env.VITE_API_URL/api/admin/orders/${orderId}/status`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchOrders();
