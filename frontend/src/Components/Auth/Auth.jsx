@@ -19,8 +19,6 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  console.log('Using API_URL:', API_URL);
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -44,8 +42,10 @@ const Auth = () => {
       const response = await axios.post(url, dataToSend);
       
       console.log('Response:', response.data);
+      console.log('User role:', response.data.role);
       
       if (response.data.token) {
+        // Save to localStorage
         localStorage.setItem('enimegebiToken', response.data.token);
         localStorage.setItem('enimegebiUser', JSON.stringify({
           _id: response.data._id,
@@ -54,16 +54,22 @@ const Auth = () => {
           role: response.data.role
         }));
         
+        // Verify saved data
+        const savedUser = localStorage.getItem('enimegebiUser');
+        console.log('Saved user:', savedUser);
+        
+        // Redirect based on role
         if (response.data.role === 'admin') {
-          navigate('/admin');
+          console.log('Redirecting to /admin');
+          window.location.href = '/admin';
         } else {
-          navigate('/');
+          console.log('Redirecting to /');
+          window.location.href = '/';
         }
       }
     } catch (err) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || 'Something went wrong');
-    } finally {
       setLoading(false);
     }
   };
