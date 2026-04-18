@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import './Auth.css';
 
 const Auth = () => {
@@ -18,6 +19,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  console.log('Using API_URL:', API_URL);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -29,14 +32,18 @@ const Auth = () => {
     
     try {
       const url = isLogin 
-        ? 'import.meta.env.VITE_API_URL/api/auth/login'
-        : 'import.meta.env.VITE_API_URL/api/auth/register';
+        ? `${API_URL}/api/auth/login`
+        : `${API_URL}/api/auth/register`;
       
       const dataToSend = isLogin 
         ? { email: formData.email, password: formData.password }
         : formData;
       
+      console.log('Sending request to:', url);
+      
       const response = await axios.post(url, dataToSend);
+      
+      console.log('Response:', response.data);
       
       if (response.data.token) {
         localStorage.setItem('enimegebiToken', response.data.token);
@@ -47,7 +54,6 @@ const Auth = () => {
           role: response.data.role
         }));
         
-        // Redirect based on role
         if (response.data.role === 'admin') {
           navigate('/admin');
         } else {
@@ -55,6 +61,7 @@ const Auth = () => {
         }
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
