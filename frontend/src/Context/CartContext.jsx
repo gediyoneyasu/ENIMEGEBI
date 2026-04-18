@@ -41,7 +41,6 @@ export const CartProvider = ({ children }) => {
   const addToCart = (product) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => (item.id === product.id || item._id === product._id));
-      
       if (existingItem) {
         return prevCart.map(item =>
           (item.id === product.id || item._id === product._id)
@@ -67,7 +66,6 @@ export const CartProvider = ({ children }) => {
       removeFromCart(productId);
       return;
     }
-    
     setCart(prevCart =>
       prevCart.map(item =>
         (item.id === productId || item._id === productId)
