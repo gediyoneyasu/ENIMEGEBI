@@ -1,8 +1,9 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { upload: cloudinaryUpload } = require('./cloudinary');
 
-// Create upload directories if they don't exist
+// Create local upload directories as fallback
 const uploadDirs = ['uploads', 'uploads/sliders', 'uploads/testimonials', 'uploads/avatars', 'uploads/products', 'uploads/team'];
 
 uploadDirs.forEach(dir => {
@@ -11,7 +12,7 @@ uploadDirs.forEach(dir => {
   }
 });
 
-// Configure storage for different types
+// Local storage (fallback)
 const createStorage = (folder) => {
   return multer.diskStorage({
     destination: function (req, file, cb) {
@@ -24,49 +25,25 @@ const createStorage = (folder) => {
   });
 };
 
-// File filter
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype);
-
   if (mimetype && extname) {
     return cb(null, true);
   } else {
-    cb(new Error('Only images are allowed (jpeg, jpg, png, gif, webp)'));
+    cb(new Error('Only images are allowed'));
   }
 };
 
-// Different upload handlers for different purposes
-const uploadSlider = multer({
-  storage: createStorage('sliders'),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: fileFilter
-});
+// Use Cloudinary for production, local for development
+const useCloudinary = process.env.NODE_ENV === 'production';
 
-const uploadTestimonial = multer({
-  storage: createStorage('testimonials'),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: fileFilter
-});
-
-const uploadAvatar = multer({
-  storage: createStorage('avatars'),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: fileFilter
-});
-
-const uploadProduct = multer({
-  storage: createStorage('products'),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: fileFilter
-});
-
-const uploadTeam = multer({
-  storage: createStorage('team'),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: fileFilter
-});
+const uploadSlider = useCloudinary ? cloudinaryUpload : multer({ storage: createStorage('sliders'), fileFilter });
+const uploadTestimonial = useCloudinary ? cloudinaryUpload : multer({ storage: createStorage('testimonials'), fileFilter });
+const uploadAvatar = useCloudinary ? cloudinaryUpload : multer({ storage: createStorage('avatars'), fileFilter });
+const uploadProduct = useCloudinary ? cloudinaryUpload : multer({ storage: createStorage('products'), fileFilter });
+const uploadTeam = useCloudinary ? cloudinaryUpload : multer({ storage: createStorage('team'), fileFilter });
 
 module.exports = {
   uploadSlider,
@@ -74,5 +51,5 @@ module.exports = {
   uploadAvatar,
   uploadProduct,
   uploadTeam,
-  upload: multer({ storage: createStorage('general'), fileFilter: fileFilter })
+  upload: multer({ storage: createStorage('general'), fileFilter })
 };
