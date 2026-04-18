@@ -13,6 +13,7 @@ import SystemSettings from './SystemSettings';
 import SliderManagement from './HomeControl/SliderManagement';
 import TestimonialManagement from './HomeControl/TestimonialManagement';
 import HomeSettings from './HomeControl/HomeSettings';
+import TeamManagement from './TeamManagement/TeamManagement';
 
 const Admin = () => {
   const [user, setUser] = useState(null);
@@ -53,6 +54,7 @@ const Admin = () => {
     { path: '/admin/products', name: 'Products', icon: 'ri-shopping-bag-3-line' },
     { path: '/admin/orders', name: 'Orders', icon: 'ri-shopping-cart-2-line' },
     { path: '/admin/farmers', name: 'Farmers', icon: 'ri-plant-line' },
+    { path: '/admin/team', name: 'Team Members', icon: 'ri-team-line' },
     { path: '/admin/sliders', name: 'Home Sliders', icon: 'ri-image-line' },
     { path: '/admin/testimonials', name: 'Testimonials', icon: 'ri-star-line' },
     { path: '/admin/home-settings', name: 'Home Settings', icon: 'ri-home-settings-line' },
@@ -67,6 +69,7 @@ const Admin = () => {
       '/admin/products': 'Products Management',
       '/admin/orders': 'Orders Management',
       '/admin/farmers': 'Farmers Management',
+      '/admin/team': 'Team Management',
       '/admin/sliders': 'Home Slider Management',
       '/admin/testimonials': 'Testimonial Management',
       '/admin/home-settings': 'Home Page Settings',
@@ -131,6 +134,7 @@ const Admin = () => {
             <Route path="/products" element={<Products />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/farmers" element={<Farmers />} />
+            <Route path="/team" element={<TeamManagement />} />
             <Route path="/sliders" element={<SliderManagement />} />
             <Route path="/testimonials" element={<TestimonialManagement />} />
             <Route path="/home-settings" element={<HomeSettings />} />

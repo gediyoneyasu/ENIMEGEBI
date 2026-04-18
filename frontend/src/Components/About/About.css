@@ -419,4 +419,232 @@
   .mission-card, .vision-card {
     padding: 25px;
   }
+}/* Team Section - Styled like Testimonials */
+.team-section-about {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.team-section-about::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(201,166,107,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.team-subtitle-about {
+  display: inline-block;
+  background: linear-gradient(90deg, #c9a66b, #e8c88a);
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 6px 20px;
+  border-radius: 50px;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+}
+
+.team-title-about {
+  font-size: 42px;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+  font-weight: 700;
+  text-align: center;
+}
+
+.team-title-about span {
+  color: #c9a66b;
+}
+
+.team-desc-about {
+  text-align: center;
+  color: #666;
+  margin-bottom: 50px;
+  font-size: 18px;
+}
+
+.team-grid-about {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+}
+
+.team-card-about {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.team-card-about:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.team-image-about {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+}
+
+.team-image-about img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.team-card-about:hover .team-image-about img {
+  transform: scale(1.05);
+}
+
+.team-content-about {
+  padding: 25px;
+}
+
+.team-content-about h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: #1a1a1a;
+}
+
+.team-role-about {
+  color: #c9a66b;
+  font-weight: 600;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.team-bio-about {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.team-bio-about i {
+  color: #c9a66b;
+  font-size: 20px;
+  margin-top: 3px;
+}
+
+.team-bio-about p {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* CTA Section About */
+.cta-section-about {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-content-about h2 {
+  font-size: 48px;
+  margin-bottom: 15px;
+  font-weight: 800;
+}
+
+.cta-content-about p {
+  font-size: 18px;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+.cta-btn-about {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 40px;
+  background: linear-gradient(90deg, #c9a66b, #e8c88a);
+  color: #1a1a1a;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 700;
+  transition: all 0.3s;
+}
+
+.cta-btn-about:hover {
+  gap: 15px;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(201,166,107,0.5);
+}
+
+/* Responsive */
+@media screen and (max-width: 1200px) {
+  .team-grid-about {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .team-title-about {
+    font-size: 32px;
+  }
+  
+  .team-desc-about {
+    font-size: 16px;
+  }
+  
+  .team-grid-about {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .team-card-about {
+    max-width: 350px;
+    margin: 0 auto;
+  }
+  
+  .team-image-about {
+    height: 220px;
+  }
+  
+  .cta-content-about h2 {
+    font-size: 32px;
+  }
+  
+  .cta-content-about p {
+    font-size: 16px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .team-title-about {
+    font-size: 26px;
+  }
+  
+  .team-image-about {
+    height: 200px;
+  }
+  
+  .team-content-about h3 {
+    font-size: 18px;
+  }
+  
+  .cta-btn-about {
+    padding: 12px 30px;
+    font-size: 14px;
+  }
 }

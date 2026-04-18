@@ -1,10 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import axios from 'axios';
 import './About.css';
 
 function About() {
-  const { language } = useLanguage();  // Use context instead of local state
+  const { language } = useLanguage();
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_URL = 'http://localhost:5001';
+
+  useEffect(() => {
+    fetchTeamMembers();
+  }, []);
+
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/team/public`);
+      if (response.data.success) {
+        setTeamMembers(response.data.team);
+      }
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      // Fallback team data
+      setTeamMembers([
+        { id: 1, name: 'Gedu', nameAm: 'ገዱ', role: 'Founder & CEO', roleAm: 'መስራች እና ዋና ስራ አስፈፃሚ', image: 'https://randomuser.me/api/portraits/men/1.jpg', bio: 'Passionate about connecting farmers to markets' },
+        { id: 2, name: 'Sarah Johnson', nameAm: 'ሳራ ጆንሰን', role: 'Operations Director', roleAm: 'የክዋኔ ዳይሬክተር', image: 'https://randomuser.me/api/portraits/women/2.jpg', bio: 'Supply chain expert with 10+ years experience' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://randomuser.me/api/portraits/men/1.jpg';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL}${imagePath}`;
+  };
 
   const translations = {
     en: {
@@ -95,12 +128,14 @@ function About() {
 
   const t = translations[language];
 
-  const teamMembers = [
-    { id: 1, name: 'Gedu', role: 'Founder & CEO', image: 'https://randomuser.me/api/portraits/men/1.jpg', bio: 'Passionate about connecting farmers to markets' },
-    { id: 2, name: 'Sarah Johnson', role: 'Operations Director', image: 'https://randomuser.me/api/portraits/women/2.jpg', bio: 'Supply chain expert with 10+ years experience' },
-    { id: 3, name: 'Michael Chen', role: 'Tech Lead', image: 'https://randomuser.me/api/portraits/men/3.jpg', bio: 'Building the future of food tech' },
-    { id: 4, name: 'Emma Wilson', role: 'Community Manager', image: 'https://randomuser.me/api/portraits/women/4.jpg', bio: 'Connecting farmers and customers daily' }
-  ];
+  if (loading) {
+    return (
+      <div className="loading-spinner">
+        <i className="ri-loader-4-line ri-spin"></i>
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="about-page">
@@ -202,18 +237,27 @@ function About() {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="team-section">
+      {/* Team Section - Styled like Testimonials */}
+      <section className="team-section-about">
         <div className="container">
-          <h2 className="section-title">{t.team}</h2>
-          <p className="team-subtitle">{t.teamDesc}</p>
-          <div className="team-grid">
-            {teamMembers.map(member => (
-              <div key={member.id} className="team-card">
-                <img src={member.image} alt={member.name} />
-                <h3>{member.name}</h3>
-                <p>{member.role}</p>
-                <span>{member.bio}</span>
+          <small className="team-subtitle-about">{t.team}</small>
+          <h2 className="team-title-about">{t.teamTitle}</h2>
+          <p className="team-desc-about">{t.teamDesc}</p>
+          
+          <div className="team-grid-about">
+            {teamMembers.map((member) => (
+              <div key={member._id || member.id} className="team-card-about">
+                <div className="team-image-about">
+                  <img src={getImageUrl(member.image)} alt={member.name} />
+                </div>
+                <div className="team-content-about">
+                  <h3>{language === 'en' ? member.name : (member.nameAm || member.name)}</h3>
+                  <p className="team-role-about">{language === 'en' ? member.role : (member.roleAm || member.role)}</p>
+                  <div className="team-bio-about">
+                    <i className="ri-double-quotes-L"></i>
+                    <p>{language === 'en' ? member.bio : (member.bioAm || member.bio)}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -235,12 +279,12 @@ function About() {
       </section>
 
       {/* CTA Section */}
-      <section className="cta-section">
+      <section className="cta-section-about">
         <div className="container">
-          <div className="cta-content">
+          <div className="cta-content-about">
             <h2>{t.ctaTitle}</h2>
             <p>{t.ctaSubtitle}</p>
-            <Link to="/products" className="cta-btn">{t.shopNow} <i className="ri-arrow-right-line"></i></Link>
+            <Link to="/products" className="cta-btn-about">{t.shopNow} <i className="ri-arrow-right-line"></i></Link>
           </div>
         </div>
       </section>

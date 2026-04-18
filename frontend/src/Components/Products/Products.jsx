@@ -13,26 +13,30 @@ function Products() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const API_URL = 'http://localhost:5001';
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/admin/public-products');
+      const response = await axios.get(`${API_URL}/api/admin/public-products`);
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
-      // Demo products if API fails
-      setProducts([
-        { id: 1, name: 'Organic Coffee', price: 350, category: 'Coffee', stock: 50, unit: 'kg', image: null, rating: 4.8 },
-        { id: 2, name: 'Raw Honey', price: 250, category: 'Honey', stock: 30, unit: 'kg', image: null, rating: 4.7 },
-        { id: 3, name: 'Organic Teff', price: 120, category: 'Grains', stock: 100, unit: 'kg', image: null, rating: 4.9 },
-        { id: 4, name: 'Fresh Milk', price: 80, category: 'Dairy', stock: 200, unit: 'liter', image: null, rating: 4.6 },
-      ]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getImageUrl = (product) => {
+    if (product.imageUrl) return product.imageUrl;
+    if (product.image) {
+      if (product.image.startsWith('http')) return product.image;
+      return `${API_URL}${product.image}`;
+    }
+    return null;
   };
 
   const handleAddToCart = (product) => {
@@ -119,25 +123,31 @@ function Products() {
           </div>
 
           <div className="products-grid">
-            {filteredProducts.map(product => (
-              <div key={product.id || product._id} className="product-card">
-                <div className="product-image">
-                  {product.imageUrl ? (
-                    <img src={product.imageUrl} alt={product.name} />
-                  ) : (
-                    <div className="no-image"><i className="ri-image-line"></i></div>
-                  )}
+            {filteredProducts.map(product => {
+              const imageUrl = getImageUrl(product);
+              return (
+                <div key={product._id} className="product-card">
+                  <div className="product-image">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt={product.name} />
+                    ) : (
+                      <div className="no-image">
+                        <i className="ri-image-line"></i>
+                      </div>
+                    )}
+                  </div>
+                  <div className="product-info">
+                    <h3>{product.name}</h3>
+                    {product.nameAm && <p className="product-name-am">{product.nameAm}</p>}
+                    <div className="product-price">{t.price} {product.price}</div>
+                    <div className="product-stock">{product.stock > 0 ? t.inStock : t.outOfStock}</div>
+                    <button className="add-to-cart-btn" onClick={() => handleAddToCart(product)} disabled={product.stock === 0}>
+                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                    </button>
+                  </div>
                 </div>
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-                  <div className="product-price">{t.price} {product.price}</div>
-                  <div className="product-stock">{product.stock > 0 ? t.inStock : t.outOfStock}</div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(product)} disabled={product.stock === 0}>
-                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {filteredProducts.length === 0 && (

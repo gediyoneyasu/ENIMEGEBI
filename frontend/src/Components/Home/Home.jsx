@@ -17,6 +17,7 @@ function Home() {
   const [sliders, setSliders] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
@@ -33,22 +34,56 @@ function Home() {
       if (response.data.success) {
         setSliders(response.data.sliders || []);
         setFeaturedProducts(response.data.featuredProducts || []);
+        setAllProducts(response.data.featuredProducts || []);
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
         
-        const categoryList = (response.data.categories || []).map(cat => ({
-          name: cat._id,
-          count: cat.count,
-          icon: getCategoryIcon(cat._id),
-          color: getCategoryColor(cat._id)
-        }));
-        setCategories(categoryList);
+        // Get all categories and find their images from products
+        const rawCategories = response.data.categories || [];
+        
+        // Get products to find category images
+        const products = response.data.featuredProducts || [];
+        
+        // Create category list with images from actual products
+        const categoryList = rawCategories.map(cat => {
+          // Find a product in this category to use its image
+          const categoryProduct = products.find(p => p.category === cat._id);
+          
+          return {
+            id: cat._id,
+            name: cat._id,
+            nameAm: getAmharicName(cat._id),
+            icon: getCategoryIcon(cat._id),
+            color: getCategoryColor(cat._id),
+            count: cat.count,
+            // Use actual product image if available, otherwise use default
+            image: categoryProduct?.imageUrl || categoryProduct?.image || getCategoryImage(cat._id),
+            description: `Fresh organic ${cat._id.toLowerCase()} products from Ethiopian farmers`
+          };
+        });
+        
+        // Show first 8 categories
+        setCategories(categoryList.slice(0, 8));
       }
     } catch (error) {
       console.error('Error fetching home data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getAmharicName = (category) => {
+    const names = {
+      'Coffee': 'ቡና',
+      'Grains': 'እህል',
+      'Honey': 'ማር',
+      'Dairy': 'ወተት',
+      'Fruits': 'ፍራፍሬ',
+      'Vegetables': 'አትክልት',
+      'Spices': 'ቅመም',
+      'Beverages': 'መጠጥ'
+    };
+    return names[category] || category;
   };
 
   const getCategoryIcon = (category) => {
@@ -79,6 +114,20 @@ function Home() {
     return colors[category] || '#c9a66b';
   };
 
+  const getCategoryImage = (category) => {
+    const images = {
+      'Coffee': 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=500',
+      'Grains': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=500',
+      'Honey': 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500',
+      'Dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=500',
+      'Fruits': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500',
+      'Vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=500',
+      'Spices': 'https://images.unsplash.com/photo-1532335693593-41c48d1ad3ab?w=500',
+      'Beverages': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500'
+    };
+    return images[category] || '';
+  };
+
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -100,6 +149,7 @@ function Home() {
         { icon: 'ri-secure-payment-line', title: 'Secure Payment', desc: 'Safe and easy checkout' }
       ],
       categoriesTitle: 'Shop by Category',
+      viewAllCategories: 'View All Categories',
       featuredProducts: 'Featured Products',
       viewAll: 'View All',
       addToCart: 'Add to Cart',
@@ -117,6 +167,7 @@ function Home() {
         { icon: 'ri-secure-payment-line', title: 'ደህንነቱ የተጠበቀ ክፍያ', desc: 'አስተማማኝ እና ቀላል ቼክአውት' }
       ],
       categoriesTitle: 'በምድብ ይግዙ',
+      viewAllCategories: 'ሁሉንም ምድቦች ይመልከቱ',
       featuredProducts: 'ታዋቂ ምርቶች',
       viewAll: 'ሁሉንም ይመልከቱ',
       addToCart: 'ወደ ጋሪ ጨምር',
@@ -191,19 +242,69 @@ function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="categories-section">
+      {/* Categories Section - Flip Cards with Real Product Images */}
+      <section className="categories-section-home">
         <div className="container">
-          <h2 className="section-title">{t.categoriesTitle}</h2>
-          <div className="categories-grid">
-            {categories.map((category, index) => (
-              <Link to={`/products?category=${category.name}`} key={index} className="category-card">
-                <div className="category-icon" style={{ backgroundColor: category.color + '20', color: category.color }}>
-                  <i className={category.icon}></i>
+          <div className="section-header-home">
+            <small className="categories-subtitle-home">{t.categoriesTitle}</small>
+            <h2 className="categories-main-title-home">Explore Our <span>Categories</span></h2>
+            <Link to="/categories" className="view-all-categories-btn">
+              {t.viewAllCategories} <i className="ri-arrow-right-line"></i>
+            </Link>
+          </div>
+          
+          <div className="categories-cards-home">
+            {categories.map((category) => (
+              <div className="category-card-home" key={category.id}>
+                {/* Front Card */}
+                <div 
+                  className="card-front-home"
+                  style={{ 
+                    backgroundImage: `url(${getImageUrl(category.image)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                >
+                  <span className="category-badge-home">{category.count} Products</span>
+                  <div className="category-icon-home">
+                    <i className={category.icon}></i>
+                  </div>
+                  <button>{category.name}</button>
                 </div>
-                <h3>{category.name}</h3>
-                <p>{category.count} products</p>
-              </Link>
+
+                {/* Back Card */}
+                <div 
+                  className="card-back-home"
+                  style={{ 
+                    backgroundImage: `url(${getImageUrl(category.image)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                >
+                  <div className="price-home">
+                    <i className={category.icon}></i>
+                    <span>{category.name}</span>
+                  </div>
+                  
+                  <div className="card-content-home">
+                    <h3>{category.name}</h3>
+                    <p className="amharic-name-home">{category.nameAm}</p>
+                    <div className="category-stats-home">
+                      <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
+                      <span><i className="ri-user-line"></i> Local Farmers</span>
+                    </div>
+                    <p className="category-description-home">
+                      {category.description}
+                    </p>
+                  </div>
+                  <div className="explore-now-home">
+                    <Link to={`/products?category=${category.name}`}>
+                      Explore {category.name}
+                      <i className="ri-arrow-right-line"></i>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -217,7 +318,7 @@ function Home() {
             <Link to="/products" className="view-all">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
           </div>
           <div className="products-grid">
-            {featuredProducts.map(product => (
+            {featuredProducts.slice(0, 8).map(product => (
               <div key={product._id} className="product-card">
                 <div className="product-image">
                   <img src={getImageUrl(product.imageUrl || product.image)} alt={product.name} />
@@ -239,7 +340,7 @@ function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section - New Design */}
+      {/* Testimonials Section */}
       <section className="testimonials-section-new">
         <div className="container">
           <small className="testimonials-subtitle">{t.testimonials}</small>
@@ -250,10 +351,7 @@ function Home() {
             slidesPerView={1}
             spaceBetween={30}
             loop={true}
-            autoplay={{
-              delay: 3000,
-              disableOnInteraction: false,
-            }}
+            autoplay={{ delay: 3000, disableOnInteraction: false }}
             speed={800}
             navigation={true}
             pagination={{ clickable: true }}
