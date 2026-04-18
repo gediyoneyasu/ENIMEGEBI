@@ -12,6 +12,7 @@ const Products = () => {
   const [alert, setAlert] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     nameAm: '',
@@ -62,40 +63,48 @@ const Products = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploading(true);
     
-    const submitData = new FormData();
-    submitData.append('product', JSON.stringify(formData));
-    if (imageFile) {
-      submitData.append('image', imageFile);
-    }
-
     try {
       const token = localStorage.getItem('enimegebiToken');
       
+      // First, save product without image
+      const productData = { ...formData };
+      
+      let response;
       if (editingProduct) {
-        await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, submitData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+        response = await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, productData, {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        setAlert({ type: 'success', message: 'Product updated successfully!' });
       } else {
-        await axios.post(`${API_URL}/api/admin/products`, submitData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+        response = await axios.post(`${API_URL}/api/admin/products`, productData, {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        setAlert({ type: 'success', message: 'Product added successfully!' });
       }
       
+      // Then upload image separately if there is one
+      if (imageFile && response.data._id) {
+        const imageFormData = new FormData();
+        imageFormData.append('image', imageFile);
+        imageFormData.append('productId', response.data._id);
+        
+        await axios.post(`${API_URL}/api/admin/products/${response.data._id}/upload-image`, imageFormData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
+      
+      setAlert({ type: 'success', message: editingProduct ? 'Product updated successfully!' : 'Product added successfully!' });
       fetchProducts();
       closeModal();
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       console.error('Error saving product:', error);
-      setAlert({ type: 'error', message: 'Failed to save product' });
+      setAlert({ type: 'error', message: error.response?.data?.message || 'Failed to save product' });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -111,6 +120,7 @@ const Products = () => {
         setTimeout(() => setAlert(null), 3000);
       } catch (error) {
         console.error('Error deleting product:', error);
+        setAlert({ type: 'error', message: 'Failed to delete product' });
       }
     }
   };
@@ -158,6 +168,8 @@ const Products = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingProduct(null);
+    setImagePreview('');
+    setImageFile(null);
   };
 
   if (loading) return <div className="loading-spinner">Loading products...</div>;
@@ -180,7 +192,7 @@ const Products = () => {
               {product.image ? (
                 <img src={`${API_URL}${product.image}`} alt={product.name} />
               ) : (
-                <i className="ri-image-line"></i>
+                <div className="no-image"><i className="ri-image-line"></i></div>
               )}
               <span className={`product-status ${product.status}`}>{product.status}</span>
             </div>
@@ -208,20 +220,20 @@ const Products = () => {
             <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Product Image</label>
-                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />}
+                <label>Product Image (Optional)</label>
+                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginBottom: '10px' }} />}
                 <input type="file" accept="image/*" onChange={handleImageChange} />
               </div>
-              <div className="form-group"><label>Name (English)</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Name (English) *</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Name (Amharic)</label><input type="text" name="nameAm" value={formData.nameAm} onChange={handleInputChange} /></div>
-              <div className="form-group"><label>Category</label><input type="text" name="category" value={formData.category} onChange={handleInputChange} required /></div>
-              <div className="form-group"><label>Price</label><input type="number" name="price" value={formData.price} onChange={handleInputChange} required /></div>
-              <div className="form-group"><label>Stock</label><input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required /></div>
-              <div className="form-group"><label>Description (English)</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3"></textarea></div>
+              <div className="form-group"><label>Category *</label><input type="text" name="category" value={formData.category} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Price *</label><input type="number" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Stock *</label><input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Description</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3"></textarea></div>
               <div className="form-group"><label>Status</label><select name="status" value={formData.status} onChange={handleInputChange}><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
               <div className="modal-actions">
                 <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="btn-save">Save Product</button>
+                <button type="submit" className="btn-save" disabled={uploading}>{uploading ? 'Saving...' : 'Save Product'}</button>
               </div>
             </form>
           </div>
