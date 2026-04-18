@@ -28,21 +28,35 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  location: {
+    type: String,
+    default: ''
+  },
+  bio: {
+    type: String,
+    default: ''
+  },
+  avatar: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     enum: ['user', 'admin', 'farmer'],
     default: 'user'
   },
-  avatar: {
-    type: String,
-    default: ''
+  settings: {
+    emailNotifications: { type: Boolean, default: true },
+    smsNotifications: { type: Boolean, default: false },
+    orderUpdates: { type: Boolean, default: true },
+    promotionalEmails: { type: Boolean, default: false }
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
 }, {
-  collection: 'enimegebi'  // ← THIS sets the collection name to 'enimegebi'
+  collection: 'enimegebi'
 });
 
 // Encrypt password

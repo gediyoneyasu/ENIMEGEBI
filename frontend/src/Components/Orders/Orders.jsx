@@ -1,340 +1,257 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { useLanguage } from '../../context/LanguageContext';
 import './Orders.css';
 
-function Orders() {
-  const { language } = useLanguage();  // Use context instead of local state
+const Orders = () => {
+  const { language } = useLanguage();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [filter, setFilter] = useState('all');
-
-  useEffect(() => {
-    // Mock orders data
-    const mockOrders = [
-      {
-        id: 'ORD-001',
-        date: '2024-03-15',
-        status: 'delivered',
-        paymentMethod: 'cash',
-        total: 620,
-        items: [
-          { id: 1, name: 'Organic Coffee', nameAm: 'ኦርጋኒክ ቡና', price: 350, quantity: 1, image: 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?w=100' },
-          { id: 2, name: 'Fresh Avocado', nameAm: 'ትኩስ አቮካዶ', price: 120, quantity: 2, image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=100' }
-        ],
-        deliveryMethod: 'delivery',
-        address: 'Hawassa, Ethiopia',
-        tracking: [
-          { status: 'Order Placed', date: '2024-03-15 10:30', completed: true },
-          { status: 'Confirmed', date: '2024-03-15 11:00', completed: true },
-          { status: 'Preparing', date: '2024-03-15 14:00', completed: true },
-          { status: 'Out for Delivery', date: '2024-03-16 09:00', completed: true },
-          { status: 'Delivered', date: '2024-03-16 14:30', completed: true }
-        ]
-      },
-      {
-        id: 'ORD-002',
-        date: '2024-03-10',
-        status: 'shipped',
-        paymentMethod: 'chapa',
-        total: 480,
-        items: [
-          { id: 3, name: 'Raw Honey', nameAm: 'ጥሬ ማር', price: 250, quantity: 1, image: 'https://images.unsplash.com/photo-1587049352847-4a222e784d38?w=100' },
-          { id: 4, name: 'Fresh Milk', nameAm: 'ትኩስ ወተት', price: 80, quantity: 3, image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=100' }
-        ],
-        deliveryMethod: 'pickup',
-        pickupPoint: 'Hawassa Main Market',
-        tracking: [
-          { status: 'Order Placed', date: '2024-03-10 09:15', completed: true },
-          { status: 'Confirmed', date: '2024-03-10 10:00', completed: true },
-          { status: 'Ready for Pickup', date: '2024-03-11 08:00', completed: true },
-          { status: 'Picked Up', date: '2024-03-11 16:30', completed: false }
-        ]
-      },
-      {
-        id: 'ORD-003',
-        date: '2024-03-05',
-        status: 'pending',
-        paymentMethod: 'telebirr',
-        total: 350,
-        items: [
-          { id: 5, name: 'Tomatoes', nameAm: 'ቲማቲም', price: 60, quantity: 3, image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa2e5?w=100' },
-          { id: 6, name: 'Mango', nameAm: 'ማንጎ', price: 90, quantity: 2, image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=100' }
-        ],
-        deliveryMethod: 'delivery',
-        address: 'Adare, Hawassa',
-        tracking: [
-          { status: 'Order Placed', date: '2024-03-05 14:20', completed: true },
-          { status: 'Confirmed', date: '2024-03-05 15:00', completed: false },
-          { status: 'Preparing', date: 'Pending', completed: false }
-        ]
-      }
-    ];
-    
-    setOrders(mockOrders);
-    setLoading(false);
-  }, []);
+  const [error, setError] = useState('');
 
   const translations = {
     en: {
       title: 'My Orders',
-      subtitle: 'View and track your orders',
+      noOrders: 'No orders yet',
+      noOrdersMsg: 'You haven\'t placed any orders yet.',
+      startShopping: 'Start Shopping',
       orderId: 'Order ID',
       date: 'Date',
-      items: 'Items',
-      total: 'Total',
-      status: 'Status',
-      actions: 'Actions',
+      paymentStatus: 'Payment Status',
+      orderStatus: 'Order Status',
+      totalAmount: 'Total Amount',
       viewDetails: 'View Details',
-      trackOrder: 'Track Order',
-      reorder: 'Reorder',
+      printReceipt: 'Print Receipt',
+      orderDetails: 'Order Details',
+      orderInfo: 'Order Information',
+      shippingInfo: 'Shipping Information',
+      items: 'Items',
+      product: 'Product',
+      quantity: 'Quantity',
+      price: 'Price',
+      total: 'Total',
+      close: 'Close',
+      print: 'Print',
       pending: 'Pending',
-      confirmed: 'Confirmed',
+      paid: 'Paid',
       processing: 'Processing',
       shipped: 'Shipped',
       delivered: 'Delivered',
       cancelled: 'Cancelled',
-      orderDetails: 'Order Details',
-      orderSummary: 'Order Summary',
-      paymentMethod: 'Payment Method',
-      deliveryMethod: 'Delivery Method',
-      deliveryAddress: 'Delivery Address',
-      pickupPoint: 'Pickup Point',
-      trackingInfo: 'Tracking Information',
-      close: 'Close',
-      noOrders: 'No orders found',
-      shopNow: 'Shop Now',
-      allOrders: 'All Orders',
-      recentOrders: 'Recent Orders'
+      failed: 'Failed',
+      refunded: 'Refunded',
+      moreItems: 'more items',
+      loading: 'Loading your orders...'
     },
     am: {
-      title: 'ትዕዛዞቼ',
-      subtitle: 'ትዕዛዞችዎን ይመልከቱ እና ይከታተሉ',
+      title: 'የእኔ ትዕዛዞች',
+      noOrders: 'እስካሁን ትዕዛዝ የለም',
+      noOrdersMsg: 'እስካሁን ምንም ትዕዛዝ አላስገቡም።',
+      startShopping: 'ግብይት ጀምር',
       orderId: 'የትዕዛዝ መለያ',
       date: 'ቀን',
-      items: 'ምርቶች',
-      total: 'ድምር',
-      status: 'ሁኔታ',
-      actions: 'ድርጊቶች',
+      paymentStatus: 'የክፍያ ሁኔታ',
+      orderStatus: 'የትዕዛዝ ሁኔታ',
+      totalAmount: 'ጠቅላላ መጠን',
       viewDetails: 'ዝርዝር ይመልከቱ',
-      trackOrder: 'ትዕዛዝ ይከታተሉ',
-      reorder: 'እንደገና ያዝዙ',
+      printReceipt: 'ደረሰኝ አትም',
+      orderDetails: 'የትዕዛዝ ዝርዝሮች',
+      orderInfo: 'የትዕዛዝ መረጃ',
+      shippingInfo: 'የመላኪያ መረጃ',
+      items: 'እቃዎች',
+      product: 'ምርት',
+      quantity: 'ብዛት',
+      price: 'ዋጋ',
+      total: 'ጠቅላላ',
+      close: 'ዝጋ',
+      print: 'አትም',
       pending: 'በመጠባበቅ ላይ',
-      confirmed: 'ተረጋግጧል',
+      paid: 'ተከፍሏል',
       processing: 'በሂደት ላይ',
       shipped: 'ተልኳል',
       delivered: 'ደርሷል',
       cancelled: 'ተሰርዟል',
-      orderDetails: 'የትዕዛዝ ዝርዝር',
-      orderSummary: 'የትዕዛዝ ማጠቃለያ',
-      paymentMethod: 'የክፍያ ዘዴ',
-      deliveryMethod: 'የመላኪያ ዘዴ',
-      deliveryAddress: 'የመላኪያ አድራሻ',
-      pickupPoint: 'የመልቀቂያ ነጥብ',
-      trackingInfo: 'የክትትል መረጃ',
-      close: 'ዝጋ',
-      noOrders: 'ምንም ትዕዛዞች አልተገኙም',
-      shopNow: 'አሁን ይግዙ',
-      allOrders: 'ሁሉም ትዕዛዞች',
-      recentOrders: 'የቅርብ ጊዜ ትዕዛዞች'
+      failed: 'አልተሳካም',
+      refunded: 'ገንዘብ ተመልሷል',
+      moreItems: 'ተጨማሪ እቃዎች',
+      loading: 'ትዕዛዞችዎን በማጫን ላይ...'
     }
   };
 
   const t = translations[language];
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: { class: 'status-pending', text: t.pending },
-      confirmed: { class: 'status-confirmed', text: t.confirmed },
-      processing: { class: 'status-processing', text: t.processing },
-      shipped: { class: 'status-shipped', text: t.shipped },
-      delivered: { class: 'status-delivered', text: t.delivered },
-      cancelled: { class: 'status-cancelled', text: t.cancelled }
-    };
-    const s = statusMap[status] || statusMap.pending;
-    return <span className={`status-badge ${s.class}`}>{s.text}</span>;
+  useEffect(() => {
+    fetchOrders();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment');
+    const orderId = urlParams.get('order');
+    
+    if (paymentSuccess === 'success' && orderId) {
+      alert(language === 'en' ? '✅ Payment successful! Your order has been confirmed.' : '✅ ክፍያ ተሳክቷል! ትዕዛዝዎ ተረጋግጧል።');
+      window.history.replaceState({}, document.title, '/orders');
+    }
+  }, [language]);
+
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('enimegebiToken');
+      const response = await axios.get('http://localhost:5001/api/orders/my-orders', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setOrders(response.data.orders || []);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError(language === 'en' ? 'Failed to load orders' : 'ትዕዛዞችን ማግኘት አልተቻለም');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredOrders = filter === 'all' ? orders : orders.filter(o => o.status === filter);
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: '#ff9800',
+      processing: '#2196f3',
+      shipped: '#9c27b0',
+      delivered: '#4caf50',
+      cancelled: '#f44336',
+      paid: '#4caf50',
+      failed: '#f44336',
+      refunded: '#9c27b0'
+    };
+    return colors[status] || '#999';
+  };
 
-  const filters = [
-    { id: 'all', name: t.allOrders },
-    { id: 'pending', name: t.pending },
-    { id: 'confirmed', name: t.confirmed },
-    { id: 'shipped', name: t.shipped },
-    { id: 'delivered', name: t.delivered }
-  ];
+  const getStatusText = (status) => {
+    const statusMap = {
+      pending: t.pending,
+      processing: t.processing,
+      shipped: t.shipped,
+      delivered: t.delivered,
+      cancelled: t.cancelled,
+      paid: t.paid,
+      failed: t.failed,
+      refunded: t.refunded
+    };
+    return statusMap[status] || status;
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString(language === 'en' ? 'en-US' : 'am-ET', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const printReceipt = (order) => {
+    const printWindow = window.open('', '_blank');
+    const title = language === 'en' ? 'Enimegebi Receipt' : 'የኢኒመገቢ ደረሰኝ';
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${title} - ${order.orderReference}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+            .receipt { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #c9a66b; padding-bottom: 20px; }
+            .header h1 { color: #c9a66b; margin: 0; }
+            .order-info { margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background: #f5f5f5; }
+            .total { font-weight: bold; font-size: 18px; text-align: right; margin-top: 20px; padding-top: 10px; border-top: 2px solid #ddd; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="header"><h1>Enimegebi</h1><p>${language === 'en' ? 'Ethiopian Organic Products' : 'የኢትዮጵያ ኦርጋኒክ ምርቶች'}</p></div>
+            <div class="order-info">
+              <p><strong>${t.orderId}:</strong> ${order.orderReference}</p>
+              <p><strong>${t.date}:</strong> ${formatDate(order.createdAt)}</p>
+              <p><strong>${t.paymentStatus}:</strong> ${getStatusText(order.paymentStatus)}</p>
+              <p><strong>${t.orderStatus}:</strong> ${getStatusText(order.orderStatus)}</p>
+            </div>
+            <table><thead><tr><th>${t.product}</th><th>${t.quantity}</th><th>${t.price}</th><th>${t.total}</th></tr></thead>
+            <tbody>${order.items.map(item => `<tr><td>${item.productName}</td><td>${item.quantity}</td><td>ETB ${item.price}</td><td>ETB ${(item.price * item.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table>
+            <div class="total"><p>${t.totalAmount}: ETB ${order.totalAmount.toFixed(2)}</p></div>
+            <div class="footer"><p>${language === 'en' ? 'Thank you for shopping with Enimegebi!' : 'ኢኒመገቢን ስለመረጡ እናመሰግናለን!'}</p></div>
+          </div>
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   if (loading) {
-    return (
-      <div className="orders-loading">
-        <i className="ri-loader-4-line ri-spin"></i>
-        <p>Loading orders...</p>
-      </div>
-    );
+    return (<div className="orders-loading"><i className="ri-loader-4-line ri-spin"></i><p>{t.loading}</p></div>);
   }
 
   return (
-    <div className="orders-page">
-      <div className="orders-container">
-        <div className="orders-header">
-          <h1>{t.title}</h1>
-          <p>{t.subtitle}</p>
+    <div className="orders-container">
+      <h1 className="orders-title">{t.title}</h1>
+      {error && <div className="error-message">{error}</div>}
+      
+      {orders.length === 0 ? (
+        <div className="no-orders">
+          <i className="ri-shopping-bag-line"></i>
+          <h2>{t.noOrders}</h2>
+          <p>{t.noOrdersMsg}</p>
+          <Link to="/products" className="start-shopping-btn">{t.startShopping}</Link>
         </div>
-
-        {/* Filter Tabs */}
-        <div className="orders-filters">
-          {filters.map(f => (
-            <button
-              key={f.id}
-              className={`filter-btn ${filter === f.id ? 'active' : ''}`}
-              onClick={() => setFilter(f.id)}
-            >
-              {f.name}
-            </button>
+      ) : (
+        <div className="orders-list">
+          {orders.map((order) => (
+            <div key={order._id} className="order-card">
+              <div className="order-header">
+                <div className="order-info"><span className="order-ref">{order.orderReference}</span><span className="order-date">{formatDate(order.createdAt)}</span></div>
+                <div className="order-status">
+                  <span className="status-badge" style={{ backgroundColor: getStatusColor(order.paymentStatus) }}>{getStatusText(order.paymentStatus)}</span>
+                  <span className="status-badge" style={{ backgroundColor: getStatusColor(order.orderStatus) }}>{getStatusText(order.orderStatus)}</span>
+                </div>
+              </div>
+              <div className="order-items">
+                {order.items.slice(0, 2).map((item, idx) => (
+                  <div key={idx} className="order-item">
+                    <div className="item-image">{item.image ? <img src={item.image} alt={item.productName} /> : <i className="ri-image-line"></i>}</div>
+                    <div className="item-details"><h4>{item.productName}</h4><p>{t.quantity}: {item.quantity} × ETB {item.price}</p></div>
+                  </div>
+                ))}
+                {order.items.length > 2 && <div className="more-items">+{order.items.length - 2} {t.moreItems}</div>}
+              </div>
+              <div className="order-footer">
+                <div className="order-total"><span>{t.totalAmount}:</span><strong>ETB {order.totalAmount.toFixed(2)}</strong></div>
+                <div className="order-actions">
+                  <button onClick={() => setSelectedOrder(order)} className="view-details-btn"><i className="ri-eye-line"></i> {t.viewDetails}</button>
+                  <button onClick={() => printReceipt(order)} className="print-receipt-btn"><i className="ri-printer-line"></i> {t.printReceipt}</button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
-
-        {/* Orders List */}
-        {filteredOrders.length === 0 ? (
-          <div className="no-orders">
-            <i className="ri-shopping-bag-line"></i>
-            <h2>{t.noOrders}</h2>
-            <p>You haven't placed any orders yet.</p>
-            <Link to="/products" className="shop-now-btn">{t.shopNow}</Link>
-          </div>
-        ) : (
-          <div className="orders-list">
-            {filteredOrders.map(order => (
-              <div key={order.id} className="order-card">
-                <div className="order-header">
-                  <div className="order-info">
-                    <span className="order-id">{t.orderId}: {order.id}</span>
-                    <span className="order-date">
-                      <i className="ri-calendar-line"></i> {new Date(order.date).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {getStatusBadge(order.status)}
-                </div>
-
-                <div className="order-items">
-                  {order.items.slice(0, 3).map(item => (
-                    <div key={item.id} className="order-item">
-                      <img src={item.image} alt={language === 'en' ? item.name : item.nameAm} />
-                      <div className="order-item-info">
-                        <h4>{language === 'en' ? item.name : item.nameAm}</h4>
-                        <p>{item.quantity} x ETB {item.price}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {order.items.length > 3 && (
-                    <div className="more-items">+{order.items.length - 3} more items</div>
-                  )}
-                </div>
-
-                <div className="order-footer">
-                  <div className="order-total">
-                    <span>{t.total}:</span>
-                    <strong>ETB {order.total}</strong>
-                  </div>
-                  <div className="order-actions">
-                    <button className="view-details-btn" onClick={() => setSelectedOrder(order)}>
-                      <i className="ri-eye-line"></i> {t.viewDetails}
-                    </button>
-                    {order.status === 'delivered' && (
-                      <button className="reorder-btn">
-                        <i className="ri-repeat-line"></i> {t.reorder}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Order Details Modal */}
+      )}
+      
       {selectedOrder && (
         <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{t.orderDetails}</h2>
-              <button className="modal-close" onClick={() => setSelectedOrder(null)}>&times;</button>
-            </div>
-            <div className="modal-body">
-              <div className="detail-row">
-                <span>{t.orderId}:</span>
-                <strong>{selectedOrder.id}</strong>
-              </div>
-              <div className="detail-row">
-                <span>{t.date}:</span>
-                <strong>{new Date(selectedOrder.date).toLocaleDateString()}</strong>
-              </div>
-              <div className="detail-row">
-                <span>{t.status}:</span>
-                {getStatusBadge(selectedOrder.status)}
-              </div>
-              <div className="detail-row">
-                <span>{t.paymentMethod}:</span>
-                <strong>{selectedOrder.paymentMethod.toUpperCase()}</strong>
-              </div>
-              <div className="detail-row">
-                <span>{t.deliveryMethod}:</span>
-                <strong>{selectedOrder.deliveryMethod === 'delivery' ? t.deliveryMethod : t.pickupPoint}</strong>
-              </div>
-              {selectedOrder.deliveryMethod === 'delivery' ? (
-                <div className="detail-row">
-                  <span>{t.deliveryAddress}:</span>
-                  <strong>{selectedOrder.address}</strong>
-                </div>
-              ) : (
-                <div className="detail-row">
-                  <span>{t.pickupPoint}:</span>
-                  <strong>{selectedOrder.pickupPoint}</strong>
-                </div>
-              )}
-
-              <div className="detail-divider"></div>
-
-              <h4>{t.orderSummary}</h4>
-              <div className="modal-items">
-                {selectedOrder.items.map(item => (
-                  <div key={item.id} className="modal-item">
-                    <span>{language === 'en' ? item.name : item.nameAm} x{item.quantity}</span>
-                    <span>ETB {item.price * item.quantity}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="modal-total">
-                <span>{t.total}:</span>
-                <strong>ETB {selectedOrder.total}</strong>
-              </div>
-
-              <div className="detail-divider"></div>
-
-              <h4>{t.trackingInfo}</h4>
-              <div className="tracking-timeline">
-                {selectedOrder.tracking.map((track, index) => (
-                  <div key={index} className={`tracking-step ${track.completed ? 'completed' : ''}`}>
-                    <div className="tracking-dot"></div>
-                    <div className="tracking-content">
-                      <div className="tracking-status">{track.status}</div>
-                      <div className="tracking-date">{track.date}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="close-modal-btn" onClick={() => setSelectedOrder(null)}>{t.close}</button>
+          <div className="modal-content order-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header"><h2>{t.orderDetails}</h2><button className="close-modal" onClick={() => setSelectedOrder(null)}><i className="ri-close-line"></i></button></div>
+            <div className="order-details">
+              <div className="detail-section"><h3>{t.orderInfo}</h3><p><strong>{t.orderId}:</strong> {selectedOrder.orderReference}</p><p><strong>{t.date}:</strong> {formatDate(selectedOrder.createdAt)}</p><p><strong>{t.paymentStatus}:</strong> <span style={{ color: getStatusColor(selectedOrder.paymentStatus) }}>{getStatusText(selectedOrder.paymentStatus)}</span></p><p><strong>{t.orderStatus}:</strong> <span style={{ color: getStatusColor(selectedOrder.orderStatus) }}>{getStatusText(selectedOrder.orderStatus)}</span></p></div>
+              <div className="detail-section"><h3>{t.shippingInfo}</h3><p><strong>{t.yourName}:</strong> {selectedOrder.userName}</p><p><strong>{t.email}:</strong> {selectedOrder.userEmail}</p><p><strong>{t.phone}:</strong> {selectedOrder.shippingAddress?.phone || 'N/A'}</p><p><strong>{t.address}:</strong> {selectedOrder.shippingAddress?.street}, {selectedOrder.shippingAddress?.city}</p></div>
+              <div className="detail-section"><h3>{t.items}</h3><table className="items-table"><thead><tr><th>{t.product}</th><th>{t.quantity}</th><th>{t.price}</th><th>{t.total}</th></tr></thead><tbody>{selectedOrder.items.map((item, idx) => (<tr key={idx}><td>{item.productName}</td><td>{item.quantity}</td><td>ETB {item.price}</td><td>ETB {(item.price * item.quantity).toFixed(2)}</td></tr>))}</tbody><tfoot><tr><td colSpan="3" className="total-label"><strong>{t.total}</strong></td><td><strong>ETB {selectedOrder.totalAmount.toFixed(2)}</strong></td></tr></tfoot></table></div>
+              <div className="modal-actions"><button onClick={() => printReceipt(selectedOrder)} className="print-btn"><i className="ri-printer-line"></i> {t.print}</button><button onClick={() => setSelectedOrder(null)} className="close-btn">{t.close}</button></div>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
+};
 
 export default Orders;

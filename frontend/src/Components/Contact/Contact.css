@@ -1,13 +1,7 @@
-.contact-page {
-  padding-top: 100px;
-  min-height: 100vh;
-  background: #f5f5f5;
-}
-
 .contact-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px 60px;
+  padding: 40px 20px;
 }
 
 .contact-header {
@@ -17,57 +11,96 @@
 
 .contact-header h1 {
   font-size: 42px;
-  color: #1a1a1a;
+  color: #2c3e50;
   margin-bottom: 15px;
 }
 
 .contact-header p {
-  color: #666;
   font-size: 18px;
+  color: #666;
 }
 
-.contact-layout {
+.contact-grid {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: 1fr 1fr;
   gap: 40px;
 }
 
-.contact-info-section {
-  background: white;
-  border-radius: 20px;
+.contact-info-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  color: white;
 }
 
-.info-item {
+.contact-info-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+  font-size: 24px;
+}
+
+.contact-detail {
   display: flex;
   align-items: center;
   gap: 15px;
-  margin-bottom: 25px;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.contact-detail i {
+  font-size: 24px;
+  width: 40px;
+}
+
+.contact-detail div {
+  flex: 1;
+}
+
+.contact-detail strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.social-links {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.social-link {
+  width: 45px;
+  height: 45px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s;
+  color: white;
+  font-size: 20px;
 }
 
-.info-item i {
-  font-size: 28px;
-  color: #4CAF50;
-}
-
-.info-item h4 {
-  color: #1a1a1a;
-}
-
-.contact-form-section {
+.social-link:hover {
   background: white;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  color: #667eea;
+  transform: translateY(-3px);
 }
 
-.contact-form-section h2 {
-  font-size: 28px;
+.contact-form-card {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.contact-form-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 25px;
+  color: #2c3e50;
 }
 
 .form-group {
@@ -77,82 +110,47 @@
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 12px;
+  padding: 12px 15px;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 14px;
-  font-family: inherit;
   transition: all 0.3s;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
+  border-color: #667eea;
   outline: none;
-  border-color: #4CAF50;
 }
 
 .submit-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
   border-radius: 10px;
-  color: #1a1a1a;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
 }
 
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-}
-
-.submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  box-shadow: 0 5px 15px rgba(102,126,234,0.3);
 }
 
 .success-message {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: #d4edda;
+  color: #155724;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   margin-bottom: 20px;
-  text-align: center;
 }
 
-.error-message {
-  background: #ffebee;
-  color: #c62828;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-@media screen and (max-width: 768px) {
-  .contact-header h1 {
-    font-size: 32px;
-  }
-  
-  .contact-layout {
+@media (max-width: 768px) {
+  .contact-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .contact-header h1 {
-    font-size: 28px;
-  }
-  
-  .contact-info-section,
-  .contact-form-section {
-    padding: 20px;
-  }
-  
-  .info-item {
-    flex-direction: column;
-    text-align: center;
   }
 }

@@ -14,11 +14,17 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  orderReference: {
+    type: String,
+    unique: true,
+    required: true
+  },
   items: [{
     productId: String,
     productName: String,
     quantity: Number,
-    price: Number
+    price: Number,
+    image: String
   }],
   totalAmount: {
     type: Number,
@@ -31,18 +37,38 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['cash', 'card', 'online'],
+    enum: ['cash', 'chapa', 'card'],
     default: 'cash'
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed'],
+    enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending'
   },
   orderStatus: {
     type: String,
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
+  },
+  transactionRef: {
+    type: String,
+    default: ''
+  },
+  chapaData: {
+    type: Object,
+    default: {}
+  },
+  paymentDetails: {
+    type: Object,
+    default: {}
+  },
+  paidAt: {
+    type: Date,
+    default: null
+  },
+  deliveredAt: {
+    type: Date,
+    default: null
   },
   createdAt: {
     type: Date,

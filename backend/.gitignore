@@ -1,1 +1,6 @@
+node_modules/
+.env
 uploads/
+dist/
+build/
+npm-debug.log

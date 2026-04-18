@@ -1,9 +1,9 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import { LanguageProvider } from './context/LanguageContext';
-import { CartProvider } from './context/CartContext';
-import './index.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+import { LanguageProvider } from './context/LanguageContext'
+import { CartProvider } from './context/CartContext'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -12,5 +12,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <App />
       </CartProvider>
     </LanguageProvider>
-  </React.StrictMode>
-);
+  </React.StrictMode>,
+)

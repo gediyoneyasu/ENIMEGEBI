@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const upload = require('../config/upload');
+const { uploadProduct } = require('../config/upload');
 const {
   getUsers,
   getUserById,
@@ -22,13 +22,11 @@ const {
   getPublicProducts
 } = require('../controllers/adminController');
 
-// Public routes (no authentication required)
+// Public routes
 router.post('/contacts', createContact);
-
-// Public products for frontend (no auth needed)
 router.get('/public-products', getPublicProducts);
 
-// Protected routes (admin only)
+// Protected routes
 router.use(protect);
 
 // Dashboard
@@ -40,17 +38,17 @@ router.get('/users/:id', getUserById);
 router.put('/users/:id', updateUser);
 router.delete('/users/:id', deleteUser);
 
-// Product routes with image upload support
+// Product routes with image upload
 router.get('/products', getProducts);
-router.post('/products', upload.single('image'), createProductWithImage);
-router.put('/products/:id', upload.single('image'), updateProductWithImage);
+router.post('/products', uploadProduct.single('image'), createProductWithImage);
+router.put('/products/:id', uploadProduct.single('image'), updateProductWithImage);
 router.delete('/products/:id', deleteProduct);
 
 // Order routes
 router.get('/orders', getOrders);
 router.put('/orders/:id/status', updateOrderStatus);
 
-// Contact routes (GET needs auth)
+// Contact routes
 router.get('/contacts', getContacts);
 router.put('/contacts/:id/read', markContactRead);
 

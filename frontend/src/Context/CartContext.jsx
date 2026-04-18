@@ -2,68 +2,103 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const CartContext = createContext();
 
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cart, setCart] = useState([]);
   const [cartCount, setCartCount] = useState(0);
 
+  // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('enimegebiCart');
-    if (savedCart) {
-      const cart = JSON.parse(savedCart);
-      setCartItems(cart);
-      setCartCount(cart.length);
+    try {
+      const savedCart = localStorage.getItem('enimegebiCart');
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        setCart(parsedCart);
+        const totalCount = parsedCart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        setCartCount(totalCount);
+      }
+    } catch (e) {
+      console.error('Error loading cart:', e);
     }
   }, []);
 
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('enimegebiCart', JSON.stringify(cart));
+      const totalCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      setCartCount(totalCount);
+    } catch (e) {
+      console.error('Error saving cart:', e);
+    }
+  }, [cart]);
+
   const addToCart = (product) => {
-    const existingCart = [...cartItems];
-    const existingItem = existingCart.find(item => item.id === product.id);
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => (item.id === product.id || item._id === product._id));
+      
+      if (existingItem) {
+        return prevCart.map(item =>
+          (item.id === product.id || item._id === product._id)
+            ? { ...item, quantity: (item.quantity || 1) + 1 }
+            : item
+        );
+      } else {
+        return [...prevCart, { 
+          ...product, 
+          id: product.id || product._id,
+          quantity: 1 
+        }];
+      }
+    });
     
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      existingCart.push({ ...product, quantity: 1 });
+    // Optional: Show a toast notification
+    console.log(`${product.name} added to cart!`);
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(prevCart => prevCart.filter(item => (item.id !== productId && item._id !== productId)));
+  };
+
+  const updateQuantity = (productId, quantity) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
     }
     
-    setCartItems(existingCart);
-    setCartCount(existingCart.length);
-    localStorage.setItem('enimegebiCart', JSON.stringify(existingCart));
-  };
-
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    
-    const updatedCart = cartItems.map(item =>
-      item.id === id ? { ...item, quantity: newQuantity } : item
+    setCart(prevCart =>
+      prevCart.map(item =>
+        (item.id === productId || item._id === productId)
+          ? { ...item, quantity }
+          : item
+      )
     );
-    setCartItems(updatedCart);
-    setCartCount(updatedCart.length);
-    localStorage.setItem('enimegebiCart', JSON.stringify(updatedCart));
-  };
-
-  const removeFromCart = (id) => {
-    const updatedCart = cartItems.filter(item => item.id !== id);
-    setCartItems(updatedCart);
-    setCartCount(updatedCart.length);
-    localStorage.setItem('enimegebiCart', JSON.stringify(updatedCart));
   };
 
   const clearCart = () => {
-    setCartItems([]);
-    setCartCount(0);
-    localStorage.setItem('enimegebiCart', JSON.stringify([]));
+    setCart([]);
+  };
+
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => total + ((item.price || 0) * (item.quantity || 1)), 0);
   };
 
   return (
-    <CartContext.Provider value={{ 
-      cartItems, 
-      cartCount, 
-      addToCart, 
-      updateQuantity, 
-      removeFromCart, 
-      clearCart 
+    <CartContext.Provider value={{
+      cart,
+      cartCount,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getCartTotal
     }}>
       {children}
     </CartContext.Provider>

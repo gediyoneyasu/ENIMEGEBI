@@ -2,22 +2,27 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure uploads directory exists
-const uploadDir = 'uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Create upload directories if they don't exist
+const uploadDirs = ['uploads', 'uploads/sliders', 'uploads/testimonials', 'uploads/avatars', 'uploads/products'];
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+uploadDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
 });
+
+// Configure storage for different types
+const createStorage = (folder) => {
+  return multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, `uploads/${folder}`);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+};
 
 // File filter
 const fileFilter = (req, file, cb) => {
@@ -32,10 +37,35 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+// Different upload handlers for different purposes
+const uploadSlider = multer({
+  storage: createStorage('sliders'),
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: fileFilter
 });
 
-module.exports = upload;
+const uploadTestimonial = multer({
+  storage: createStorage('testimonials'),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: fileFilter
+});
+
+const uploadAvatar = multer({
+  storage: createStorage('avatars'),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: fileFilter
+});
+
+const uploadProduct = multer({
+  storage: createStorage('products'),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: fileFilter
+});
+
+module.exports = {
+  uploadSlider,
+  uploadTestimonial,
+  uploadAvatar,
+  uploadProduct,
+  upload: multer({ storage: createStorage('general'), fileFilter: fileFilter })
+};

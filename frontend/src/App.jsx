@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 
 import Header from './Components/Header/Header';
+import Footer from './Components/Footer/Footer';
 import Auth from './Components/Auth/Auth';
 import Admin from './Components/Admin/Admin';
 import AdminLogin from './Components/Admin/AdminLogin';
@@ -46,6 +47,7 @@ function App() {
           <Route path="/admin/*" element={<Admin />} />
         </Routes>
       </Suspense>
+      <Footer />
     </BrowserRouter>
   );
 }
