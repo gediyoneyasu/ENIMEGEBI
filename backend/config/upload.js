@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Create upload directories if they don't exist
-const uploadDirs = ['uploads', 'uploads/sliders', 'uploads/testimonials', 'uploads/avatars', 'uploads/products'];
+const uploadDirs = ['uploads', 'uploads/sliders', 'uploads/testimonials', 'uploads/avatars', 'uploads/products', 'uploads/team'];
 
 uploadDirs.forEach(dir => {
   if (!fs.existsSync(dir)) {
@@ -62,10 +62,17 @@ const uploadProduct = multer({
   fileFilter: fileFilter
 });
 
+const uploadTeam = multer({
+  storage: createStorage('team'),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: fileFilter
+});
+
 module.exports = {
   uploadSlider,
   uploadTestimonial,
   uploadAvatar,
   uploadProduct,
+  uploadTeam,
   upload: multer({ storage: createStorage('general'), fileFilter: fileFilter })
 };

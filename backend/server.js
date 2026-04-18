@@ -43,3 +43,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📁 Uploads available at: http://localhost:${PORT}/uploads`);
 });
+// Add this line with other routes
+app.use('/api/team', require('./routes/teamRoutes'));

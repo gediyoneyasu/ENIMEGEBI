@@ -69,7 +69,12 @@ const deleteUser = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({});
-    res.json(products);
+    // Add full image URL for each product
+    const productsWithUrl = products.map(product => ({
+      ...product._doc,
+      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
+    }));
+    res.json(productsWithUrl);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -125,12 +130,19 @@ const createProductWithImage = async (req, res) => {
     const imageFile = req.file;
     
     if (imageFile) {
-      productData.image = `/uploads/${imageFile.filename}`;
-      productData.imageUrl = `http://localhost:5001/uploads/${imageFile.filename}`;
+      productData.image = `/uploads/products/${imageFile.filename}`;
+      productData.imageUrl = `http://localhost:5001/uploads/products/${imageFile.filename}`;
     }
     
     const product = await Product.create(productData);
-    res.status(201).json(product);
+    
+    // Return product with full image URL
+    const productWithUrl = {
+      ...product._doc,
+      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
+    };
+    
+    res.status(201).json(productWithUrl);
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ message: error.message });
@@ -154,13 +166,20 @@ const updateProductWithImage = async (req, res) => {
     const imageFile = req.file;
     
     if (imageFile) {
-      productData.image = `/uploads/${imageFile.filename}`;
-      productData.imageUrl = `http://localhost:5001/uploads/${imageFile.filename}`;
+      productData.image = `/uploads/products/${imageFile.filename}`;
+      productData.imageUrl = `http://localhost:5001/uploads/products/${imageFile.filename}`;
     }
     
     Object.assign(product, productData);
     await product.save();
-    res.json(product);
+    
+    // Return product with full image URL
+    const productWithUrl = {
+      ...product._doc,
+      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
+    };
+    
+    res.json(productWithUrl);
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).json({ message: error.message });
@@ -171,7 +190,12 @@ const updateProductWithImage = async (req, res) => {
 const getPublicProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: 'active' }).sort({ createdAt: -1 });
-    res.json(products);
+    // Add full image URL for each product
+    const productsWithUrl = products.map(product => ({
+      ...product._doc,
+      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
+    }));
+    res.json(productsWithUrl);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
