@@ -25,16 +25,29 @@ const Admin = () => {
     const token = localStorage.getItem('enimegebiToken');
     const userData = localStorage.getItem('enimegebiUser');
     
+    console.log('Admin check - Token:', !!token);
+    console.log('Admin check - UserData:', userData);
+    
     if (!token || !userData) {
+      console.log('No token or user data, redirecting to admin-login');
       navigate('/admin-login');
       return;
     }
     
-    const parsedUser = JSON.parse(userData);
-    if (parsedUser.role !== 'admin') {
+    try {
+      const parsedUser = JSON.parse(userData);
+      console.log('Parsed user role:', parsedUser.role);
+      
+      if (parsedUser.role !== 'admin') {
+        console.log('User is not admin, redirecting');
+        navigate('/admin-login');
+      } else {
+        console.log('Admin user verified:', parsedUser);
+        setUser(parsedUser);
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
       navigate('/admin-login');
-    } else {
-      setUser(parsedUser);
     }
   }, [navigate]);
 
@@ -46,7 +59,9 @@ const Admin = () => {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  if (!user) return <div className="admin-loading">Loading Admin Panel...</div>;
+  if (!user) {
+    return <div className="admin-loading">Loading Admin Panel...</div>;
+  }
 
   const menuItems = [
     { path: '/admin', name: 'Dashboard', icon: 'ri-dashboard-line' },
@@ -81,7 +96,6 @@ const Admin = () => {
 
   return (
     <div className="admin-panel">
-      {/* Sidebar */}
       <div className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
           <div className="logo">
@@ -99,7 +113,7 @@ const Admin = () => {
             <div className="admin-details">
               <h4>{user.name}</h4>
               <p>{user.email}</p>
-              <span className="admin-badge">Super Administrator</span>
+              <span className="admin-badge">Administrator</span>
             </div>
           )}
         </div>
@@ -118,15 +132,10 @@ const Admin = () => {
         </nav>
       </div>
 
-      {/* Main Content */}
       <div className={`admin-main ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <header className="admin-header">
           <h1>{getPageTitle(location.pathname)}</h1>
-          <div className="header-actions">
-            <div className="admin-user"><i className="ri-user-line"></i><span>{user.name}</span></div>
-          </div>
         </header>
-
         <div className="admin-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
