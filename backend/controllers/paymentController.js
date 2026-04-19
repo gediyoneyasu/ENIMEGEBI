@@ -1,12 +1,11 @@
 const axios = require('axios');
-const { v4: uuidv4 } = require('uuid');
 const Order = require('../models/Order');
 const Project = require('../models/Project');
 
 const CHAPA_API_URL = 'https://api.chapa.co/v1';
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 
-// Initialize payment for order (product)
+// Initialize payment for order
 const initializeOrderPayment = async (req, res) => {
   try {
     const { orderId, amount, email, name, phone } = req.body;
@@ -89,7 +88,7 @@ const initializeProjectPayment = async (req, res) => {
     if (response.data.status === 'success') {
       await Project.findOneAndUpdate(
         { _id: projectId },
-        { $push: { purchasedBy: { user: req.user.id, amount: amount, purchasedAt: new Date(), isUnlocked: false, tx_ref: tx_ref } } }
+        { $push: { purchasedBy: { user: req.user.id, amount: amount, purchasedAt: new Date(), isUnlocked: true, tx_ref: tx_ref } } }
       );
       
       res.json({
@@ -154,7 +153,7 @@ const verifyProjectPayment = async (req, res) => {
   }
 };
 
-// Webhook for Chapa
+// Webhook
 const webhook = async (req, res) => {
   try {
     const event = req.body;

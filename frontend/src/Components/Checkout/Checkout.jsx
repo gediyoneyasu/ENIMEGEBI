@@ -10,8 +10,9 @@ const Checkout = () => {
   const { cart, clearCart, getCartTotal } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [orderRef, setOrderRef] = useState('');
   const [user, setUser] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('cash');
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -53,35 +54,11 @@ const Checkout = () => {
   };
 
   const calculateTotal = () => {
-    if (!cart || cart.length === 0) return { subtotal: 0, shipping: 0, tax: 0, total: 0 };
-    const subtotal = getCartTotal();
-    const shipping = subtotal > 500 ? 0 : 50;
-    const tax = subtotal * 0.15;
-    return { subtotal, shipping, tax, total: subtotal + shipping + tax };
+    if (!cart || cart.length === 0) return { total: 0 };
+    return { total: getCartTotal() };
   };
 
   const totals = calculateTotal();
-
-  const createOrder = async () => {
-    const token = localStorage.getItem('enimegebiToken');
-    const orderData = {
-      items: cart.map(item => ({
-        productId: item.id || item._id,
-        productName: item.name,
-        quantity: item.quantity || 1,
-        price: item.price || 0
-      })),
-      totalAmount: totals.total,
-      shippingAddress: { street: formData.address, city: formData.city, phone: formData.phone },
-      paymentMethod: paymentMethod,
-      orderReference: 'ORD-' + Date.now().toString().slice(-8) + Math.random().toString(36).substring(2, 6).toUpperCase()
-    };
-
-    const response = await axios.post(`${API_URL}/api/orders`, orderData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data.order;
-  };
 
   const handleChapaPayment = async () => {
     setLoading(true);
@@ -89,17 +66,32 @@ const Checkout = () => {
     
     try {
       const token = localStorage.getItem('enimegebiToken');
-      console.log('Token exists:', !!token);
       
-      if (!token) {
-        setError('Please login again');
-        navigate('/auth');
-        return;
-      }
+      // First create order
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item.id || item._id,
+          productName: item.name,
+          quantity: item.quantity || 1,
+          price: item.price || 0
+        })),
+        totalAmount: totals.total,
+        shippingAddress: {
+          street: formData.address,
+          city: formData.city,
+          phone: formData.phone
+        },
+        paymentMethod: 'chapa',
+        orderReference: 'ORD-' + Date.now().toString().slice(-8)
+      };
+
+      const orderResponse = await axios.post(`${API_URL}/api/orders`, orderData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      const order = await createOrder();
-      console.log('Order created:', order);
+      const order = orderResponse.data.order;
       
+      // Initialize Chapa payment
       const paymentResponse = await axios.post(`${API_URL}/api/payment/initialize-order`, {
         orderId: order.orderReference,
         amount: totals.total,
@@ -110,17 +102,15 @@ const Checkout = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log('Payment response:', paymentResponse.data);
-
       if (paymentResponse.data.success) {
-        sessionStorage.setItem('pendingOrderRef', order.orderReference);
         window.location.href = paymentResponse.data.checkout_url;
       } else {
-        throw new Error(paymentResponse.data.message || 'Payment initialization failed');
+        setError('Payment initialization failed');
       }
     } catch (err) {
-      console.error('Chapa error:', err);
-      setError(err.response?.data?.message || err.message || 'Payment initialization failed');
+      console.error('Error:', err);
+      setError(err.response?.data?.message || 'Payment failed');
+    } finally {
       setLoading(false);
     }
   };
@@ -130,28 +120,54 @@ const Checkout = () => {
     setError('');
     
     try {
-      await createOrder();
-      clearCart();
-      navigate('/orders?payment=success');
+      const token = localStorage.getItem('enimegebiToken');
+      
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item.id || item._id,
+          productName: item.name,
+          quantity: item.quantity || 1,
+          price: item.price || 0
+        })),
+        totalAmount: totals.total,
+        shippingAddress: {
+          street: formData.address,
+          city: formData.city,
+          phone: formData.phone
+        },
+        paymentMethod: 'cash',
+        orderReference: 'ORD-' + Date.now().toString().slice(-8)
+      };
+
+      const response = await axios.post(`${API_URL}/api/orders`, orderData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        setOrderRef(response.data.order.orderReference);
+        setSuccess(true);
+        clearCart();
+      }
     } catch (err) {
-      console.error('Order error:', err);
+      console.error('Error:', err);
       setError('Failed to place order');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.address || !formData.city || !formData.phone) {
       setError('Please fill all shipping information');
       return;
     }
     
+    const paymentMethod = e.nativeEvent.submitter.value;
     if (paymentMethod === 'chapa') {
-      await handleChapaPayment();
+      handleChapaPayment();
     } else {
-      await handleCashOnDelivery();
+      handleCashOnDelivery();
     }
   };
 
@@ -165,15 +181,29 @@ const Checkout = () => {
     );
   }
 
+  if (success) {
+    return (
+      <div className="success-container">
+        <div className="success-card">
+          <i className="ri-checkbox-circle-fill"></i>
+          <h1>Order Successful!</h1>
+          <p>Order ID: {orderRef}</p>
+          <Link to="/orders" className="view-orders-btn">View Orders</Link>
+          <Link to="/" className="continue-shopping-btn">Continue Shopping</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="checkout-container">
-      <h1 className="checkout-title">Checkout</h1>
+      <h1>Checkout</h1>
       {error && <div className="error-alert">{error}</div>}
       
       <div className="checkout-wrapper">
-        <form onSubmit={handleSubmit} className="checkout-form">
+        <form onSubmit={handleSubmit}>
           <div className="form-section">
-            <h2>Personal Information</h2>
+            <h2>Shipping Information</h2>
             <input type="text" name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleChange} required />
             <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
             <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} required />
@@ -181,28 +211,18 @@ const Checkout = () => {
             <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} required />
           </div>
 
-          <div className="form-section">
+          <div className="payment-section">
             <h2>Payment Method</h2>
-            <div className="payment-options">
-              <label className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''}`}>
-                <input type="radio" name="payment" value="cash" checked={paymentMethod === 'cash'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                <i className="ri-cash-line"></i>
-                <div><strong>Cash on Delivery</strong><small>Pay when you receive</small></div>
-              </label>
-              <label className={`payment-option ${paymentMethod === 'chapa' ? 'selected' : ''}`}>
-                <input type="radio" name="payment" value="chapa" checked={paymentMethod === 'chapa'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                <i className="ri-bank-card-line"></i>
-                <div><strong>Chapa Payment</strong><small>Pay with CBE, Awash, Dashen, Telebirr, Card</small></div>
-              </label>
-            </div>
+            <button type="submit" name="paymentMethod" value="cash" className="cash-btn" disabled={loading}>
+              Cash on Delivery
+            </button>
+            <button type="submit" name="paymentMethod" value="chapa" className="chapa-btn" disabled={loading}>
+              Pay with Chapa (Card, CBE, Awash, Dashen, Telebirr)
+            </button>
           </div>
-
-          <button type="submit" className="place-order-btn" disabled={loading}>
-            {loading ? 'Processing...' : `Place Order - ETB ${totals.total.toFixed(2)}`}
-          </button>
         </form>
 
-        <div className="order-summary-sidebar">
+        <div className="order-summary">
           <h2>Order Summary</h2>
           {cart.map((item, idx) => (
             <div key={idx} className="summary-item">
@@ -210,11 +230,8 @@ const Checkout = () => {
               <span>ETB {((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
             </div>
           ))}
-          <div className="summary-totals">
-            <div className="total-row"><span>Subtotal:</span><span>ETB {totals.subtotal.toFixed(2)}</span></div>
-            <div className="total-row"><span>Shipping:</span><span>ETB {totals.shipping.toFixed(2)}</span></div>
-            <div className="total-row"><span>Tax (15%):</span><span>ETB {totals.tax.toFixed(2)}</span></div>
-            <div className="total-row grand-total"><span>Total:</span><span>ETB {totals.total.toFixed(2)}</span></div>
+          <div className="summary-total">
+            <strong>Total: ETB {totals.total.toFixed(2)}</strong>
           </div>
         </div>
       </div>
