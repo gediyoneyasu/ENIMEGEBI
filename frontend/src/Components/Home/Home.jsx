@@ -33,17 +33,19 @@ function Home() {
       const response = await axios.get(`${API_URL}/api/home/public-data`);
       if (response.data.success) {
         setSliders(response.data.sliders || []);
-        setFeaturedProducts(response.data.featuredProducts || []);
+        // Get featured products (limit to 8)
+        setFeaturedProducts(response.data.featuredProducts?.slice(0, 8) || []);
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
         
-        const categoryList = (response.data.categories || []).map(cat => ({
-          name: cat._id,
-          count: cat.count,
-          icon: getCategoryIcon(cat._id),
-          color: getCategoryColor(cat._id)
-        }));
-        setCategories(categoryList.slice(0, 8));
+        // Get unique categories from products
+        const allProducts = response.data.featuredProducts || [];
+        const uniqueCategories = [...new Map(allProducts.map(p => [p.category, { 
+          name: p.category, 
+          count: allProducts.filter(prod => prod.category === p.category).length,
+          image: p.image || p.imageUrl
+        }])).values()];
+        setCategories(uniqueCategories.slice(0, 6));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -52,27 +54,10 @@ function Home() {
     }
   };
 
-  const getCategoryIcon = (category) => {
-    const icons = {
-      'Coffee': 'ri-cup-line', 'Grains': 'ri-seedling-line', 'Honey': 'ri-drop-line',
-      'Dairy': 'ri-drinks-line', 'Fruits': 'ri-apple-line', 'Vegetables': 'ri-leaf-line',
-      'Spices': 'ri-fire-line', 'Beverages': 'ri-drinks-2-line'
-    };
-    return icons[category] || 'ri-apps-line';
-  };
-
-  const getCategoryColor = (category) => {
-    const colors = {
-      'Coffee': '#6F4E37', 'Grains': '#D4A373', 'Honey': '#F4A261',
-      'Dairy': '#E9C46A', 'Fruits': '#2A9D8F', 'Vegetables': '#4CAF50',
-      'Spices': '#E76F51', 'Beverages': '#264653'
-    };
-    return colors[category] || '#c9a66b';
-  };
-
   const translations = {
     en: {
-      shopNow: 'Shop Now', callNow: 'Call Now',
+      shopNow: 'Shop Now',
+      callNow: 'Call Now',
       featuresTitle: 'Why Choose Enimegebi?',
       features: [
         { icon: 'ri-farm-line', title: 'Direct from Farmers', desc: 'No middlemen, better prices' },
@@ -83,13 +68,14 @@ function Home() {
       categoriesTitle: 'Shop by Category',
       viewAllCategories: 'View All Categories',
       featuredProducts: 'Featured Products',
-      viewAll: 'View All',
+      viewAll: 'View All Products',
       addToCart: 'Add to Cart',
       testimonials: 'What Our Customers Say',
       getStarted: 'Get Started'
     },
     am: {
-      shopNow: 'አሁን ይግዙ', callNow: 'አሁን ይደውሉ',
+      shopNow: 'አሁን ይግዙ',
+      callNow: 'አሁን ይደውሉ',
       featuresTitle: 'ለምን እንመገቢን ይመርጣሉ?',
       features: [
         { icon: 'ri-farm-line', title: 'ከአርሶ አደር በቀጥታ', desc: 'ምንም ደላላ የለም, የተሻለ ዋጋ' },
@@ -100,7 +86,7 @@ function Home() {
       categoriesTitle: 'በምድብ ይግዙ',
       viewAllCategories: 'ሁሉንም ምድቦች ይመልከቱ',
       featuredProducts: 'ታዋቂ ምርቶች',
-      viewAll: 'ሁሉንም ይመልከቱ',
+      viewAll: 'ሁሉንም ምርቶች ይመልከቱ',
       addToCart: 'ወደ ጋሪ ጨምር',
       testimonials: 'ደንበኞቻችን ምን ይላሉ',
       getStarted: 'ይጀምሩ'
@@ -113,6 +99,7 @@ function Home() {
 
   return (
     <div className="home-page">
+      {/* Hero Slider Section */}
       <div className="hero-slider">
         <Swiper modules={[Autoplay, Pagination, Navigation, EffectFade]} autoplay={{ delay: 4000 }} loop={true} effect="fade" pagination={{ clickable: true }} navigation={true} className="hero-swiper">
           {sliders.map((slider, index) => (
@@ -132,6 +119,7 @@ function Home() {
         </Swiper>
       </div>
 
+      {/* Features Section */}
       <section className="features-section">
         <div className="container">
           <h2 className="section-title">{t.featuresTitle}</h2>
@@ -147,22 +135,52 @@ function Home() {
         </div>
       </section>
 
-      <section className="featured-section">
+      {/* Categories Section */}
+      <section className="categories-section-home">
         <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">{t.featuredProducts}</h2>
-            <Link to="/products" className="view-all">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
+          <div className="section-header-home">
+            <h2 className="section-title">{t.categoriesTitle}</h2>
+            <Link to="/categories" className="view-all-link">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
           </div>
-          <div className="products-grid">
-            {featuredProducts.slice(0, 8).map(product => (
-              <div key={product._id} className="product-card">
-                <div className="product-image">
-                  <img src={getImageUrl(product.imageUrl || product.image) || 'https://placehold.co/400x400/e8c88a/1a1a1e?text=Enimegebi'} alt={product.name} />
+          <div className="categories-grid-home">
+            {categories.map((category, index) => (
+              <Link to={`/products?category=${category.name}`} key={index} className="category-card-home">
+                <div className="category-card-front">
+                  <div className="category-image-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+                    <div className="category-overlay"></div>
+                  </div>
+                  <div className="category-info-home">
+                    <h3>{category.name}</h3>
+                    <p>{category.count} Products</p>
+                    <span className="explore-btn">Explore <i className="ri-arrow-right-line"></i></span>
+                  </div>
                 </div>
-                <div className="product-info">
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Products Section */}
+      <section className="featured-section-home">
+        <div className="container">
+          <div className="section-header-home">
+            <h2 className="section-title">{t.featuredProducts}</h2>
+            <Link to="/products" className="view-all-link">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
+          </div>
+          <div className="products-grid-home">
+            {featuredProducts.map(product => (
+              <div key={product._id} className="product-card-home">
+                <div className="product-image-home">
+                  <img src={getImageUrl(product.imageUrl || product.image) || 'https://placehold.co/400x400/e8c88a/1a1a1e?text=Enimegebi'} alt={product.name} />
+                  {product.stock < 20 && product.stock > 0 && <span className="stock-badge">{product.stock} left</span>}
+                </div>
+                <div className="product-info-home">
                   <h3>{product.name}</h3>
-                  <div className="product-price">ETB {product.price}</div>
-                  <button onClick={() => addToCart(product)} className="add-to-cart-btn"><i className="ri-shopping-cart-line"></i></button>
+                  <div className="product-price-home">ETB {product.price}</div>
+                  <button onClick={() => addToCart(product)} className="add-to-cart-btn-home">
+                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                  </button>
                 </div>
               </div>
             ))}
@@ -170,11 +188,35 @@ function Home() {
         </div>
       </section>
 
-      <section className="cta-section">
+      {/* Testimonials Section */}
+      <section className="testimonials-section-home">
         <div className="container">
-          <div className="cta-content">
+          <h2 className="section-title">{t.testimonials}</h2>
+          <div className="testimonials-grid-home">
+            {testimonials.slice(0, 3).map(testimonial => (
+              <div key={testimonial._id} className="testimonial-card-home">
+                <div className="testimonial-image-home">
+                  <img src={getImageUrl(testimonial.image)} alt={testimonial.name} />
+                </div>
+                <div className="testimonial-rating-home">
+                  {[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}
+                </div>
+                <p>"{language === 'en' ? testimonial.comment : (testimonial.commentAm || testimonial.comment)}"</p>
+                <h4>{language === 'en' ? testimonial.name : (testimonial.nameAm || testimonial.name)}</h4>
+                <span>{language === 'en' ? testimonial.position : (testimonial.positionAm || testimonial.position)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section-home">
+        <div className="container">
+          <div className="cta-content-home">
             <h2>{language === 'en' ? (settings.ctaTitle || 'Fresh Products Delivered to Your Doorstep') : (settings.ctaTitleAm || 'ትኩስ ምርቶች ወደ በርዎ ይደርሳሉ')}</h2>
-            <Link to="/products" className="cta-btn">{t.getStarted} <i className="ri-arrow-right-line"></i></Link>
+            <p>{language === 'en' ? (settings.ctaSubtitle || 'Join thousands of happy customers') : (settings.ctaSubtitleAm || 'በሺዎች ከሚቆጠሩ ደስተኛ ደንበኞች ጋር ይቀላቀሉ')}</p>
+            <Link to="/products" className="cta-btn-home">{t.getStarted} <i className="ri-arrow-right-line"></i></Link>
           </div>
         </div>
       </section>
