@@ -13,6 +13,7 @@ import SliderManagement from './HomeControl/SliderManagement';
 import TestimonialManagement from './HomeControl/TestimonialManagement';
 import HomeSettings from './HomeControl/HomeSettings';
 import TeamManagement from './TeamManagement/TeamManagement';
+import ProjectManagement from './ProjectManagement/ProjectManagement';
 import ContactInfo from './ContactInfo';
 
 const Admin = () => {
@@ -53,6 +54,7 @@ const Admin = () => {
   if (!user) return <div className="admin-loading">Loading Admin Panel...</div>;
 
   const menuItems = [
+    { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
     { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
     { path: '/admin', name: 'Dashboard', icon: 'ri-dashboard-line' },
     { path: '/admin/users', name: 'Users', icon: 'ri-user-settings-line' },
@@ -121,6 +123,7 @@ const Admin = () => {
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/home-settings" element={<HomeSettings />} />
             <Route path="/contact" element={<ContactInfo />} />
+            <Route path="/projects" element={<ProjectManagement />} />
             <Route path="/settings" element={<SystemSettings />} />
           </Routes>
         </div>

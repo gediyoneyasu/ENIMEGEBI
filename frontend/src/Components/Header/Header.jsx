@@ -55,6 +55,7 @@ function Header() {
       home: 'Home',
       products: 'Products',
       categories: 'Categories',
+      projects: 'Projects',
       orders: 'Orders',
       about: 'About',
       contact: 'Contact',
@@ -68,6 +69,7 @@ function Header() {
       home: 'መነሻ',
       products: 'ምርቶች',
       categories: 'ምድቦች',
+      projects: 'ፕሮጀክቶች',
       orders: 'ትዕዛዞች',
       about: 'ስለእኛ',
       contact: 'ያግኙን',
@@ -91,6 +93,7 @@ function Header() {
         <li><Link to="/">{t.home}</Link></li>
         <li><Link to="/products">{t.products}</Link></li>
         <li><Link to="/categories">{t.categories}</Link></li>
+        <li><Link to="/projects">{t.projects}</Link></li>
         <li><Link to="/about">{t.about}</Link></li>
         <li><Link to="/contact">{t.contact}</Link></li>
         {isLoggedIn && userRole === 'admin' && <li><Link to="/admin">{t.admin}</Link></li>}

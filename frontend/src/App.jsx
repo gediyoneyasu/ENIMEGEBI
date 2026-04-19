@@ -5,9 +5,10 @@ import './App.css';
 import Header from './Components/Header/Header';
 import Footer from './Components/Footer/Footer';
 import Auth from './Components/Auth/Auth';
+import Admin from './Components/Admin/Admin';
 import AdminLogin from './Components/Admin/AdminLogin';
+import Projects from './Components/Projects/Projects';
 
-// Lazy load components
 const Home = lazy(() => import('./Components/Home/Home'));
 const Products = lazy(() => import('./Components/Products/Products'));
 const Categories = lazy(() => import('./Components/Categories/Categories'));
@@ -17,7 +18,6 @@ const Orders = lazy(() => import('./Components/Orders/Orders'));
 const Profile = lazy(() => import('./Components/Profile/Profile'));
 const About = lazy(() => import('./Components/About/About'));
 const Contact = lazy(() => import('./Components/Contact/Contact'));
-const Admin = lazy(() => import('./Components/Admin/Admin'));
 
 function PageLoading() {
   return (
@@ -46,6 +46,7 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin/*" element={<Admin />} />
+          <Route path="/projects" element={<Projects />} />
         </Routes>
       </Suspense>
       <Footer />

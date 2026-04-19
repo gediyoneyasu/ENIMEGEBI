@@ -1,12 +1,12 @@
 const Project = require('../models/Project');
-const Order = require('../models/Order');
+const User = require('../models/User');
 
-// Get all projects (public - only show unlocked/approved)
+// Get all projects for public (only show approved and unlocked)
 const getPublicProjects = async (req, res) => {
   try {
     const projects = await Project.find({ 
-      status: 'available',
-      isApproved: true 
+      isApproved: true,
+      status: 'unlocked'
     }).sort({ order: 1 });
     res.json({ success: true, projects });
   } catch (error) {
@@ -19,6 +19,43 @@ const getAllProjects = async (req, res) => {
   try {
     const projects = await Project.find({}).sort({ order: 1 });
     res.json({ success: true, projects });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get single project (check if user has access)
+const getProjectById = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+    
+    // Check if user has purchased this project
+    const hasAccess = project.purchasedBy.some(p => 
+      p.user.toString() === req.user.id && p.isUnlocked === true
+    );
+    
+    // If project is locked and user hasn't purchased, return limited info
+    if (project.status === 'locked' && !hasAccess && req.user.role !== 'admin') {
+      return res.json({ 
+        success: true, 
+        project: {
+          _id: project._id,
+          title: project.title,
+          titleAm: project.titleAm,
+          description: project.description,
+          descriptionAm: project.descriptionAm,
+          image: project.image,
+          price: project.price,
+          status: 'locked',
+          type: project.type
+        }
+      });
+    }
+    
+    res.json({ success: true, project });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -67,31 +104,62 @@ const deleteProject = async (req, res) => {
   }
 };
 
-// Unlock project after payment
-const unlockProject = async (req, res) => {
+// Purchase project (after payment)
+const purchaseProject = async (req, res) => {
   try {
-    const { projectId, userId, amount } = req.body;
+    const { projectId, amount } = req.body;
+    const userId = req.user.id;
     
     const project = await Project.findById(projectId);
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
     
-    project.paidBy.push({
+    // Check if already purchased
+    const alreadyPurchased = project.purchasedBy.some(p => p.user.toString() === userId);
+    if (alreadyPurchased) {
+      return res.json({ success: true, message: 'Already purchased', project });
+    }
+    
+    project.purchasedBy.push({
       user: userId,
       amount: amount,
-      paidAt: new Date()
+      purchasedAt: new Date(),
+      isUnlocked: false
     });
     
-    // Check if enough payments received
-    const totalPaid = project.paidBy.reduce((sum, p) => sum + p.amount, 0);
-    if (totalPaid >= project.price) {
-      project.status = 'available';
-      project.isPaid = true;
+    await project.save();
+    res.json({ success: true, message: 'Purchase recorded, awaiting admin approval', project });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Approve purchase (admin)
+const approvePurchase = async (req, res) => {
+  try {
+    const { projectId, userId } = req.body;
+    
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+    
+    const purchase = project.purchasedBy.find(p => p.user.toString() === userId);
+    if (purchase) {
+      purchase.isUnlocked = true;
+      purchase.approvedAt = new Date();
+    }
+    
+    // Check if all payments are approved, unlock project
+    const allUnlocked = project.purchasedBy.every(p => p.isUnlocked === true);
+    if (allUnlocked && project.purchasedBy.length > 0) {
+      project.status = 'unlocked';
+      project.isApproved = true;
     }
     
     await project.save();
-    res.json({ success: true, message: 'Payment recorded', project });
+    res.json({ success: true, message: 'Purchase approved', project });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -105,9 +173,21 @@ const approveProject = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
     project.isApproved = true;
-    project.status = 'available';
     await project.save();
     res.json({ success: true, message: 'Project approved', project });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get user's purchased projects
+const getUserProjects = async (req, res) => {
+  try {
+    const projects = await Project.find({
+      'purchasedBy.user': req.user.id,
+      'purchasedBy.isUnlocked': true
+    });
+    res.json({ success: true, projects });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -116,9 +196,12 @@ const approveProject = async (req, res) => {
 module.exports = {
   getPublicProjects,
   getAllProjects,
+  getProjectById,
   createProject,
   updateProject,
   deleteProject,
-  unlockProject,
-  approveProject
+  purchaseProject,
+  approvePurchase,
+  approveProject,
+  getUserProjects
 };
