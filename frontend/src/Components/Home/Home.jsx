@@ -283,3 +283,41 @@ function Home() {
 }
 
 export default Home;
+
+      {/* Projects Section */}
+      <section className="projects-section-home">
+        <div className="container">
+          <div className="section-header-home">
+            <h2 className="section-title">Our Projects</h2>
+            <Link to="/projects" className="view-all-link">View All Projects <i className="ri-arrow-right-line"></i></Link>
+          </div>
+          <div className="projects-grid-home">
+            {projects.slice(0, 4).map(project => (
+              <div key={project._id} className="project-card-home">
+                <div className="project-image-home">
+                  <img src={getImageUrl(project.image)} alt={project.title} />
+                  {project.status === 'locked' && (
+                    <div className="project-locked-overlay">
+                      <i className="ri-lock-line"></i>
+                      <span>Locked</span>
+                    </div>
+                  )}
+                </div>
+                <div className="project-info-home">
+                  <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
+                  <p>{language === 'en' ? project.description.substring(0, 80) : (project.descriptionAm || project.description).substring(0, 80)}...</p>
+                  {project.status === 'locked' ? (
+                    <button className="unlock-btn" onClick={() => navigate('/checkout', { state: { projectId: project._id, amount: project.price } })}>
+                      Unlock for ${project.price}
+                    </button>
+                  ) : (
+                    <button className="view-btn" onClick={() => navigate(`/projects/${project._id}`)}>
+                      View Project
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>

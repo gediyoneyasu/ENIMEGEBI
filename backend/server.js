@@ -59,3 +59,4 @@ app.listen(PORT, () => {
 });
 // Add category routes
 // Add category routes
+app.use('/api/projects', require('./routes/projectRoutes'));
