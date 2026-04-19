@@ -38,8 +38,3 @@ const uploadAvatar = multer({ storage: storage('avatars'), fileFilter, limits: {
 const uploadTeam = multer({ storage: storage('team'), fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 module.exports = { uploadProduct, uploadSlider, uploadTestimonial, uploadAvatar, uploadTeam };
-
-// Add category upload
-const uploadCategory = multer({ storage: storage('categories'), fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
-
-module.exports = { uploadProduct, uploadSlider, uploadTestimonial, uploadAvatar, uploadTeam, uploadCategory };
