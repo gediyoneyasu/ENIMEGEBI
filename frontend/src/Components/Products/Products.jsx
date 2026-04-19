@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
+import getImageUrl from '../../utils/imageHelper';
 import './Products.css';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
@@ -23,44 +24,15 @@ function Products() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      setError('');
-      
       const response = await axios.get(`${API_URL}/api/admin/public-products`);
-      
-      // Ensure products is an array
-      const productsData = Array.isArray(response.data) ? response.data : [];
-      setProducts(productsData);
+      setProducts(Array.isArray(response.data) ? response.data : []);
+      setError('');
     } catch (err) {
-      console.error('Error fetching products:', err);
+      console.error('Error:', err);
       setError('Failed to load products');
-      setProducts([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const getImageUrl = (product) => {
-    // Don't use localhost images on production
-    if (product.image && product.image.includes('localhost')) {
-      return null; // Skip local images
-    }
-    if (product.imageUrl && product.imageUrl.includes('localhost')) {
-      return null;
-    }
-    if (product.imageUrl && product.imageUrl.startsWith('http')) {
-      return product.imageUrl;
-    }
-    if (product.image && product.image.startsWith('http')) {
-      return product.image;
-    }
-    if (product.image) {
-      return `${API_URL}${product.image}`;
-    }
-    return null;
-  };
-
-  const handleAddToCart = (product) => {
-    addToCart(product);
   };
 
   const translations = {
@@ -73,9 +45,7 @@ function Products() {
       addToCart: 'Add to Cart',
       inStock: 'In Stock',
       outOfStock: 'Out of Stock',
-      noProducts: 'No products found',
-      error: 'Failed to load products. Please try again.',
-      retry: 'Retry'
+      noProducts: 'No products found'
     },
     am: {
       title: 'ምርቶቻችን',
@@ -86,9 +56,7 @@ function Products() {
       addToCart: 'ወደ ጋሪ ጨምር',
       inStock: 'ክምችት አለ',
       outOfStock: 'ክምችት የለም',
-      noProducts: 'ምንም ምርቶች አልተገኙም',
-      error: 'ምርቶችን ማግኘት አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
-      retry: 'እንደገና ሞክር'
+      noProducts: 'ምንም ምርቶች አልተገኙም'
     }
   };
 
@@ -104,22 +72,11 @@ function Products() {
   });
 
   if (loading) {
-    return (
-      <div className="products-loading">
-        <i className="ri-loader-4-line ri-spin"></i>
-        <p>Loading products...</p>
-      </div>
-    );
+    return <div className="products-loading"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
   }
 
   if (error) {
-    return (
-      <div className="products-error">
-        <i className="ri-error-warning-line"></i>
-        <p>{t.error}</p>
-        <button onClick={fetchProducts} className="retry-btn">{t.retry}</button>
-      </div>
-    );
+    return <div className="products-error"><p>{error}</p><button onClick={fetchProducts}>Retry</button></div>;
   }
 
   return (
@@ -130,12 +87,7 @@ function Products() {
           <p>{t.subtitle}</p>
           <div className="search-bar">
             <i className="ri-search-line"></i>
-            <input 
-              type="text" 
-              placeholder={t.search} 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-            />
+            <input type="text" placeholder={t.search} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
       </div>
@@ -144,11 +96,7 @@ function Products() {
         <div className="container">
           <div className="categories-grid">
             {categories.map(category => (
-              <button
-                key={category}
-                className={`category-card ${selectedCategory === category ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category)}
-              >
+              <button key={category} className={`category-card ${selectedCategory === category ? 'active' : ''}`} onClick={() => setSelectedCategory(category)}>
                 <span>{category === 'all' ? t.allCategories : category}</span>
               </button>
             ))}
@@ -167,33 +115,20 @@ function Products() {
             <div className="no-results">
               <i className="ri-search-eye-line"></i>
               <h3>{t.noProducts}</h3>
-              <p>Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             <div className="products-grid">
               {filteredProducts.map(product => {
-                const imageUrl = getImageUrl(product);
+                const imageUrl = getImageUrl(product.image || product.imageUrl);
                 return (
                   <div key={product._id} className="product-card">
                     <div className="product-image">
-                      {imageUrl ? (
-                        <img src={imageUrl} alt={product.name} />
-                      ) : (
-                        <div className="no-image"><i className="ri-image-line"></i></div>
-                      )}
+                      {imageUrl ? <img src={imageUrl} alt={product.name} /> : <div className="no-image"><i className="ri-image-line"></i></div>}
                     </div>
                     <div className="product-info">
                       <h3>{product.name}</h3>
-                      {product.seller && <p className="product-seller">{product.seller}</p>}
                       <div className="product-price">{t.price} {product.price}</div>
-                      <div className="product-stock">
-                        {product.stock > 0 ? t.inStock : t.outOfStock}
-                      </div>
-                      <button 
-                        className="add-to-cart-btn" 
-                        onClick={() => handleAddToCart(product)} 
-                        disabled={product.stock === 0}
-                      >
+                      <button className="add-to-cart-btn" onClick={() => addToCart(product)} disabled={product.stock === 0}>
                         <i className="ri-shopping-cart-line"></i> {t.addToCart}
                       </button>
                     </div>

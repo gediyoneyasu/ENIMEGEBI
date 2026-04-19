@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
-import API_URL from '../../config/api';
+import getImageUrl from '../../utils/imageHelper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -11,6 +11,8 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import 'swiper/css/effect-fade';
 import './Home.css';
+
+const API_URL = 'https://enimegebi-backend.onrender.com';
 
 function Home() {
   const { language } = useLanguage();
@@ -44,7 +46,7 @@ function Home() {
         setCategories(categoryList.slice(0, 8));
       }
     } catch (error) {
-      console.error('Error fetching home data:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -66,13 +68,6 @@ function Home() {
       'Spices': '#E76F51', 'Beverages': '#264653'
     };
     return colors[category] || '#c9a66b';
-  };
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    if (!imagePath.startsWith('/uploads')) return `${API_URL}/uploads/${imagePath}`;
-    return `${API_URL}${imagePath}`;
   };
 
   const translations = {
@@ -114,9 +109,7 @@ function Home() {
 
   const t = translations[language];
 
-  if (loading) {
-    return <div className="loading-spinner"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
-  }
+  if (loading) return <div className="loading-spinner"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
 
   return (
     <div className="home-page">
@@ -124,14 +117,14 @@ function Home() {
         <Swiper modules={[Autoplay, Pagination, Navigation, EffectFade]} autoplay={{ delay: 4000 }} loop={true} effect="fade" pagination={{ clickable: true }} navigation={true} className="hero-swiper">
           {sliders.map((slider, index) => (
             <SwiperSlide key={slider._id || index} className="hero-slide">
-              <div className="slide-bg" style={{ backgroundImage: `url(${getImageUrl(slider.image)})`, backgroundSize: 'cover', backgroundPosition: 'center', width: '100%', height: '100%' }} />
+              <div className="slide-bg" style={{ backgroundImage: `url(${getImageUrl(slider.image)})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
               <div className="hero-content">
                 <small>{language === 'en' ? 'Welcome to Enimegebi' : 'እንኳን ወደ እንመገቢ በደህና መጡ'}</small>
                 <h1>{language === 'en' ? slider.title : (slider.titleAm || slider.title)} <span>{language === 'en' ? 'To Your Table' : 'ወደ ጠረጴዛዎ'}</span></h1>
                 <p>{language === 'en' ? slider.subtitle : (slider.subtitleAm || slider.subtitle)}</p>
                 <div className="hero-buttons">
                   <Link to="/products" className="btn-primary">{t.shopNow}</Link>
-                  <a href={`tel:${settings.phone || '+251964113416'}`} className="btn-secondary">{t.callNow} {settings.phone || '+251 96 411 3416'}</a>
+                  <a href={`tel:${settings.phone || '+251964113416'}`} className="btn-secondary">{t.callNow}</a>
                 </div>
               </div>
             </SwiperSlide>
@@ -154,26 +147,6 @@ function Home() {
         </div>
       </section>
 
-      <section className="categories-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">{t.categoriesTitle}</h2>
-            <Link to="/categories" className="view-all">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
-          </div>
-          <div className="categories-grid">
-            {categories.map((category, index) => (
-              <Link to={`/products?category=${category.name}`} key={index} className="category-card">
-                <div className="category-icon" style={{ backgroundColor: category.color + '20', color: category.color }}>
-                  <i className={category.icon}></i>
-                </div>
-                <h3>{category.name}</h3>
-                <p>{category.count} products</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="featured-section">
         <div className="container">
           <div className="section-header">
@@ -184,34 +157,13 @@ function Home() {
             {featuredProducts.slice(0, 8).map(product => (
               <div key={product._id} className="product-card">
                 <div className="product-image">
-                  <img src={getImageUrl(product.imageUrl || product.image)} alt={product.name} />
-                  <span className="product-rating"><i className="ri-star-fill"></i> {product.rating || 4.5}</span>
+                  <img src={getImageUrl(product.imageUrl || product.image) || 'https://placehold.co/400x400/e8c88a/1a1a1e?text=Enimegebi'} alt={product.name} />
                 </div>
                 <div className="product-info">
                   <h3>{product.name}</h3>
-                  <p className="product-seller">{product.seller || 'Local Farmer'}</p>
-                  <div className="product-price">
-                    <span className="price">ETB {product.price}</span>
-                    <button onClick={() => addToCart(product)} className="add-to-cart-btn"><i className="ri-shopping-cart-line"></i></button>
-                  </div>
+                  <div className="product-price">ETB {product.price}</div>
+                  <button onClick={() => addToCart(product)} className="add-to-cart-btn"><i className="ri-shopping-cart-line"></i></button>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="testimonials-section">
-        <div className="container">
-          <h2 className="section-title">{t.testimonials}</h2>
-          <div className="testimonials-grid">
-            {testimonials.map(testimonial => (
-              <div key={testimonial._id} className="testimonial-card">
-                <div className="testimonial-image"><img src={getImageUrl(testimonial.image)} alt={testimonial.name} /></div>
-                <div className="testimonial-rating">{[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}</div>
-                <p>"{language === 'en' ? testimonial.comment : (testimonial.commentAm || testimonial.comment)}"</p>
-                <h4>{language === 'en' ? testimonial.name : (testimonial.nameAm || testimonial.name)}</h4>
-                <span>{language === 'en' ? testimonial.position : (testimonial.positionAm || testimonial.position)}</span>
               </div>
             ))}
           </div>
@@ -222,7 +174,6 @@ function Home() {
         <div className="container">
           <div className="cta-content">
             <h2>{language === 'en' ? (settings.ctaTitle || 'Fresh Products Delivered to Your Doorstep') : (settings.ctaTitleAm || 'ትኩስ ምርቶች ወደ በርዎ ይደርሳሉ')}</h2>
-            <p>{language === 'en' ? (settings.ctaSubtitle || 'Join thousands of happy customers') : (settings.ctaSubtitleAm || 'በሺዎች ከሚቆጠሩ ደስተኛ ደንበኞች ጋር ይቀላቀሉ')}</p>
             <Link to="/products" className="cta-btn">{t.getStarted} <i className="ri-arrow-right-line"></i></Link>
           </div>
         </div>
