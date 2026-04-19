@@ -2,18 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './Admin.css';
 
-// Admin Components
 import Dashboard from './Dashboard';
 import Users from './Users';
 import Products from './Products';
 import Orders from './Orders';
 import Farmers from './Farmers';
-import ContactInfo from './ContactInfo';
+import ContactMessages from './ContactMessages';
 import SystemSettings from './SystemSettings';
-import SliderManagement from './HomeControl/SliderManagement';
-import TestimonialManagement from './HomeControl/TestimonialManagement';
-import HomeSettings from './HomeControl/HomeSettings';
-import TeamManagement from './TeamManagement/TeamManagement';
 
 const Admin = () => {
   const [user, setUser] = useState(null);
@@ -25,29 +20,16 @@ const Admin = () => {
     const token = localStorage.getItem('enimegebiToken');
     const userData = localStorage.getItem('enimegebiUser');
     
-    console.log('Admin check - Token:', !!token);
-    console.log('Admin check - UserData:', userData);
-    
     if (!token || !userData) {
-      console.log('No token or user data, redirecting to admin-login');
       navigate('/admin-login');
       return;
     }
     
-    try {
-      const parsedUser = JSON.parse(userData);
-      console.log('Parsed user role:', parsedUser.role);
-      
-      if (parsedUser.role !== 'admin') {
-        console.log('User is not admin, redirecting');
-        navigate('/admin-login');
-      } else {
-        console.log('Admin user verified:', parsedUser);
-        setUser(parsedUser);
-      }
-    } catch (error) {
-      console.error('Error parsing user data:', error);
+    const parsedUser = JSON.parse(userData);
+    if (parsedUser.role !== 'admin') {
       navigate('/admin-login');
+    } else {
+      setUser(parsedUser);
     }
   }, [navigate]);
 
@@ -59,22 +41,16 @@ const Admin = () => {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  if (!user) {
-    return <div className="admin-loading">Loading Admin Panel...</div>;
-  }
+  if (!user) return <div className="admin-loading">Loading Admin Panel...</div>;
 
   const menuItems = [
     { path: '/admin', name: 'Dashboard', icon: 'ri-dashboard-line' },
-    { path: '/admin/users', name: 'Users', icon: 'ri-user-settings-line' },
-    { path: '/admin/products', name: 'Products', icon: 'ri-shopping-bag-3-line' },
-    { path: '/admin/orders', name: 'Orders', icon: 'ri-shopping-cart-2-line' },
+    { path: '/admin/users', name: 'Users', icon: 'ri-user-line' },
+    { path: '/admin/products', name: 'Products', icon: 'ri-shopping-bag-line' },
+    { path: '/admin/orders', name: 'Orders', icon: 'ri-shopping-cart-line' },
     { path: '/admin/farmers', name: 'Farmers', icon: 'ri-plant-line' },
-    { path: '/admin/team', name: 'Team Members', icon: 'ri-team-line' },
-    { path: '/admin/sliders', name: 'Home Sliders', icon: 'ri-image-line' },
-    { path: '/admin/testimonials', name: 'Testimonials', icon: 'ri-star-line' },
-    { path: '/admin/home-settings', name: 'Home Settings', icon: 'ri-home-settings-line' },
-    { path: '/admin/contact', name: 'Contact', icon: 'ri-mail-send-line' },
-    { path: '/admin/settings', name: 'Settings', icon: 'ri-settings-3-line' },
+    { path: '/admin/messages', name: 'Messages', icon: 'ri-mail-line' },
+    { path: '/admin/settings', name: 'Settings', icon: 'ri-settings-line' },
   ];
 
   const getPageTitle = (path) => {
@@ -84,11 +60,7 @@ const Admin = () => {
       '/admin/products': 'Products Management',
       '/admin/orders': 'Orders Management',
       '/admin/farmers': 'Farmers Management',
-      '/admin/team': 'Team Management',
-      '/admin/sliders': 'Home Slider Management',
-      '/admin/testimonials': 'Testimonial Management',
-      '/admin/home-settings': 'Home Page Settings',
-      '/admin/contact': 'Contact Information',
+      '/admin/messages': 'Contact Messages',
       '/admin/settings': 'System Settings'
     };
     return titles[path] || 'Admin Panel';
@@ -143,11 +115,7 @@ const Admin = () => {
             <Route path="/products" element={<Products />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/farmers" element={<Farmers />} />
-            <Route path="/team" element={<TeamManagement />} />
-            <Route path="/sliders" element={<SliderManagement />} />
-            <Route path="/testimonials" element={<TestimonialManagement />} />
-            <Route path="/home-settings" element={<HomeSettings />} />
-            <Route path="/contact" element={<ContactInfo />} />
+            <Route path="/messages" element={<ContactMessages />} />
             <Route path="/settings" element={<SystemSettings />} />
           </Routes>
         </div>

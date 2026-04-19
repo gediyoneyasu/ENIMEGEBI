@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './AdminPages.css';
+
+const API_URL = 'https://enimegebi-backend.onrender.com';
 
 const ContactMessages = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     fetchMessages();
@@ -12,10 +16,10 @@ const ContactMessages = () => {
   const fetchMessages = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/contacts', {
+      const response = await axios.get(`${API_URL}/api/admin/contacts`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMessages(response.data.contacts);
+      setMessages(response.data.contacts || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -23,41 +27,75 @@ const ContactMessages = () => {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Loading messages...</div>;
+  const markAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem('enimegebiToken');
+      await axios.put(`${API_URL}/api/admin/contacts/${id}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchMessages();
+      setAlert({ type: 'success', message: 'Message marked as read!' });
+      setTimeout(() => setAlert(null), 3000);
+    } catch (error) {
+      console.error('Error marking message:', error);
+    }
+  };
+
+  if (loading) return <div className="loading-spinner">Loading messages...</div>;
 
   return (
-    <div>
-      <h2>Contact Messages</h2>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
+    <div className="contact-messages">
+      {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
+
+      <div className="management-header">
+        <h2><i className="ri-mail-line"></i> Contact Messages</h2>
+      </div>
+
+      <div className="messages-table">
+        <table>
           <thead>
-            <tr style={{ background: '#f5f5f5' }}>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Date</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Name</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Subject</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Message</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Status</th>
-             </tr>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Subject</th>
+              <th>Message</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
           </thead>
           <tbody>
             {messages.map((msg) => (
-              <tr key={msg._id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '12px' }}>{new Date(msg.createdAt).toLocaleDateString()}</td>
-                <td style={{ padding: '12px' }}>{msg.name}</td>
-                <td style={{ padding: '12px' }}>{msg.email}</td>
-                <td style={{ padding: '12px' }}>{msg.subject}</td>
-                <td style={{ padding: '12px' }}>{msg.message}</td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{ background: msg.status === 'unread' ? '#f44336' : '#4caf50', color: 'white', padding: '3px 8px', borderRadius: '5px', fontSize: '12px' }}>
-                    {msg.status}
+              <tr key={msg._id} style={{ background: msg.status === 'unread' ? '#fff3e0' : 'white' }}>
+                <td>{new Date(msg.createdAt).toLocaleDateString()}</td>
+                <td>{msg.name}</td>
+                <td>{msg.email}</td>
+                <td><strong>{msg.subject}</strong></td>
+                <td>{msg.message}</td>
+                <td>
+                  <span className={`status-badge ${msg.status}`}>
+                    {msg.status === 'unread' ? 'Unread' : 'Read'}
                   </span>
+                </td>
+                <td>
+                  {msg.status === 'unread' && (
+                    <button className="btn-view" onClick={() => markAsRead(msg._id)}>
+                      Mark as Read
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {messages.length === 0 && (
+        <div className="no-messages">
+          <i className="ri-mail-line"></i>
+          <p>No messages yet</p>
+        </div>
+      )}
     </div>
   );
 };
