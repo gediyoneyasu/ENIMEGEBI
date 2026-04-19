@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { uploadAvatar } = require('../config/upload');
 const User = require('../models/User');
 const Order = require('../models/Order');
 
@@ -43,26 +42,6 @@ router.put('/profile', protect, async (req, res) => {
   }
 });
 
-// Upload avatar
-router.post('/avatar', protect, uploadAvatar.single('avatar'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
-    }
-    
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    
-    const user = await User.findById(req.user.id);
-    user.avatar = avatarUrl;
-    await user.save();
-    
-    res.json({ success: true, avatar: avatarUrl });
-  } catch (error) {
-    console.error('Avatar upload error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
 // Update password
 router.put('/password', protect, async (req, res) => {
   try {
@@ -81,27 +60,6 @@ router.put('/password', protect, async (req, res) => {
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     console.error('Password update error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// Update notification settings
-router.put('/settings', protect, async (req, res) => {
-  try {
-    const { emailNotifications, smsNotifications, orderUpdates, promotionalEmails } = req.body;
-    
-    const user = await User.findById(req.user.id);
-    user.settings = {
-      emailNotifications: emailNotifications !== undefined ? emailNotifications : true,
-      smsNotifications: smsNotifications !== undefined ? smsNotifications : false,
-      orderUpdates: orderUpdates !== undefined ? orderUpdates : true,
-      promotionalEmails: promotionalEmails !== undefined ? promotionalEmails : false
-    };
-    await user.save();
-    
-    res.json({ success: true, message: 'Settings updated successfully' });
-  } catch (error) {
-    console.error('Settings update error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
