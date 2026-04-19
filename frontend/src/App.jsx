@@ -9,7 +9,6 @@ import Admin from './Components/Admin/Admin';
 import AdminLogin from './Components/Admin/AdminLogin';
 import Projects from './Components/Projects/Projects';
 import ProjectDetail from './Components/Projects/ProjectDetail';
-import ProjectDetail from './Components/Projects/ProjectDetail';
 
 const Home = lazy(() => import('./Components/Home/Home'));
 const Products = lazy(() => import('./Components/Products/Products'));
@@ -49,7 +48,6 @@ function App() {
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin/*" element={<Admin />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/:id" element={<ProjectDetail />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
         </Routes>
       </Suspense>
