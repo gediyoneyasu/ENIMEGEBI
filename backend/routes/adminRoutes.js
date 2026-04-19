@@ -53,5 +53,3 @@ router.get('/contacts', getContacts);
 router.put('/contacts/:id/read', markContactRead);
 
 module.exports = router;
-// Product image upload route
-router.post('/products/:id/upload-image', uploadProduct.single('image'), uploadProductImage);

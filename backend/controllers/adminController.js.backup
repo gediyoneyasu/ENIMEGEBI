@@ -308,6 +308,7 @@ const getDashboardStats = async (req, res) => {
 
 // ============ EXPORT ALL ============
 module.exports = {
+  // User controllers
   getUsers,
   getUserById,
   updateUser,
