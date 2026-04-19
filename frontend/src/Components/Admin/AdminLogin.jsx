@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './AdminLogin.css';
 
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
 const AdminLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@enimegebi.com');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -16,8 +18,9 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      const response = await axios.post('import.meta.env.VITE_API_URL/api/auth/login', {
-        email, password
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
+        email,
+        password
       });
 
       if (response.data.token && response.data.role === 'admin') {
@@ -64,12 +67,24 @@ const AdminLogin = () => {
         <form onSubmit={handleSubmit} className="admin-login-form">
           <div className="input-group">
             <i className="ri-mail-line"></i>
-            <input type="email" placeholder="Admin Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input
+              type="email"
+              placeholder="Admin Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
 
           <div className="input-group">
             <i className="ri-lock-line"></i>
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
 
           <button type="submit" disabled={loading} className="admin-login-btn">
