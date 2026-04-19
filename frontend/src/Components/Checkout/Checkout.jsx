@@ -10,9 +10,8 @@ const Checkout = () => {
   const { cart, clearCart, getCartTotal } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [orderRef, setOrderRef] = useState('');
   const [user, setUser] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -54,9 +53,7 @@ const Checkout = () => {
   };
 
   const calculateTotal = () => {
-    if (!cart || cart.length === 0) {
-      return { subtotal: 0, shipping: 0, tax: 0, total: 0 };
-    }
+    if (!cart || cart.length === 0) return { subtotal: 0, shipping: 0, tax: 0, total: 0 };
     const subtotal = getCartTotal();
     const shipping = subtotal > 500 ? 0 : 50;
     const tax = subtotal * 0.15;
@@ -65,42 +62,67 @@ const Checkout = () => {
 
   const totals = calculateTotal();
 
+  const createOrder = async () => {
+    const token = localStorage.getItem('enimegebiToken');
+    const orderData = {
+      items: cart.map(item => ({
+        productId: item.id || item._id,
+        productName: item.name,
+        quantity: item.quantity || 1,
+        price: item.price || 0
+      })),
+      totalAmount: totals.total,
+      shippingAddress: { street: formData.address, city: formData.city, phone: formData.phone },
+      paymentMethod: paymentMethod,
+      orderReference: 'ORD-' + Date.now().toString().slice(-8)
+    };
+
+    const response = await axios.post(`${API_URL}/api/orders`, orderData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data.order;
+  };
+
+  const handleChapaPayment = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const order = await createOrder();
+      const token = localStorage.getItem('enimegebiToken');
+      
+      const paymentResponse = await axios.post(`${API_URL}/api/payment/initialize-order`, {
+        orderId: order.orderReference,
+        amount: totals.total,
+        email: formData.email,
+        name: formData.fullName,
+        phone: formData.phone
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (paymentResponse.data.success) {
+        sessionStorage.setItem('pendingOrderRef', order.orderReference);
+        window.location.href = paymentResponse.data.checkout_url;
+      } else {
+        throw new Error(paymentResponse.data.message);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Payment initialization failed');
+      setLoading(false);
+    }
+  };
+
   const handleCashOnDelivery = async () => {
     setLoading(true);
     setError('');
-
+    
     try {
-      const token = localStorage.getItem('enimegebiToken');
-      
-      const orderData = {
-        items: cart.map(item => ({
-          productId: item.id || item._id,
-          productName: item.name,
-          quantity: item.quantity || 1,
-          price: item.price || 0
-        })),
-        totalAmount: totals.total,
-        shippingAddress: {
-          street: formData.address,
-          city: formData.city,
-          phone: formData.phone
-        },
-        paymentMethod: 'cash',
-        orderReference: 'ORD-' + Date.now().toString().slice(-8) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase()
-      };
-
-      const response = await axios.post(`${API_URL}/api/orders`, orderData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data.success) {
-        setOrderRef(response.data.order.orderReference);
-        setSuccess(true);
-        clearCart();
-      }
+      await createOrder();
+      clearCart();
+      navigate('/orders?payment=success');
     } catch (err) {
-      console.error('Order error:', err);
-      setError('Failed to place order. Please try again.');
+      setError('Failed to place order');
     } finally {
       setLoading(false);
     }
@@ -108,13 +130,16 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!formData.address || !formData.city || !formData.phone) {
       setError('Please fill all shipping information');
       return;
     }
     
-    await handleCashOnDelivery();
+    if (paymentMethod === 'chapa') {
+      await handleChapaPayment();
+    } else {
+      await handleCashOnDelivery();
+    }
   };
 
   if (!cart || cart.length === 0) {
@@ -127,110 +152,56 @@ const Checkout = () => {
     );
   }
 
-  if (success) {
-    return (
-      <div className="success-container">
-        <div className="success-card">
-          <i className="ri-checkbox-circle-fill"></i>
-          <h1>Order Successful!</h1>
-          <p>Your order has been placed successfully.</p>
-          <p className="order-ref">Order ID: {orderRef}</p>
-          <Link to="/orders" className="view-orders-btn">View My Orders</Link>
-          <Link to="/" className="continue-shopping-btn">Continue Shopping</Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="checkout-container">
       <h1 className="checkout-title">Checkout</h1>
-      
-      {error && (
-        <div className="error-alert">
-          <i className="ri-error-warning-line"></i>
-          <span>{error}</span>
-        </div>
-      )}
+      {error && <div className="error-alert">{error}</div>}
       
       <div className="checkout-wrapper">
         <form onSubmit={handleSubmit} className="checkout-form">
           <div className="form-section">
-            <h2><i className="ri-user-line"></i> Personal Information</h2>
-            <div className="form-group">
-              <label>Full Name *</label>
-              <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>Email *</label>
-              <input type="email" name="email" value={formData.email} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>Phone *</label>
-              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required />
-            </div>
+            <h2>Personal Information</h2>
+            <input type="text" name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleChange} required />
+            <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+            <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} required />
+            <input type="text" name="address" placeholder="Address" value={formData.address} onChange={handleChange} required />
+            <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} required />
           </div>
 
           <div className="form-section">
-            <h2><i className="ri-map-pin-line"></i> Shipping Information</h2>
-            <div className="form-group">
-              <label>Address *</label>
-              <input type="text" name="address" value={formData.address} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label>City *</label>
-              <input type="text" name="city" value={formData.city} onChange={handleChange} required />
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h2><i className="ri-bank-card-line"></i> Payment Method</h2>
+            <h2>Payment Method</h2>
             <div className="payment-options">
-              <label className="payment-option selected">
+              <label className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''}`}>
+                <input type="radio" name="payment" value="cash" checked={paymentMethod === 'cash'} onChange={(e) => setPaymentMethod(e.target.value)} />
                 <i className="ri-cash-line"></i>
-                <div>
-                  <strong>Cash on Delivery</strong>
-                  <small>Pay when you receive your order</small>
-                </div>
+                <div><strong>Cash on Delivery</strong><small>Pay when you receive</small></div>
+              </label>
+              <label className={`payment-option ${paymentMethod === 'chapa' ? 'selected' : ''}`}>
+                <input type="radio" name="payment" value="chapa" checked={paymentMethod === 'chapa'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                <i className="ri-bank-card-line"></i>
+                <div><strong>Chapa Payment</strong><small>Pay with CBE, Awash, Dashen, Telebirr, Card</small></div>
               </label>
             </div>
           </div>
 
           <button type="submit" className="place-order-btn" disabled={loading}>
-            {loading ? (
-              <>
-                <i className="ri-loader-4-line ri-spin"></i>
-                Processing...
-              </>
-            ) : (
-              <>
-                Place Order - ETB {totals.total.toFixed(2)}
-                <i className="ri-arrow-right-line"></i>
-              </>
-            )}
+            {loading ? 'Processing...' : `Place Order - ETB ${totals.total.toFixed(2)}`}
           </button>
         </form>
 
         <div className="order-summary-sidebar">
           <h2>Order Summary</h2>
-          <div className="summary-items">
-            {cart.map((item, idx) => (
-              <div key={idx} className="summary-item">
-                <span>{item.name} x {item.quantity}</span>
-                <span>ETB {((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
+          {cart.map((item, idx) => (
+            <div key={idx} className="summary-item">
+              <span>{item.name} x{item.quantity}</span>
+              <span>ETB {((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+            </div>
+          ))}
           <div className="summary-totals">
             <div className="total-row"><span>Subtotal:</span><span>ETB {totals.subtotal.toFixed(2)}</span></div>
             <div className="total-row"><span>Shipping:</span><span>ETB {totals.shipping.toFixed(2)}</span></div>
             <div className="total-row"><span>Tax (15%):</span><span>ETB {totals.tax.toFixed(2)}</span></div>
             <div className="total-row grand-total"><span>Total:</span><span>ETB {totals.total.toFixed(2)}</span></div>
-          </div>
-          
-          <div className="payment-info">
-            <i className="ri-shield-check-line"></i>
-            <span>Pay on delivery - No online payment needed</span>
           </div>
         </div>
       </div>

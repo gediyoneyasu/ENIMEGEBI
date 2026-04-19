@@ -1,19 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { 
-  initializePayment, 
-  verifyPayment, 
-  webhook,
-  getPaymentStatus 
+const {
+  initializeOrderPayment,
+  initializeProjectPayment,
+  verifyOrderPayment,
+  verifyProjectPayment,
+  webhook
 } = require('../controllers/paymentController');
 
-// Public webhook endpoint (no auth needed)
+// Webhook (public)
 router.post('/webhook', webhook);
 
 // Protected routes
-router.post('/initialize', protect, initializePayment);
-router.get('/verify/:tx_ref', verifyPayment);
-router.get('/status/:orderId', protect, getPaymentStatus);
+router.post('/initialize-order', protect, initializeOrderPayment);
+router.post('/initialize-project', protect, initializeProjectPayment);
+router.get('/verify-order/:tx_ref', verifyOrderPayment);
+router.get('/verify-project/:tx_ref', verifyProjectPayment);
 
 module.exports = router;
