@@ -45,7 +45,6 @@ function Home() {
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
         
-        // Get unique categories from products
         const allProducts = response.data.featuredProducts || [];
         const categoryMap = new Map();
         
@@ -234,12 +233,9 @@ function Home() {
                         <span>No Image</span>
                       </div>
                     )}
-                    {product.stock < 20 && product.stock > 0 && (
-                      <span className="stock-badge">{product.stock} left</span>
-                    )}
                   </div>
                   <div className="product-info-home">
-                    <h3>{product.name}</h3>
+                    <h3>{language === 'en' ? product.name : (product.nameAm || product.name)}</h3>
                     <div className="product-price-home">ETB {product.price}</div>
                     <button onClick={() => addToCart(product)} className="add-to-cart-btn-home">
                       <i className="ri-shopping-cart-line"></i> {t.addToCart}

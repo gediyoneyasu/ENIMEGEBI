@@ -14,10 +14,15 @@ const Products = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [formData, setFormData] = useState({
     name: '',
+    nameAm: '',
     category: '',
     price: '',
     stock: '',
     description: '',
+    descriptionAm: '',
+    unit: 'kg',
+    seller: '',
+    rating: 0,
     status: 'active'
   });
 
@@ -48,9 +53,7 @@ const Products = () => {
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
+      reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -69,18 +72,12 @@ const Products = () => {
       
       if (editingProduct) {
         await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, submitData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         setAlert({ type: 'success', message: 'Product updated successfully!' });
       } else {
         await axios.post(`${API_URL}/api/admin/products`, submitData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         setAlert({ type: 'success', message: 'Product added successfully!' });
       }
@@ -90,7 +87,7 @@ const Products = () => {
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setAlert({ type: 'error', message: error.response?.data?.message || 'Failed to save product' });
+      setAlert({ type: 'error', message: 'Failed to save product' });
     }
   };
 
@@ -114,10 +111,15 @@ const Products = () => {
     setEditingProduct(product);
     setFormData({
       name: product.name,
+      nameAm: product.nameAm || '',
       category: product.category,
       price: product.price,
       stock: product.stock,
       description: product.description || '',
+      descriptionAm: product.descriptionAm || '',
+      unit: product.unit || 'kg',
+      seller: product.seller || '',
+      rating: product.rating || 0,
       status: product.status
     });
     setImagePreview(product.image ? `${API_URL}${product.image}` : '');
@@ -128,12 +130,8 @@ const Products = () => {
   const openModal = () => {
     setEditingProduct(null);
     setFormData({
-      name: '',
-      category: '',
-      price: '',
-      stock: '',
-      description: '',
-      status: 'active'
+      name: '', nameAm: '', category: '', price: '', stock: '',
+      description: '', descriptionAm: '', unit: 'kg', seller: '', rating: 0, status: 'active'
     });
     setImagePreview('');
     setImageFile(null);
@@ -147,49 +145,68 @@ const Products = () => {
     setImagePreview('');
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading products...</div>;
 
   return (
-    <div>
+    <div className="products-management">
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h2>Products</h2>
-        <button onClick={openModal} style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Add Product</button>
+
+      <div className="management-header">
+        <h2><i className="ri-shopping-bag-3-line"></i> Products Management</h2>
+        <button className="add-btn" onClick={openModal}><i className="ri-add-line"></i> Add Product</button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+      <div className="products-grid">
         {products.map(product => (
-          <div key={product._id} style={{ border: '1px solid #ddd', borderRadius: '10px', padding: '15px', background: 'white' }}>
-            {product.image && <img src={`${API_URL}${product.image}`} alt={product.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px' }} />}
-            <h3>{product.name}</h3>
-            <p>Price: ${product.price}</p>
-            <p>Stock: {product.stock}</p>
-            <button onClick={() => handleEdit(product)} style={{ marginRight: '10px', padding: '5px 10px', cursor: 'pointer' }}>Edit</button>
-            <button onClick={() => handleDelete(product._id)} style={{ padding: '5px 10px', background: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Delete</button>
+          <div key={product._id} className="product-card">
+            <div className="product-image">
+              {product.image ? (
+                <img src={`${API_URL}${product.image}`} alt={product.name} />
+              ) : (
+                <div className="no-image"><i className="ri-image-line"></i></div>
+              )}
+              <span className={`product-status ${product.status}`}>{product.status}</span>
+            </div>
+            <div className="product-info">
+              <h3>{product.name}</h3>
+              {product.nameAm && <p className="product-name-am">{product.nameAm}</p>}
+              <span className="product-category">{product.category}</span>
+              <div className="product-price">${product.price}</div>
+              <div className="product-stock">Stock: {product.stock}</div>
+              <div className="product-actions">
+                <button className="btn-edit" onClick={() => handleEdit(product)}><i className="ri-edit-line"></i> Edit</button>
+                <button className="btn-delete" onClick={() => handleDelete(product._id)}><i className="ri-delete-bin-line"></i> Delete</button>
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'white', padding: '30px', borderRadius: '10px', width: '500px', maxWidth: '90%' }}>
-            <h3>{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
             <form onSubmit={handleSubmit}>
-              {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginBottom: '10px' }} />}
-              <input type="file" accept="image/*" onChange={handleImageChange} style={{ width: '100%', marginBottom: '10px' }} />
-              <input type="text" name="name" placeholder="Name" value={formData.name} onChange={handleInputChange} required style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
-              <input type="text" name="category" placeholder="Category" value={formData.category} onChange={handleInputChange} required style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
-              <input type="number" name="price" placeholder="Price" value={formData.price} onChange={handleInputChange} required style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
-              <input type="number" name="stock" placeholder="Stock" value={formData.stock} onChange={handleInputChange} required style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
-              <textarea name="description" placeholder="Description" value={formData.description} onChange={handleInputChange} rows="3" style={{ width: '100%', marginBottom: '10px', padding: '8px' }}></textarea>
-              <select name="status" value={formData.status} onChange={handleInputChange} style={{ width: '100%', marginBottom: '10px', padding: '8px' }}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button type="submit" style={{ flex: 1, padding: '10px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Save</button>
-                <button type="button" onClick={closeModal} style={{ flex: 1, padding: '10px', background: '#ccc', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Cancel</button>
+              <div className="form-group">
+                <label>Product Image</label>
+                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />}
+                <input type="file" accept="image/*" onChange={handleImageChange} />
+              </div>
+              
+              <div className="form-group"><label>Name (English) *</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Name (Amharic) *</label><input type="text" name="nameAm" value={formData.nameAm} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Category *</label><input type="text" name="category" value={formData.category} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Price *</label><input type="number" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Stock *</label><input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Description (English)</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3"></textarea></div>
+              <div className="form-group"><label>Description (Amharic)</label><textarea name="descriptionAm" value={formData.descriptionAm} onChange={handleInputChange} rows="3"></textarea></div>
+              <div className="form-group"><label>Unit</label><select name="unit" value={formData.unit} onChange={handleInputChange}><option value="kg">Kilogram (kg)</option><option value="liter">Liter (L)</option><option value="piece">Piece</option></select></div>
+              <div className="form-group"><label>Seller/Farmer</label><input type="text" name="seller" value={formData.seller} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Status</label><select name="status" value={formData.status} onChange={handleInputChange}><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+              
+              <div className="modal-actions">
+                <button type="submit" className="btn-save">Save Product</button>
+                <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>
               </div>
             </form>
           </div>
