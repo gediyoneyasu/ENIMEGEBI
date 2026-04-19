@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import './Projects.css';
@@ -9,6 +10,7 @@ const Projects = () => {
   const { language } = useLanguage();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProject, setSelectedProject] = useState(null);
 
   useEffect(() => {
     fetchProjects();
@@ -27,31 +29,50 @@ const Projects = () => {
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${API_URL}${imagePath}`;
-  };
-
-  const handleUnlock = async (project) => {
+  const handlePurchase = async (project) => {
     const token = localStorage.getItem('enimegebiToken');
     if (!token) {
       alert('Please login first');
       window.location.href = '/auth';
       return;
     }
-    alert(`Project "${project.title}" - Payment of $${project.price} required. Contact admin for payment.`);
+
+    try {
+      const response = await axios.post(`${API_URL}/api/projects/purchase`, {
+        projectId: project._id,
+        amount: project.price
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        alert('Purchase request sent! Admin will approve after payment verification.');
+        fetchProjects();
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      alert('Failed to process purchase');
+    }
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL}${imagePath}`;
   };
 
   const translations = {
     en: {
       title: 'Projects',
-      subtitle: 'Browse our premium projects',
+      subtitle: 'Browse our premium projects and resources',
       price: 'Price',
       unlock: 'Unlock Project',
       locked: 'Locked',
+      view: 'View Project',
       noProjects: 'No projects available',
-      comingSoon: 'More projects coming soon'
+      comingSoon: 'More projects coming soon',
+      purchase: 'Purchase',
+      pending: 'Pending Approval'
     },
     am: {
       title: 'ፕሮጀክቶች',
@@ -59,8 +80,11 @@ const Projects = () => {
       price: 'ዋጋ',
       unlock: 'ፕሮጀክት ክፈት',
       locked: 'ተቆልፏል',
+      view: 'ፕሮጀክት ይመልከቱ',
       noProjects: 'ምንም ፕሮጀክቶች የሉም',
-      comingSoon: 'ተጨማሪ ፕሮጀክቶች በቅርቡ'
+      comingSoon: 'ተጨማሪ ፕሮጀክቶች በቅርቡ',
+      purchase: 'ግዛ',
+      pending: 'በመጠባበቅ ላይ'
     }
   };
 
@@ -111,9 +135,15 @@ const Projects = () => {
                 <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
                 <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
                 <div className="project-price">${project.price}</div>
-                <button className="unlock-btn" onClick={() => handleUnlock(project)}>
-                  <i className="ri-lock-unlock-line"></i> {t.unlock}
-                </button>
+                {project.status === 'locked' ? (
+                  <button className="unlock-btn" onClick={() => handlePurchase(project)}>
+                    <i className="ri-lock-unlock-line"></i> {t.unlock} - ${project.price}
+                  </button>
+                ) : (
+                  <Link to={`/projects/${project._id}`} className="view-btn">
+                    <i className="ri-eye-line"></i> {t.view}
+                  </Link>
+                )}
               </div>
             </div>
           ))}

@@ -4,21 +4,25 @@ const { protect } = require('../middleware/authMiddleware');
 const { uploadProduct } = require('../config/upload');
 const {
   getPublicProjects,
+  getProjectById,
   getAllProjects,
   createProject,
   updateProject,
   deleteProject,
   purchaseProject,
   approvePurchase,
-  approveProject
+  approveProject,
+  getUserProjects
 } = require('../controllers/projectController');
 
 // Public routes
 router.get('/public', getPublicProjects);
+router.get('/public/:id', getProjectById);
 
 // Protected routes
 router.use(protect);
 router.get('/', getAllProjects);
+router.get('/my-projects', getUserProjects);
 router.post('/', uploadProduct.single('image'), createProject);
 router.put('/:id', uploadProduct.single('image'), updateProject);
 router.delete('/:id', deleteProject);

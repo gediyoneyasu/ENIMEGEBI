@@ -17,10 +17,11 @@ const ProjectManagement = () => {
     titleAm: '',
     description: '',
     descriptionAm: '',
-    fileUrl: '',
-    videoUrl: '',
+    contentType: 'image',
+    contentUrl: '',
+    youtubeId: '',
+    pdfUrl: '',
     price: '',
-    type: 'pdf',
     order: 0
   });
 
@@ -139,10 +140,11 @@ const ProjectManagement = () => {
       titleAm: project.titleAm || '',
       description: project.description || '',
       descriptionAm: project.descriptionAm || '',
-      fileUrl: project.fileUrl || '',
-      videoUrl: project.videoUrl || '',
+      contentType: project.contentType || 'image',
+      contentUrl: project.contentUrl || '',
+      youtubeId: project.youtubeId || '',
+      pdfUrl: project.pdfUrl || '',
       price: project.price,
-      type: project.type || 'pdf',
       order: project.order || 0
     });
     setImagePreview(project.image ? `${API_URL}${project.image}` : '');
@@ -154,7 +156,8 @@ const ProjectManagement = () => {
     setEditingProject(null);
     setFormData({
       title: '', titleAm: '', description: '', descriptionAm: '',
-      fileUrl: '', videoUrl: '', price: '', type: 'pdf', order: 0
+      contentType: 'image', contentUrl: '', youtubeId: '', pdfUrl: '',
+      price: '', order: 0
     });
     setImagePreview('');
     setImageFile(null);
@@ -177,54 +180,62 @@ const ProjectManagement = () => {
       </div>
       
       {projects.map(project => (
-        <div key={project._id} className="project-admin-card">
-          {project.image && <img src={`${API_URL}${project.image}`} alt={project.title} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />}
-          <div>
-            <h3>{project.title}</h3>
-            <p>Price: ${project.price} | Type: {project.type} | Approved: {project.isApproved ? 'Yes' : 'No'} | Status: {project.status}</p>
-            <p>Purchases: {project.purchasedBy?.length || 0}</p>
-            {project.purchasedBy?.map(purchase => (
-              <div key={purchase.user} className="purchase-item">
-                User ID: {purchase.user} | Amount: ${purchase.amount} | Unlocked: {purchase.isUnlocked ? 'Yes' : 'No'}
-                {!purchase.isUnlocked && (
-                  <button onClick={() => handleApprovePurchase(project._id, purchase.user)}>Approve Purchase</button>
-                )}
-              </div>
-            ))}
+        <div key={project._id} className="project-admin-card" style={{ border: '1px solid #ddd', margin: '10px', padding: '15px', borderRadius: '10px' }}>
+          <div style={{ display: 'flex', gap: '15px' }}>
+            {project.image && <img src={`${API_URL}${project.image}`} alt={project.title} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />}
+            <div style={{ flex: 1 }}>
+              <h3>{project.title}</h3>
+              <p>Price: ${project.price} | Type: {project.contentType} | Approved: {project.isApproved ? 'Yes' : 'No'}</p>
+              <p>Purchases: {project.purchasedBy?.length || 0}</p>
+            </div>
+            <div>
+              <button className="btn-edit" onClick={() => handleEdit(project)}>Edit</button>
+              {!project.isApproved && <button className="btn-approve" onClick={() => handleApprove(project._id)}>Approve</button>}
+              <button className="btn-delete" onClick={() => handleDelete(project._id)}>Delete</button>
+            </div>
           </div>
-          <div>
-            <button className="btn-edit" onClick={() => handleEdit(project)}>Edit</button>
-            {!project.isApproved && (
-              <button className="btn-approve" onClick={() => handleApprove(project._id)}>Approve Project</button>
-            )}
-            <button className="btn-delete" onClick={() => handleDelete(project._id)}>Delete</button>
-          </div>
+          {project.purchasedBy?.filter(p => !p.isUnlocked).map(purchase => (
+            <div key={purchase.user} style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '5px' }}>
+              User ID: {purchase.user} | Amount: ${purchase.amount}
+              <button onClick={() => handleApprovePurchase(project._id, purchase.user)}>Approve Purchase</button>
+            </div>
+          ))}
         </div>
       ))}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto' }}>
             <h3>{editingProject ? 'Edit Project' : 'Add Project'}</h3>
             <form onSubmit={handleSubmit}>
-              {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />}
+              {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginBottom: '10px' }} />}
               <input type="file" accept="image/*" onChange={handleImageChange} />
+              
               <input type="text" name="title" placeholder="Title (English)" value={formData.title} onChange={handleInputChange} required />
               <input type="text" name="titleAm" placeholder="Title (Amharic)" value={formData.titleAm} onChange={handleInputChange} />
-              <textarea name="description" placeholder="Description (English)" value={formData.description} onChange={handleInputChange} rows="3" />
-              <textarea name="descriptionAm" placeholder="Description (Amharic)" value={formData.descriptionAm} onChange={handleInputChange} rows="3" />
-              <input type="text" name="fileUrl" placeholder="File URL (PDF/Document link)" value={formData.fileUrl} onChange={handleInputChange} />
-              <input type="text" name="videoUrl" placeholder="Video URL (YouTube/Vimeo link)" value={formData.videoUrl} onChange={handleInputChange} />
-              <input type="number" name="price" placeholder="Price (ETB)" value={formData.price} onChange={handleInputChange} required />
-              <select name="type" value={formData.type} onChange={handleInputChange}>
+              <textarea name="description" placeholder="Description (English)" value={formData.description} onChange={handleInputChange} rows="2" />
+              <textarea name="descriptionAm" placeholder="Description (Amharic)" value={formData.descriptionAm} onChange={handleInputChange} rows="2" />
+              
+              <select name="contentType" value={formData.contentType} onChange={handleInputChange}>
+                <option value="image">Image Only</option>
                 <option value="pdf">PDF Document</option>
-                <option value="video">Video</option>
-                <option value="document">Document</option>
-                <option value="image">Image</option>
+                <option value="video">Video File</option>
+                <option value="youtube">YouTube Video</option>
+                <option value="link">External Link</option>
               </select>
+              
+              {formData.contentType === 'youtube' && (
+                <input type="text" name="youtubeId" placeholder="YouTube Video ID (e.g., dQw4w9WgXcQ)" value={formData.youtubeId} onChange={handleInputChange} />
+              )}
+              {(formData.contentType === 'pdf' || formData.contentType === 'video' || formData.contentType === 'link') && (
+                <input type="text" name="contentUrl" placeholder="File URL or Link" value={formData.contentUrl} onChange={handleInputChange} />
+              )}
+              
+              <input type="number" name="price" placeholder="Price (ETB)" value={formData.price} onChange={handleInputChange} required />
               <input type="number" name="order" placeholder="Order" value={formData.order} onChange={handleInputChange} />
+              
               <div className="modal-actions">
-                <button type="submit" className="btn-save">Save</button>
+                <button type="submit" className="btn-save">Save Project</button>
                 <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>
               </div>
             </form>
