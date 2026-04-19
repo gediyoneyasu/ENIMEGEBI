@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
@@ -17,15 +17,18 @@ const API_URL = 'https://enimegebi-backend.onrender.com';
 function Home() {
   const { language } = useLanguage();
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const [sliders, setSliders] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchHomeData();
+    fetchProjects();
   }, []);
 
   const fetchHomeData = async () => {
@@ -33,15 +36,7 @@ function Home() {
       const response = await axios.get(`${API_URL}/api/home/public-data`);
       if (response.data.success) {
         setSliders(response.data.sliders || []);
-        
-        // Get products and ensure images are properly formatted
-        const products = response.data.featuredProducts || [];
-        const productsWithImages = products.map(product => ({
-          ...product,
-          imageUrl: product.imageUrl || (product.image ? `${API_URL}${product.image}` : null)
-        }));
-        setFeaturedProducts(productsWithImages.slice(0, 8));
-        
+        setFeaturedProducts(response.data.featuredProducts?.slice(0, 8) || []);
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
         
@@ -50,23 +45,30 @@ function Home() {
         
         allProducts.forEach(product => {
           if (!categoryMap.has(product.category)) {
-            const categoryProduct = allProducts.find(p => p.category === product.category);
             categoryMap.set(product.category, {
               name: product.category,
               count: allProducts.filter(p => p.category === product.category).length,
-              image: categoryProduct?.image || categoryProduct?.imageUrl,
-              nameAm: getAmharicName(product.category),
-              description: `Fresh organic ${product.category.toLowerCase()} products`
+              image: product.image || product.imageUrl
             });
           }
         });
-        
         setCategories(Array.from(categoryMap.values()).slice(0, 8));
       }
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/projects/public`);
+      if (response.data.success) {
+        setProjects(response.data.projects || []);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
     }
   };
 
@@ -87,15 +89,6 @@ function Home() {
     return icons[category] || 'ri-apps-line';
   };
 
-  const getProductImage = (product) => {
-    if (product.imageUrl) return product.imageUrl;
-    if (product.image) {
-      if (product.image.startsWith('http')) return product.image;
-      return `${API_URL}${product.image}`;
-    }
-    return null;
-  };
-
   const translations = {
     en: {
       shopNow: 'Shop Now', callNow: 'Call Now',
@@ -112,7 +105,11 @@ function Home() {
       viewAll: 'View All Products',
       addToCart: 'Add to Cart',
       testimonials: 'What Our Customers Say',
-      getStarted: 'Get Started'
+      getStarted: 'Get Started',
+      projects: 'Our Projects',
+      viewAllProjects: 'View All Projects',
+      unlock: 'Unlock',
+      locked: 'Locked'
     },
     am: {
       shopNow: 'አሁን ይግዙ', callNow: 'አሁን ይደውሉ',
@@ -129,7 +126,11 @@ function Home() {
       viewAll: 'ሁሉንም ምርቶች ይመልከቱ',
       addToCart: 'ወደ ጋሪ ጨምር',
       testimonials: 'ደንበኞቻችን ምን ይላሉ',
-      getStarted: 'ይጀምሩ'
+      getStarted: 'ይጀምሩ',
+      projects: 'የእኛ ፕሮጀክቶች',
+      viewAllProjects: 'ሁሉንም ፕሮጀክቶች ይመልከቱ',
+      unlock: 'ክፈት',
+      locked: 'ተቆልፏል'
     }
   };
 
@@ -175,38 +176,26 @@ function Home() {
         </div>
       </section>
 
-      {/* Categories Section - FLIP CARD DESIGN */}
+      {/* Categories Section */}
       <section className="categories-section-home">
         <div className="container">
           <div className="section-header-home">
             <h2 className="section-title">{t.categoriesTitle}</h2>
             <Link to="/categories" className="view-all-link">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
           </div>
-          
-          <div className="categories-cards-home">
+          <div className="categories-grid-home">
             {categories.map((category, idx) => (
-              <div className="category-card-home" key={idx}>
-                <div className="card-front-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-                  <span className="category-badge-home">{category.count} Products</span>
-                  <div className="category-icon-home"><i className={getCategoryIcon(category.name)}></i></div>
-                  <button>{category.name}</button>
-                </div>
-                <div className="card-back-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-                  <div className="price-home"><i className={getCategoryIcon(category.name)}></i><span>{category.name}</span></div>
-                  <div className="card-content-home">
+              <Link to={`/products?category=${category.name}`} key={idx} className="category-card-home">
+                <div className="category-card-front">
+                  <div className="category-image-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+                    <div className="category-overlay"></div>
+                  </div>
+                  <div className="category-info-home">
                     <h3>{category.name}</h3>
-                    <p className="amharic-name-home">{category.nameAm}</p>
-                    <div className="category-stats-home">
-                      <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
-                      <span><i className="ri-user-line"></i> Local Farmers</span>
-                    </div>
-                    <p className="category-description-home">{category.description}</p>
-                  </div>
-                  <div className="explore-now-home">
-                    <Link to={`/products?category=${category.name}`}>Explore {category.name}<i className="ri-arrow-right-line"></i></Link>
+                    <p>{category.count} Products</p>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -220,33 +209,63 @@ function Home() {
             <Link to="/products" className="view-all-link">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
           </div>
           <div className="products-grid-home">
-            {featuredProducts.map(product => {
-              const productImage = getProductImage(product);
-              return (
-                <div key={product._id} className="product-card-home">
-                  <div className="product-image-home">
-                    {productImage ? (
-                      <img src={productImage} alt={product.name} />
-                    ) : (
-                      <div className="no-image-placeholder">
-                        <i className="ri-image-line"></i>
-                        <span>No Image</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="product-info-home">
-                    <h3>{language === 'en' ? product.name : (product.nameAm || product.name)}</h3>
-                    <div className="product-price-home">ETB {product.price}</div>
-                    <button onClick={() => addToCart(product)} className="add-to-cart-btn-home">
-                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                    </button>
-                  </div>
+            {featuredProducts.map(product => (
+              <div key={product._id} className="product-card-home">
+                <div className="product-image-home">
+                  <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
                 </div>
-              );
-            })}
+                <div className="product-info-home">
+                  <h3>{product.name}</h3>
+                  <div className="product-price-home">ETB {product.price}</div>
+                  <button onClick={() => addToCart(product)} className="add-to-cart-btn-home">
+                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
+
+      {/* Projects Section */}
+      {projects.length > 0 && (
+        <section className="projects-section-home">
+          <div className="container">
+            <div className="section-header-home">
+              <h2 className="section-title">{t.projects}</h2>
+              <Link to="/projects" className="view-all-link">{t.viewAllProjects} <i className="ri-arrow-right-line"></i></Link>
+            </div>
+            <div className="projects-grid-home">
+              {projects.slice(0, 4).map(project => (
+                <div key={project._id} className="project-card-home">
+                  <div className="project-image-home">
+                    <img src={getImageUrl(project.image)} alt={project.title} />
+                    {project.status === 'locked' && (
+                      <div className="project-locked-overlay">
+                        <i className="ri-lock-line"></i>
+                        <span>{t.locked}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="project-info-home">
+                    <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
+                    <p>{language === 'en' ? project.description?.substring(0, 80) : (project.descriptionAm || project.description)?.substring(0, 80)}...</p>
+                    {project.status === 'locked' ? (
+                      <button className="unlock-btn" onClick={() => navigate('/checkout', { state: { projectId: project._id, amount: project.price } })}>
+                        {t.unlock} ${project.price}
+                      </button>
+                    ) : (
+                      <button className="view-btn" onClick={() => navigate(`/projects/${project._id}`)}>
+                        View Project
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Testimonials Section */}
       <section className="testimonials-section-home">
@@ -283,41 +302,3 @@ function Home() {
 }
 
 export default Home;
-
-      {/* Projects Section */}
-      <section className="projects-section-home">
-        <div className="container">
-          <div className="section-header-home">
-            <h2 className="section-title">Our Projects</h2>
-            <Link to="/projects" className="view-all-link">View All Projects <i className="ri-arrow-right-line"></i></Link>
-          </div>
-          <div className="projects-grid-home">
-            {projects.slice(0, 4).map(project => (
-              <div key={project._id} className="project-card-home">
-                <div className="project-image-home">
-                  <img src={getImageUrl(project.image)} alt={project.title} />
-                  {project.status === 'locked' && (
-                    <div className="project-locked-overlay">
-                      <i className="ri-lock-line"></i>
-                      <span>Locked</span>
-                    </div>
-                  )}
-                </div>
-                <div className="project-info-home">
-                  <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
-                  <p>{language === 'en' ? project.description.substring(0, 80) : (project.descriptionAm || project.description).substring(0, 80)}...</p>
-                  {project.status === 'locked' ? (
-                    <button className="unlock-btn" onClick={() => navigate('/checkout', { state: { projectId: project._id, amount: project.price } })}>
-                      Unlock for ${project.price}
-                    </button>
-                  ) : (
-                    <button className="view-btn" onClick={() => navigate(`/projects/${project._id}`)}>
-                      View Project
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
