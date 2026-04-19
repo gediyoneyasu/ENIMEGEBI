@@ -2,19 +2,20 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Contact = require('../models/Contact');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, '../uploads/products');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // ============ USER CONTROLLERS ============
 const getUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
-    const totalUsers = await User.countDocuments();
-    const farmers = await User.countDocuments({ role: 'farmer' });
-    
-    res.json({
-      users,
-      count: totalUsers,
-      farmers
-    });
+    res.json({ users, count: users.length });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -23,9 +24,7 @@ const getUsers = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -35,18 +34,10 @@ const getUserById = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    user.name = req.body.name || user.name;
-    user.phone = req.body.phone || user.phone;
-    user.address = req.body.address || user.address;
-    user.city = req.body.city || user.city;
-    user.role = req.body.role || user.role;
-    
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    Object.assign(user, req.body);
     await user.save();
-    res.json({ message: 'User updated successfully', user });
+    res.json({ message: 'User updated', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -54,12 +45,8 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    await user.deleteOne();
-    res.json({ message: 'User deleted successfully' });
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: 'User deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -69,55 +56,12 @@ const deleteUser = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({});
-    // Add full image URL for each product
-    const productsWithUrl = products.map(product => ({
-      ...product._doc,
-      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
-    }));
-    res.json(productsWithUrl);
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const createProduct = async (req, res) => {
-  try {
-    const product = await Product.create(req.body);
-    res.status(201).json(product);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const updateProduct = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    
-    Object.assign(product, req.body);
-    await product.save();
-    res.json(product);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    await product.deleteOne();
-    res.json({ message: 'Product deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Product with image upload
 const createProductWithImage = async (req, res) => {
   try {
     let productData;
@@ -127,22 +71,14 @@ const createProductWithImage = async (req, res) => {
       productData = req.body;
     }
     
-    const imageFile = req.file;
-    
-    if (imageFile) {
-      productData.image = `/uploads/products/${imageFile.filename}`;
-      productData.imageUrl = `http://localhost:5001/uploads/products/${imageFile.filename}`;
+    if (req.file) {
+      const imageUrl = `/uploads/products/${req.file.filename}`;
+      productData.image = imageUrl;
+      productData.imageUrl = `https://enimegebi-backend.onrender.com${imageUrl}`;
     }
     
     const product = await Product.create(productData);
-    
-    // Return product with full image URL
-    const productWithUrl = {
-      ...product._doc,
-      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
-    };
-    
-    res.status(201).json(productWithUrl);
+    res.status(201).json(product);
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ message: error.message });
@@ -152,9 +88,7 @@ const createProductWithImage = async (req, res) => {
 const updateProductWithImage = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
     
     let productData;
     if (req.body.product) {
@@ -163,39 +97,34 @@ const updateProductWithImage = async (req, res) => {
       productData = req.body;
     }
     
-    const imageFile = req.file;
-    
-    if (imageFile) {
-      productData.image = `/uploads/products/${imageFile.filename}`;
-      productData.imageUrl = `http://localhost:5001/uploads/products/${imageFile.filename}`;
+    if (req.file) {
+      const imageUrl = `/uploads/products/${req.file.filename}`;
+      productData.image = imageUrl;
+      productData.imageUrl = `https://enimegebi-backend.onrender.com${imageUrl}`;
     }
     
     Object.assign(product, productData);
     await product.save();
-    
-    // Return product with full image URL
-    const productWithUrl = {
-      ...product._doc,
-      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
-    };
-    
-    res.json(productWithUrl);
+    res.json(product);
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// Public products for frontend
+const deleteProduct = async (req, res) => {
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Product deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getPublicProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: 'active' }).sort({ createdAt: -1 });
-    // Add full image URL for each product
-    const productsWithUrl = products.map(product => ({
-      ...product._doc,
-      imageUrl: product.image ? `http://localhost:5001${product.image}` : null
-    }));
-    res.json(productsWithUrl);
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -205,17 +134,7 @@ const getPublicProducts = async (req, res) => {
 const getOrders = async (req, res) => {
   try {
     const orders = await Order.find({}).sort({ createdAt: -1 });
-    const totalOrders = await Order.countDocuments();
-    const totalRevenue = await Order.aggregate([
-      { $match: { orderStatus: 'delivered' } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-    
-    res.json({
-      orders,
-      count: totalOrders,
-      revenue: totalRevenue[0]?.total || 0
-    });
+    res.json({ orders, count: orders.length });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -224,10 +143,7 @@ const getOrders = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-    
+    if (!order) return res.status(404).json({ message: 'Order not found' });
     order.orderStatus = req.body.status;
     await order.save();
     res.json({ message: 'Order status updated', order });
@@ -240,12 +156,7 @@ const updateOrderStatus = async (req, res) => {
 const getContacts = async (req, res) => {
   try {
     const contacts = await Contact.find({}).sort({ createdAt: -1 });
-    const unreadCount = await Contact.countDocuments({ status: 'unread' });
-    
-    res.json({
-      contacts,
-      unreadCount
-    });
+    res.json({ contacts });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -263,10 +174,7 @@ const createContact = async (req, res) => {
 const markContactRead = async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
-    if (!contact) {
-      return res.status(404).json({ message: 'Contact not found' });
-    }
-    
+    if (!contact) return res.status(404).json({ message: 'Contact not found' });
     contact.status = 'read';
     await contact.save();
     res.json({ message: 'Contact marked as read' });
@@ -281,56 +189,26 @@ const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalProducts = await Product.countDocuments();
     const totalOrders = await Order.countDocuments();
-    const pendingOrders = await Order.countDocuments({ orderStatus: 'pending' });
-    const totalFarmers = await User.countDocuments({ role: 'farmer' });
-    const unreadMessages = await Contact.countDocuments({ status: 'unread' });
-    
-    const revenue = await Order.aggregate([
-      { $match: { orderStatus: 'delivered' } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-    
-    res.json({
-      stats: {
-        totalUsers,
-        totalProducts,
-        totalOrders,
-        totalRevenue: revenue[0]?.total || 0,
-        totalFarmers,
-        pendingOrders,
-        unreadMessages
-      }
-    });
+    res.json({ stats: { totalUsers, totalProducts, totalOrders } });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ============ EXPORT ALL ============
 module.exports = {
   getUsers,
   getUserById,
   updateUser,
   deleteUser,
-  // Product controllers
   getProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct,
   createProductWithImage,
   updateProductWithImage,
+  deleteProduct,
   getPublicProducts,
-  // Order controllers
   getOrders,
   updateOrderStatus,
-  // Contact controllers
   getContacts,
   createContact,
   markContactRead,
-  // Dashboard
   getDashboardStats
 };
-
-// Upload product image separately
-
-// Upload product image separately
