@@ -22,11 +22,11 @@ const {
   getPublicProducts
 } = require('../controllers/adminController');
 
-// Public routes
+// Public routes (no authentication required)
 router.post('/contacts', createContact);
 router.get('/public-products', getPublicProducts);
 
-// Protected routes
+// Protected routes (admin only)
 router.use(protect);
 
 // Dashboard
@@ -48,7 +48,7 @@ router.delete('/products/:id', deleteProduct);
 router.get('/orders', getOrders);
 router.put('/orders/:id/status', updateOrderStatus);
 
-// Contact routes
+// Contact routes (GET needs auth)
 router.get('/contacts', getContacts);
 router.put('/contacts/:id/read', markContactRead);
 
