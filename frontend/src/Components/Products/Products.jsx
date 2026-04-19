@@ -5,15 +5,16 @@ import { useLanguage } from '../../main';
 import { useCart } from '../../main';
 import './Products.css';
 
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
 function Products() {
   const { language } = useLanguage();
   const { addToCart } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-
-  const API_URL = 'import.meta.env.VITE_API_URL';
 
   useEffect(() => {
     fetchProducts();
@@ -21,10 +22,21 @@ function Products() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/admin/public-products`);
-      setProducts(response.data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
+      setLoading(true);
+      setError('');
+      
+      const token = localStorage.getItem('enimegebiToken');
+      console.log('Fetching products from:', `${API_URL}/api/admin/public-products`);
+      
+      const response = await axios.get(`${API_URL}/api/admin/public-products`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      
+      console.log('Products received:', response.data.length);
+      setProducts(response.data || []);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err.message || 'Failed to load products');
       setProducts([]);
     } finally {
       setLoading(false);
@@ -42,7 +54,6 @@ function Products() {
 
   const handleAddToCart = (product) => {
     addToCart(product);
-    alert(`${product.name} added to cart!`);
   };
 
   const translations = {
@@ -55,6 +66,9 @@ function Products() {
       addToCart: 'Add to Cart',
       inStock: 'In Stock',
       outOfStock: 'Out of Stock',
+      noProducts: 'No products found',
+      error: 'Failed to load products. Please try again.',
+      retry: 'Retry'
     },
     am: {
       title: 'ምርቶቻችን',
@@ -65,6 +79,9 @@ function Products() {
       addToCart: 'ወደ ጋሪ ጨምር',
       inStock: 'ክምችት አለ',
       outOfStock: 'ክምችት የለም',
+      noProducts: 'ምንም ምርቶች አልተገኙም',
+      error: 'ምርቶችን ማግኘት አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+      retry: 'እንደገና ሞክር'
     }
   };
 
@@ -72,9 +89,10 @@ function Products() {
   const categories = ['all', 'Coffee', 'Grains', 'Honey', 'Dairy', 'Fruits', 'Vegetables', 'Spices', 'Beverages'];
 
   const filteredProducts = products.filter(product => {
+    if (!product) return false;
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const productName = language === 'en' ? product.name : (product.nameAm || product.name);
-    const matchesSearch = productName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = productName?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     return matchesCategory && matchesSearch && product.status !== 'inactive';
   });
 
@@ -87,6 +105,16 @@ function Products() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="products-error">
+        <i className="ri-error-warning-line"></i>
+        <p>{t.error}</p>
+        <button onClick={fetchProducts} className="retry-btn">{t.retry}</button>
+      </div>
+    );
+  }
+
   return (
     <div className="products-page">
       <div className="products-hero">
@@ -95,7 +123,12 @@ function Products() {
           <p>{t.subtitle}</p>
           <div className="search-bar">
             <i className="ri-search-line"></i>
-            <input type="text" placeholder={t.search} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <input 
+              type="text" 
+              placeholder={t.search} 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
           </div>
         </div>
       </div>
@@ -120,39 +153,49 @@ function Products() {
         <div className="container">
           <div className="products-header">
             <h2>{selectedCategory === 'all' ? t.title : selectedCategory}</h2>
-            <p>{filteredProducts.length} products found</p>
+            <p>{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found</p>
           </div>
 
-          <div className="products-grid">
-            {filteredProducts.map(product => {
-              const imageUrl = getImageUrl(product);
-              return (
-                <div key={product._id} className="product-card">
-                  <div className="product-image">
-                    {imageUrl ? (
-                      <img src={imageUrl} alt={product.name} />
-                    ) : (
-                      <div className="no-image"><i className="ri-image-line"></i></div>
-                    )}
-                  </div>
-                  <div className="product-info">
-                    <h3>{product.name}</h3>
-                    <div className="product-price">{t.price} {product.price}</div>
-                    <div className="product-stock">{product.stock > 0 ? t.inStock : t.outOfStock}</div>
-                    <button className="add-to-cart-btn" onClick={() => handleAddToCart(product)} disabled={product.stock === 0}>
-                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {filteredProducts.length === 0 && (
+          {filteredProducts.length === 0 ? (
             <div className="no-results">
               <i className="ri-search-eye-line"></i>
-              <h3>No products found</h3>
+              <h3>{t.noProducts}</h3>
               <p>Try adjusting your search or filter criteria</p>
+            </div>
+          ) : (
+            <div className="products-grid">
+              {filteredProducts.map(product => {
+                const imageUrl = getImageUrl(product);
+                return (
+                  <div key={product._id} className="product-card">
+                    <div className="product-image">
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={product.name} />
+                      ) : (
+                        <div className="no-image"><i className="ri-image-line"></i></div>
+                      )}
+                      {product.stock > 0 && product.stock < 20 && (
+                        <span className="stock-badge low-stock">{product.stock} left</span>
+                      )}
+                    </div>
+                    <div className="product-info">
+                      <h3>{product.name}</h3>
+                      {product.seller && <p className="product-seller">{product.seller}</p>}
+                      <div className="product-price">{t.price} {product.price}</div>
+                      <div className="product-stock">
+                        {product.stock > 0 ? t.inStock : t.outOfStock}
+                      </div>
+                      <button 
+                        className="add-to-cart-btn" 
+                        onClick={() => handleAddToCart(product)} 
+                        disabled={product.stock === 0}
+                      >
+                        <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
