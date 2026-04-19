@@ -2,14 +2,6 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Contact = require('../models/Contact');
-const path = require('path');
-const fs = require('fs');
-
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../uploads/products');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 // ============ USER CONTROLLERS ============
 const getUsers = async (req, res) => {
@@ -64,6 +56,9 @@ const getProducts = async (req, res) => {
 
 const createProductWithImage = async (req, res) => {
   try {
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file);
+    
     let productData;
     if (req.body.product) {
       productData = JSON.parse(req.body.product);
@@ -74,10 +69,10 @@ const createProductWithImage = async (req, res) => {
     if (req.file) {
       const imageUrl = `/uploads/products/${req.file.filename}`;
       productData.image = imageUrl;
-      productData.imageUrl = `https://enimegebi-backend.onrender.com${imageUrl}`;
     }
     
     const product = await Product.create(productData);
+    console.log('Product created:', product);
     res.status(201).json(product);
   } catch (error) {
     console.error('Error creating product:', error);
@@ -100,7 +95,6 @@ const updateProductWithImage = async (req, res) => {
     if (req.file) {
       const imageUrl = `/uploads/products/${req.file.filename}`;
       productData.image = imageUrl;
-      productData.imageUrl = `https://enimegebi-backend.onrender.com${imageUrl}`;
     }
     
     Object.assign(product, productData);

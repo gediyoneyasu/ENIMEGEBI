@@ -12,15 +12,11 @@ dirs.forEach(dir => {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    let folder = 'uploads';
-    if (file.fieldname === 'image') {
-      folder = 'uploads/products';
-    }
-    cb(null, folder);
+    cb(null, 'uploads/products');
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
@@ -28,13 +24,18 @@ const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype);
+  
   if (mimetype && extname) {
     cb(null, true);
   } else {
-    cb(new Error('Only images are allowed'));
+    cb(new Error('Only images are allowed (jpeg, jpg, png, gif, webp)'));
   }
 };
 
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ 
+  storage: storage, 
+  fileFilter: fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
-module.exports = { upload, uploadProduct: upload };
+module.exports = { upload };
