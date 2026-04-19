@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import API_URL from '../../config/api';
 import './Auth.css';
+
+const API_URL = 'https://enimegebi-backend.onrender.com';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -42,7 +43,6 @@ const Auth = () => {
       const response = await axios.post(url, dataToSend);
       
       console.log('Response:', response.data);
-      console.log('User role:', response.data.role);
       
       if (response.data.token) {
         // Save to localStorage
@@ -51,25 +51,24 @@ const Auth = () => {
           _id: response.data._id,
           name: response.data.name,
           email: response.data.email,
-          role: response.data.role
+          role: response.data.role,
+          phone: response.data.phone || ''
         }));
         
-        // Verify saved data
-        const savedUser = localStorage.getItem('enimegebiUser');
-        console.log('Saved user:', savedUser);
+        console.log('Token saved:', localStorage.getItem('enimegebiToken'));
+        console.log('User saved:', localStorage.getItem('enimegebiUser'));
         
         // Redirect based on role
         if (response.data.role === 'admin') {
-          console.log('Redirecting to /admin');
           window.location.href = '/admin';
         } else {
-          console.log('Redirecting to /');
           window.location.href = '/';
         }
       }
     } catch (err) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || 'Something went wrong');
+    } finally {
       setLoading(false);
     }
   };
