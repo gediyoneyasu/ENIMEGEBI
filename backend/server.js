@@ -57,3 +57,5 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+// Add category routes
+app.use('/api/categories', require('./routes/categoryRoutes'));

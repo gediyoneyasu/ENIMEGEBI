@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './Admin.css';
 
-// Admin Components
 import Dashboard from './Dashboard';
 import Users from './Users';
 import Products from './Products';
 import Orders from './Orders';
 import Farmers from './Farmers';
-import ContactInfo from './ContactInfo';
+import CategoryManagement from './CategoryManagement/CategoryManagement';
+import ContactMessages from './ContactMessages';
 import SystemSettings from './SystemSettings';
 import SliderManagement from './HomeControl/SliderManagement';
 import TestimonialManagement from './HomeControl/TestimonialManagement';
 import HomeSettings from './HomeControl/HomeSettings';
 import TeamManagement from './TeamManagement/TeamManagement';
-import ContactMessages from './ContactMessages';
+import ContactInfo from './ContactInfo';
 
 const Admin = () => {
   const [user, setUser] = useState(null);
@@ -56,6 +56,7 @@ const Admin = () => {
   const menuItems = [
     { path: '/admin', name: 'Dashboard', icon: 'ri-dashboard-line' },
     { path: '/admin/users', name: 'Users', icon: 'ri-user-settings-line' },
+    { path: '/admin/categories', name: 'Categories', icon: 'ri-apps-line' },
     { path: '/admin/products', name: 'Products', icon: 'ri-shopping-bag-3-line' },
     { path: '/admin/orders', name: 'Orders', icon: 'ri-shopping-cart-2-line' },
     { path: '/admin/farmers', name: 'Farmers', icon: 'ri-plant-line' },
@@ -70,10 +71,19 @@ const Admin = () => {
 
   const getPageTitle = (path) => {
     const titles = {
-      '/admin': 'Dashboard', '/admin/users': 'Users Management', '/admin/products': 'Products Management',
-      '/admin/orders': 'Orders Management', '/admin/farmers': 'Farmers Management', '/admin/messages': 'Contact Messages',
-      '/admin/sliders': 'Home Sliders', '/admin/testimonials': 'Testimonials', '/admin/team': 'Team Members',
-      '/admin/home-settings': 'Home Settings', '/admin/contact': 'Contact Information', '/admin/settings': 'System Settings'
+      '/admin': 'Dashboard',
+      '/admin/users': 'Users Management',
+      '/admin/categories': 'Category Management',
+      '/admin/products': 'Products Management',
+      '/admin/orders': 'Orders Management',
+      '/admin/farmers': 'Farmers Management',
+      '/admin/messages': 'Contact Messages',
+      '/admin/sliders': 'Home Sliders',
+      '/admin/testimonials': 'Testimonials',
+      '/admin/team': 'Team Members',
+      '/admin/home-settings': 'Home Settings',
+      '/admin/contact': 'Contact Information',
+      '/admin/settings': 'System Settings'
     };
     return titles[path] || 'Admin Panel';
   };
@@ -104,6 +114,7 @@ const Admin = () => {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/categories" element={<CategoryManagement />} />
             <Route path="/products" element={<Products />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/farmers" element={<Farmers />} />
