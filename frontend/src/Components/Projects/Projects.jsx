@@ -17,35 +17,48 @@ const Projects = () => {
   const fetchProjects = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/projects/public`);
-      console.log('Projects response:', response.data);
       if (response.data.success) {
         setProjects(response.data.projects);
       }
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL}${imagePath}`;
+  };
+
+  const handleUnlock = async (project) => {
+    const token = localStorage.getItem('enimegebiToken');
+    if (!token) {
+      alert('Please login first');
+      window.location.href = '/auth';
+      return;
+    }
+    alert(`Project "${project.title}" - Payment of $${project.price} required. Contact admin for payment.`);
+  };
+
   const translations = {
     en: {
       title: 'Projects',
-      subtitle: 'Access premium projects and resources',
+      subtitle: 'Browse our premium projects',
       price: 'Price',
       unlock: 'Unlock Project',
       locked: 'Locked',
-      view: 'View Project',
       noProjects: 'No projects available',
       comingSoon: 'More projects coming soon'
     },
     am: {
       title: 'ፕሮጀክቶች',
-      subtitle: 'ፕሪሚየም ፕሮጀክቶችን እና ሀብቶችን ይድረሱ',
+      subtitle: 'የእኛን ፕሪሚየም ፕሮጀክቶች ይመልከቱ',
       price: 'ዋጋ',
       unlock: 'ፕሮጀክት ክፈት',
       locked: 'ተቆልፏል',
-      view: 'ፕሮጀክት ይመልከቱ',
       noProjects: 'ምንም ፕሮጀክቶች የሉም',
       comingSoon: 'ተጨማሪ ፕሮጀክቶች በቅርቡ'
     }
@@ -71,7 +84,7 @@ const Projects = () => {
 
       {projects.length === 0 ? (
         <div className="no-projects">
-          <i className="ri-folder-line"></i>
+          <i className="ri-folder-image-line"></i>
           <h3>{t.noProjects}</h3>
           <p>{t.comingSoon}</p>
         </div>
@@ -79,22 +92,26 @@ const Projects = () => {
         <div className="projects-grid">
           {projects.map(project => (
             <div key={project._id} className="project-card">
-              <div className="project-card-image">
-                {project.image && (
-                  <img src={`${API_URL}${project.image}`} alt={project.title} />
+              <div className="project-image">
+                {getImageUrl(project.image) ? (
+                  <img src={getImageUrl(project.image)} alt={project.title} />
+                ) : (
+                  <div className="no-image-placeholder">
+                    <i className="ri-image-line"></i>
+                  </div>
                 )}
                 {project.status === 'locked' && (
-                  <div className="locked-badge">
+                  <div className="locked-overlay">
                     <i className="ri-lock-line"></i>
                     <span>{t.locked}</span>
                   </div>
                 )}
               </div>
-              <div className="project-card-content">
+              <div className="project-details">
                 <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
                 <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
                 <div className="project-price">${project.price}</div>
-                <button className="unlock-project-btn">
+                <button className="unlock-btn" onClick={() => handleUnlock(project)}>
                   <i className="ri-lock-unlock-line"></i> {t.unlock}
                 </button>
               </div>
