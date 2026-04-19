@@ -9,7 +9,7 @@ const Settings = () => {
         <h3>General Settings</h3>
         <div className="setting-item">
           <label>Site Name</label>
-          <input type="text" defaultValue="Enimegebi" />
+          <input type="text" defaultValue="admin123" />
         </div>
         <div className="setting-item">
           <label>Site Email</label>

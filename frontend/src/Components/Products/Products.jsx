@@ -25,18 +25,14 @@ function Products() {
       setLoading(true);
       setError('');
       
-      const token = localStorage.getItem('enimegebiToken');
-      console.log('Fetching products from:', `${API_URL}/api/admin/public-products`);
+      const response = await axios.get(`${API_URL}/api/admin/public-products`);
       
-      const response = await axios.get(`${API_URL}/api/admin/public-products`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      
-      console.log('Products received:', response.data.length);
-      setProducts(response.data || []);
+      // Ensure products is an array
+      const productsData = Array.isArray(response.data) ? response.data : [];
+      setProducts(productsData);
     } catch (err) {
       console.error('Error fetching products:', err);
-      setError(err.message || 'Failed to load products');
+      setError('Failed to load products');
       setProducts([]);
     } finally {
       setLoading(false);
@@ -44,9 +40,20 @@ function Products() {
   };
 
   const getImageUrl = (product) => {
-    if (product.imageUrl) return product.imageUrl;
+    // Don't use localhost images on production
+    if (product.image && product.image.includes('localhost')) {
+      return null; // Skip local images
+    }
+    if (product.imageUrl && product.imageUrl.includes('localhost')) {
+      return null;
+    }
+    if (product.imageUrl && product.imageUrl.startsWith('http')) {
+      return product.imageUrl;
+    }
+    if (product.image && product.image.startsWith('http')) {
+      return product.image;
+    }
     if (product.image) {
-      if (product.image.startsWith('http')) return product.image;
       return `${API_URL}${product.image}`;
     }
     return null;
@@ -153,7 +160,7 @@ function Products() {
         <div className="container">
           <div className="products-header">
             <h2>{selectedCategory === 'all' ? t.title : selectedCategory}</h2>
-            <p>{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found</p>
+            <p>{filteredProducts.length} products found</p>
           </div>
 
           {filteredProducts.length === 0 ? (
@@ -173,9 +180,6 @@ function Products() {
                         <img src={imageUrl} alt={product.name} />
                       ) : (
                         <div className="no-image"><i className="ri-image-line"></i></div>
-                      )}
-                      {product.stock > 0 && product.stock < 20 && (
-                        <span className="stock-badge low-stock">{product.stock} left</span>
                       )}
                     </div>
                     <div className="product-info">
