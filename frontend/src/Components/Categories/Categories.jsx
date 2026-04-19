@@ -1,150 +1,173 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useLanguage } from '../../main'
+import { useLanguage } from '../../main';
+import { useCart } from '../../main';
 import './Categories.css';
+
+const API_URL = 'https://enimegebi-backend.onrender.com';
 
 function Categories() {
   const { language } = useLanguage();
+  const { addToCart } = useCart();
   const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const translations = {
-    en: {
-      title: 'Shop by Category',
-      mainTitle: 'Explore Our',
-      mainTitleSpan: 'Categories',
-      products: 'Products',
-      localFarmers: 'Local Farmers',
-      explore: 'Explore',
-      loading: 'Loading categories...'
-    },
-    am: {
-      title: 'በምድብ ይግዙ',
-      mainTitle: 'የእኛን ይመልከቱ',
-      mainTitleSpan: 'ምድቦች',
-      products: 'ምርቶች',
-      localFarmers: 'የአካባቢ ገበሬዎች',
-      explore: 'ያስሱ',
-      loading: 'ምድቦችን በማጫን ላይ...'
-    }
-  };
-
-  const t = translations[language];
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCategories();
+    fetchData();
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get('import.meta.env.VITE_API_URL/api/admin/public-products');
-      const products = response.data;
+      // Fetch products
+      const productsRes = await axios.get(`${API_URL}/api/admin/public-products`);
+      setProducts(productsRes.data);
       
-      const categoryMap = new Map();
-      products.forEach(product => {
-        if (!categoryMap.has(product.category)) {
-          categoryMap.set(product.category, {
-            id: product.category,
-            name: product.category,
-            nameAm: getAmharicName(product.category),
-            count: 0,
-            image: product.imageUrl || product.image || getCategoryImage(product.category),
-            description: language === 'en' 
-              ? `Fresh organic ${product.category.toLowerCase()} products from Ethiopian farmers`
-              : `ትኩስ ኦርጋኒክ ${getAmharicName(product.category).toLowerCase()} ምርቶች ከኢትዮጵያ ገበሬዎች`
-          });
-        }
-        categoryMap.get(product.category).count++;
-      });
+      // Extract unique categories from products
+      const uniqueCategories = [...new Map(productsRes.data.map(p => [p.category, {
+        name: p.category,
+        count: productsRes.data.filter(prod => prod.category === p.category).length,
+        image: p.image || p.imageUrl
+      }])).values()];
       
-      if (categoryMap.size === 0) {
-        setCategories(defaultCategories);
-      } else {
-        setCategories(Array.from(categoryMap.values()));
-      }
+      setCategories(uniqueCategories);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      setCategories(defaultCategories);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getAmharicName = (category) => {
-    const names = {
-      'Coffee': 'ቡና',
-      'Grains': 'እህል',
-      'Honey': 'ማር',
-      'Dairy': 'ወተት',
-      'Fruits': 'ፍራፍሬ',
-      'Vegetables': 'አትክልት',
-      'Spices': 'ቅመም',
-      'Beverages': 'መጠጥ'
-    };
-    return names[category] || category;
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (!imagePath.startsWith('/uploads')) return `${API_URL}/uploads/${imagePath}`;
+    return `${API_URL}${imagePath}`;
   };
 
-  const getCategoryImage = (category) => {
-    const images = {
-      'Coffee': 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=500',
-      'Grains': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=500',
-      'Honey': 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500',
-      'Dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=500',
-      'Fruits': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500',
-      'Vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=500',
-      'Spices': 'https://images.unsplash.com/photo-1532335693593-41c48d1ad3ab?w=500',
-      'Beverages': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500'
-    };
-    return images[category] || '';
+  const getProductsByCategory = (categoryName) => {
+    return products.filter(p => p.category === categoryName && p.status === 'active');
   };
 
-  const defaultCategories = [
-    { id: 1, name: "Coffee", nameAm: "ቡና", count: 12, image: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=500", description: "Premium Ethiopian coffee beans, fresh and aromatic" },
-    { id: 2, name: "Grains", nameAm: "እህል", count: 8, image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=500", description: "Organic teff, wheat, barley and more" },
-    { id: 3, name: "Honey", nameAm: "ማር", count: 5, image: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500", description: "Pure natural honey from Ethiopian highlands" },
-    { id: 4, name: "Dairy", nameAm: "ወተት", count: 6, image: "https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=500", description: "Fresh milk, cheese, and yogurt products" },
-    { id: 5, name: "Fruits", nameAm: "ፍራፍሬ", count: 10, image: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500", description: "Fresh seasonal fruits from local farms" },
-    { id: 6, name: "Vegetables", nameAm: "አትክልት", count: 15, image: "https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=500", description: "Organic vegetables delivered fresh daily" },
-    { id: 7, name: "Spices", nameAm: "ቅመም", count: 7, image: "https://images.unsplash.com/photo-1532335693593-41c48d1ad3ab?w=500", description: "Traditional Ethiopian spices and seasonings" },
-    { id: 8, name: "Beverages", nameAm: "መጠጥ", count: 4, image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500", description: "Fresh juices and traditional drinks" }
-  ];
+  const handleAddToCart = (product) => {
+    addToCart(product);
+    alert(`${product.name} added to cart!`);
+  };
 
-  if (loading) {
+  const translations = {
+    en: {
+      title: 'Shop by Category',
+      subtitle: 'Browse our products by category',
+      backToCategories: 'Back to Categories',
+      products: 'Products',
+      price: 'ETB',
+      addToCart: 'Add to Cart',
+      inStock: 'In Stock',
+      outOfStock: 'Out of Stock'
+    },
+    am: {
+      title: 'በምድብ ይግዙ',
+      subtitle: 'ምርቶችን በምድብ ይመልከቱ',
+      backToCategories: 'ወደ ምድቦች ተመለስ',
+      products: 'ምርቶች',
+      price: 'ብር',
+      addToCart: 'ወደ ጋሪ ጨምር',
+      inStock: 'ክምችት አለ',
+      outOfStock: 'ክምችት የለም'
+    }
+  };
+
+  const t = translations[language];
+
+  // If a category is selected, show products for that category
+  if (selectedCategory) {
+    const categoryProducts = getProductsByCategory(selectedCategory.name);
+    
     return (
-      <div className="categories-loading">
-        <i className="ri-loader-4-line ri-spin"></i>
-        <p>{t.loading}</p>
+      <div className="categories-products-page">
+        <div className="categories-products-header">
+          <button className="back-btn" onClick={() => setSelectedCategory(null)}>
+            <i className="ri-arrow-left-line"></i> {t.backToCategories}
+          </button>
+          <h1>{selectedCategory.name}</h1>
+          <p>{categoryProducts.length} {t.products}</p>
+        </div>
+
+        <div className="products-grid-category">
+          {categoryProducts.map(product => {
+            const imageUrl = getImageUrl(product.image || product.imageUrl);
+            return (
+              <div key={product._id} className="product-card-category">
+                <div className="product-image-category">
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={product.name} />
+                  ) : (
+                    <div className="no-image"><i className="ri-image-line"></i></div>
+                  )}
+                </div>
+                <div className="product-info-category">
+                  <h3>{language === 'en' ? product.name : (product.nameAm || product.name)}</h3>
+                  <div className="product-price-category">{t.price} {product.price}</div>
+                  <div className="product-stock-category">
+                    {product.stock > 0 ? t.inStock : t.outOfStock}
+                  </div>
+                  <button 
+                    className="add-to-cart-btn-category" 
+                    onClick={() => handleAddToCart(product)} 
+                    disabled={product.stock === 0}
+                  >
+                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {categoryProducts.length === 0 && (
+          <div className="no-products-category">
+            <i className="ri-shopping-bag-line"></i>
+            <p>No products found in this category</p>
+          </div>
+        )}
       </div>
     );
   }
 
-  return (
-    <div className='categories_container' id="categories">
-      <small className='categories_title'>{t.title}</small>
-      <h2 className='section_title'>{t.mainTitle} <span>{t.mainTitleSpan}</span></h2>
-      
-      <div className="categories_cards">
-        {categories.map((category) => (
-          <div className="category_card" key={category.id}>
-            <div className="card_front" style={{ backgroundImage: `url(${category.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-              <span className="category_badge">{category.count} {t.products}</span>
-              <button>{language === 'en' ? category.name : category.nameAm}</button>
-            </div>
+  // Show all categories (flip card view)
+  if (loading) return <div className="loading-spinner"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
 
-            <div className="card_back" style={{ backgroundImage: `url(${category.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-              <div className="price"><span>{language === 'en' ? category.name : category.nameAm}</span></div>
-              <div className="card_content">
-                <h3>{language === 'en' ? category.name : category.nameAm}</h3>
-                <p>{language === 'en' ? category.nameAm : category.name}</p>
-                <div className="category_stats">
-                  <span><i className="ri-shopping-bag-line"></i> {category.count} {t.products}</span>
-                  <span><i className="ri-user-line"></i> {t.localFarmers}</span>
-                </div>
-                <p className="category_description">{category.description}</p>
+  return (
+    <div className="categories-container">
+      <div className="categories-header">
+        <h1>{t.title}</h1>
+        <p>{t.subtitle}</p>
+      </div>
+
+      <div className="categories-grid-main">
+        {categories.map((category) => (
+          <div className="category-card-main" key={category.name} onClick={() => setSelectedCategory(category)}>
+            <div className="card-front-main" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+              <span className="category-badge-main">{category.count} Products</span>
+              <div className="category-icon-main">
+                <i className="ri-apps-line"></i>
               </div>
-              <div className="explore_now">
-                <Link to={`/products?category=${category.name}`}>{t.explore} {language === 'en' ? category.name : category.nameAm}<i className="ri-arrow-right-line"></i></Link>
+              <button>{category.name}</button>
+            </div>
+            <div className="card-back-main">
+              <div className="price-main">{category.name}</div>
+              <div className="card-content-main">
+                <h3>{category.name}</h3>
+                <div className="category-stats-main">
+                  <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
+                </div>
+                <p>Click to view all {category.name} products</p>
+              </div>
+              <div className="explore-main">
+                <span>Explore <i className="ri-arrow-right-line"></i></span>
               </div>
             </div>
           </div>
