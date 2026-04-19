@@ -51,9 +51,12 @@ const Projects = () => {
       return;
     }
 
-    const user = JSON.parse(localStorage.getItem('enimegebiUser'));
+    const userData = localStorage.getItem('enimegebiUser');
+    const user = JSON.parse(userData);
     
     try {
+      console.log('Initiating payment for project:', project._id);
+      
       const response = await axios.post(`${API_URL}/api/payment/initialize-project`, {
         projectId: project._id,
         amount: project.price,
@@ -64,14 +67,16 @@ const Projects = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      console.log('Payment response:', response.data);
+
       if (response.data.success) {
         window.location.href = response.data.checkout_url;
       } else {
-        alert('Payment initialization failed');
+        alert(response.data.message || 'Payment initialization failed');
       }
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Failed to process payment');
+      alert(error.response?.data?.message || 'Failed to process payment');
     }
   };
 

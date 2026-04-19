@@ -38,7 +38,7 @@ const Checkout = () => {
         setFormData({
           fullName: parsed.name || '',
           email: parsed.email || '',
-          phone: '',
+          phone: parsed.phone || '',
           address: '',
           city: ''
         });
@@ -74,7 +74,7 @@ const Checkout = () => {
       totalAmount: totals.total,
       shippingAddress: { street: formData.address, city: formData.city, phone: formData.phone },
       paymentMethod: paymentMethod,
-      orderReference: 'ORD-' + Date.now().toString().slice(-8)
+      orderReference: 'ORD-' + Date.now().toString().slice(-8) + Math.random().toString(36).substring(2, 6).toUpperCase()
     };
 
     const response = await axios.post(`${API_URL}/api/orders`, orderData, {
@@ -88,8 +88,17 @@ const Checkout = () => {
     setError('');
     
     try {
-      const order = await createOrder();
       const token = localStorage.getItem('enimegebiToken');
+      console.log('Token exists:', !!token);
+      
+      if (!token) {
+        setError('Please login again');
+        navigate('/auth');
+        return;
+      }
+      
+      const order = await createOrder();
+      console.log('Order created:', order);
       
       const paymentResponse = await axios.post(`${API_URL}/api/payment/initialize-order`, {
         orderId: order.orderReference,
@@ -101,14 +110,17 @@ const Checkout = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      console.log('Payment response:', paymentResponse.data);
+
       if (paymentResponse.data.success) {
         sessionStorage.setItem('pendingOrderRef', order.orderReference);
         window.location.href = paymentResponse.data.checkout_url;
       } else {
-        throw new Error(paymentResponse.data.message);
+        throw new Error(paymentResponse.data.message || 'Payment initialization failed');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Payment initialization failed');
+      console.error('Chapa error:', err);
+      setError(err.response?.data?.message || err.message || 'Payment initialization failed');
       setLoading(false);
     }
   };
@@ -122,6 +134,7 @@ const Checkout = () => {
       clearCart();
       navigate('/orders?payment=success');
     } catch (err) {
+      console.error('Order error:', err);
       setError('Failed to place order');
     } finally {
       setLoading(false);
