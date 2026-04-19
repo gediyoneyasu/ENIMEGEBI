@@ -1205,3 +1205,109 @@ input:checked + .slider:before {
     height: 120px;
   }
 }
+
+/* Project Management Styles */
+.project-management {
+  padding: 20px;
+}
+
+.projects-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.project-admin-card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  transition: transform 0.3s;
+}
+
+.project-admin-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.project-admin-image {
+  width: 100%;
+  height: 150px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.project-admin-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.file-icon {
+  text-align: center;
+  font-size: 48px;
+  color: #c9a66b;
+}
+
+.file-icon span {
+  display: block;
+  font-size: 12px;
+}
+
+.project-admin-info h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.project-admin-info p {
+  margin: 5px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.project-price {
+  color: #c9a66b !important;
+  font-weight: bold;
+}
+
+.project-admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.pending-purchases {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.pending-purchases h4 {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.pending-purchase {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #fff8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.pending-purchase button {
+  padding: 4px 12px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

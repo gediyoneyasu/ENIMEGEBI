@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { uploadProduct } = require('../config/upload');
+const { uploadProjectFile } = require('../config/upload');
 const {
   getPublicProjects,
   getProjectById,
@@ -23,8 +23,8 @@ router.get('/public/:id', getProjectById);
 router.use(protect);
 router.get('/', getAllProjects);
 router.get('/my-projects', getUserProjects);
-router.post('/', uploadProduct.single('image'), createProject);
-router.put('/:id', uploadProduct.single('image'), updateProject);
+router.post('/', uploadProjectFile.single('file'), createProject);
+router.put('/:id', uploadProjectFile.single('file'), updateProject);
 router.delete('/:id', deleteProject);
 router.post('/purchase', purchaseProject);
 router.post('/approve-purchase', approvePurchase);

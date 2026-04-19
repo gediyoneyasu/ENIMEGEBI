@@ -23,7 +23,6 @@ const getProjectById = async (req, res) => {
       p.user.toString() === req.user.id && p.isUnlocked === true
     );
     
-    // If user doesn't have access and is not admin, return limited info
     if (!hasAccess && req.user.role !== 'admin') {
       return res.json({
         success: true,
@@ -35,13 +34,12 @@ const getProjectById = async (req, res) => {
           descriptionAm: project.descriptionAm,
           image: project.image,
           price: project.price,
-          status: 'locked',
-          contentType: project.contentType
+          fileType: project.fileType,
+          status: 'locked'
         }
       });
     }
     
-    // Return full project with content
     res.json({ success: true, project });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -58,24 +56,25 @@ const getAllProjects = async (req, res) => {
   }
 };
 
-// Create project
+// Create project with file upload
 const createProject = async (req, res) => {
   try {
-    let projectData;
-    if (req.body.project) {
-      projectData = JSON.parse(req.body.project);
-    } else {
-      projectData = req.body;
-    }
+    let projectData = JSON.parse(req.body.project);
     
+    // Handle uploaded file
     if (req.file) {
-      projectData.image = `/uploads/projects/${req.file.filename}`;
+      projectData.fileUrl = `/uploads/projects/${req.file.filename}`;
+      // Determine file type from extension
+      const ext = req.file.originalname.split('.').pop().toLowerCase();
+      if (ext === 'pdf') projectData.fileType = 'pdf';
+      else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) projectData.fileType = 'video';
+      else projectData.fileType = 'image';
     }
     
     const project = await Project.create(projectData);
     res.status(201).json({ success: true, project });
   } catch (error) {
-    console.error('Error creating project:', error);
+    console.error('Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -88,15 +87,14 @@ const updateProject = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
     
-    let projectData;
-    if (req.body.project) {
-      projectData = JSON.parse(req.body.project);
-    } else {
-      projectData = req.body;
-    }
+    let projectData = JSON.parse(req.body.project);
     
     if (req.file) {
-      projectData.image = `/uploads/projects/${req.file.filename}`;
+      projectData.fileUrl = `/uploads/projects/${req.file.filename}`;
+      const ext = req.file.originalname.split('.').pop().toLowerCase();
+      if (ext === 'pdf') projectData.fileType = 'pdf';
+      else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) projectData.fileType = 'video';
+      else projectData.fileType = 'image';
     }
     
     Object.assign(project, projectData);
@@ -128,7 +126,6 @@ const purchaseProject = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
     
-    // Check if already purchased
     const alreadyPurchased = project.purchasedBy.some(p => p.user.toString() === userId);
     if (alreadyPurchased) {
       return res.json({ success: true, message: 'Already purchased, waiting for approval' });
@@ -148,7 +145,7 @@ const purchaseProject = async (req, res) => {
   }
 };
 
-// Approve purchase (admin)
+// Approve purchase
 const approvePurchase = async (req, res) => {
   try {
     const { projectId, userId } = req.body;
@@ -171,7 +168,7 @@ const approvePurchase = async (req, res) => {
   }
 };
 
-// Approve project (admin)
+// Approve project
 const approveProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);

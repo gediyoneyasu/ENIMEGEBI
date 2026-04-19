@@ -39,24 +39,23 @@ const ProjectDetail = () => {
   const renderContent = () => {
     if (!project) return null;
     
-    switch (project.contentType) {
+    switch (project.fileType) {
       case 'youtube':
         return (
-          <div className="project-video-container">
+          <div className="project-content-viewer">
             <iframe
               src={`https://www.youtube.com/embed/${project.youtubeId}`}
               title={project.title}
               frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
           </div>
         );
       case 'pdf':
         return (
-          <div className="project-pdf-container">
+          <div className="project-content-viewer">
             <iframe
-              src={project.pdfUrl}
+              src={`${API_URL}${project.fileUrl}#toolbar=0`}
               title={project.title}
               width="100%"
               height="600px"
@@ -65,26 +64,18 @@ const ProjectDetail = () => {
         );
       case 'video':
         return (
-          <div className="project-video-container">
+          <div className="project-content-viewer">
             <video controls width="100%">
-              <source src={project.contentUrl} type="video/mp4" />
+              <source src={`${API_URL}${project.fileUrl}`} />
               Your browser does not support the video tag.
             </video>
-          </div>
-        );
-      case 'link':
-        return (
-          <div className="project-link-container">
-            <a href={project.contentUrl} target="_blank" rel="noopener noreferrer" className="project-link">
-              {project.contentUrl}
-            </a>
           </div>
         );
       case 'image':
       default:
         return (
-          <div className="project-image-container">
-            <img src={`${API_URL}${project.image}`} alt={project.title} />
+          <div className="project-content-viewer">
+            <img src={`${API_URL}${project.fileUrl || project.image}`} alt={project.title} />
           </div>
         );
     }
@@ -134,7 +125,7 @@ const ProjectDetail = () => {
           </button>
         </div>
       ) : (
-        <div className="project-content">
+        <div className="project-content-section">
           <h3>{t.content}</h3>
           {renderContent()}
         </div>

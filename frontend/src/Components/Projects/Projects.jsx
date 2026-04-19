@@ -10,10 +10,12 @@ const Projects = () => {
   const { language } = useLanguage();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [myProjects, setMyProjects] = useState([]);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchProjects();
+    fetchMyProjects();
   }, []);
 
   const fetchProjects = async () => {
@@ -26,6 +28,22 @@ const Projects = () => {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMyProjects = async () => {
+    try {
+      const token = localStorage.getItem('enimegebiToken');
+      if (token) {
+        const response = await axios.get(`${API_URL}/api/projects/my-projects`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setMyProjects(response.data.projects);
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 
@@ -47,7 +65,7 @@ const Projects = () => {
 
       if (response.data.success) {
         alert('Purchase request sent! Admin will approve after payment verification.');
-        fetchProjects();
+        fetchMyProjects();
       }
     } catch (error) {
       console.error('Purchase error:', error);
@@ -65,30 +83,35 @@ const Projects = () => {
     en: {
       title: 'Projects',
       subtitle: 'Browse our premium projects and resources',
+      allProjects: 'All Projects',
+      myProjects: 'My Projects',
       price: 'Price',
       unlock: 'Unlock Project',
       locked: 'Locked',
       view: 'View Project',
       noProjects: 'No projects available',
-      comingSoon: 'More projects coming soon',
+      myProjectsEmpty: 'You haven\'t purchased any projects yet',
       purchase: 'Purchase',
       pending: 'Pending Approval'
     },
     am: {
       title: 'ፕሮጀክቶች',
       subtitle: 'የእኛን ፕሪሚየም ፕሮጀክቶች ይመልከቱ',
+      allProjects: 'ሁሉም ፕሮጀክቶች',
+      myProjects: 'የኔ ፕሮጀክቶች',
       price: 'ዋጋ',
       unlock: 'ፕሮጀክት ክፈት',
       locked: 'ተቆልፏል',
       view: 'ፕሮጀክት ይመልከቱ',
       noProjects: 'ምንም ፕሮጀክቶች የሉም',
-      comingSoon: 'ተጨማሪ ፕሮጀክቶች በቅርቡ',
+      myProjectsEmpty: 'እስካሁን ምንም ፕሮጀክት አልገዙም',
       purchase: 'ግዛ',
       pending: 'በመጠባበቅ ላይ'
     }
   };
 
   const t = translations[language];
+  const displayProjects = activeTab === 'all' ? projects : myProjects;
 
   if (loading) {
     return (
@@ -106,25 +129,34 @@ const Projects = () => {
         <p>{t.subtitle}</p>
       </div>
 
-      {projects.length === 0 ? (
+      <div className="projects-tabs">
+        <button className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
+          {t.allProjects}
+        </button>
+        <button className={`tab-btn ${activeTab === 'my' ? 'active' : ''}`} onClick={() => setActiveTab('my')}>
+          {t.myProjects}
+        </button>
+      </div>
+
+      {displayProjects.length === 0 ? (
         <div className="no-projects">
           <i className="ri-folder-image-line"></i>
-          <h3>{t.noProjects}</h3>
+          <h3>{activeTab === 'all' ? t.noProjects : t.myProjectsEmpty}</h3>
           <p>{t.comingSoon}</p>
         </div>
       ) : (
         <div className="projects-grid">
-          {projects.map(project => (
+          {displayProjects.map(project => (
             <div key={project._id} className="project-card">
               <div className="project-image">
-                {getImageUrl(project.image) ? (
-                  <img src={getImageUrl(project.image)} alt={project.title} />
+                {getImageUrl(project.image || project.fileUrl) ? (
+                  <img src={getImageUrl(project.image || project.fileUrl)} alt={project.title} />
                 ) : (
                   <div className="no-image-placeholder">
                     <i className="ri-image-line"></i>
                   </div>
                 )}
-                {project.status === 'locked' && (
+                {project.status === 'locked' && !project.isUnlocked && (
                   <div className="locked-overlay">
                     <i className="ri-lock-line"></i>
                     <span>{t.locked}</span>
@@ -135,14 +167,14 @@ const Projects = () => {
                 <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
                 <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
                 <div className="project-price">${project.price}</div>
-                {project.status === 'locked' ? (
-                  <button className="unlock-btn" onClick={() => handlePurchase(project)}>
-                    <i className="ri-lock-unlock-line"></i> {t.unlock} - ${project.price}
-                  </button>
-                ) : (
+                {activeTab === 'my' || project.isUnlocked ? (
                   <Link to={`/projects/${project._id}`} className="view-btn">
                     <i className="ri-eye-line"></i> {t.view}
                   </Link>
+                ) : (
+                  <button className="unlock-btn" onClick={() => handlePurchase(project)}>
+                    <i className="ri-lock-unlock-line"></i> {t.unlock} - ${project.price}
+                  </button>
                 )}
               </div>
             </div>
