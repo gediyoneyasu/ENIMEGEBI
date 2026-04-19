@@ -7,7 +7,6 @@ import Users from './Users';
 import Products from './Products';
 import Orders from './Orders';
 import Farmers from './Farmers';
-import CategoryManagement from './CategoryManagement/CategoryManagement';
 import ContactMessages from './ContactMessages';
 import SystemSettings from './SystemSettings';
 import SliderManagement from './HomeControl/SliderManagement';
@@ -56,7 +55,6 @@ const Admin = () => {
   const menuItems = [
     { path: '/admin', name: 'Dashboard', icon: 'ri-dashboard-line' },
     { path: '/admin/users', name: 'Users', icon: 'ri-user-settings-line' },
-    { path: '/admin/categories', name: 'Categories', icon: 'ri-apps-line' },
     { path: '/admin/products', name: 'Products', icon: 'ri-shopping-bag-3-line' },
     { path: '/admin/orders', name: 'Orders', icon: 'ri-shopping-cart-2-line' },
     { path: '/admin/farmers', name: 'Farmers', icon: 'ri-plant-line' },
@@ -73,7 +71,6 @@ const Admin = () => {
     const titles = {
       '/admin': 'Dashboard',
       '/admin/users': 'Users Management',
-      '/admin/categories': 'Category Management',
       '/admin/products': 'Products Management',
       '/admin/orders': 'Orders Management',
       '/admin/farmers': 'Farmers Management',
@@ -114,7 +111,6 @@ const Admin = () => {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
-            <Route path="/categories" element={<CategoryManagement />} />
             <Route path="/products" element={<Products />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/farmers" element={<Farmers />} />
