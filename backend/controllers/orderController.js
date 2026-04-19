@@ -1,85 +1,54 @@
 const Order = require('../models/Order');
-const Product = require('../models/Product');
+const User = require('../models/User');
 
-// Generate unique order ID
-const generateOrderId = () => {
-  return 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-};
-
-// @desc    Create order
-// @route   POST /api/orders
-// @access  Private
+// Create order
 const createOrder = async (req, res) => {
   try {
-    const { items, deliveryMethod, address, city, pickupPoint, paymentMethod, notes } = req.body;
-    
-    let subtotal = 0;
-    const orderItems = [];
-    
-    for (const item of items) {
-      const product = await Product.findById(item.id);
-      if (product) {
-        orderItems.push({
-          product: product._id,
-          name: product.name,
-          nameAm: product.nameAm,
-          price: product.price,
-          quantity: item.quantity,
-          unit: product.unit,
-          image: product.image
-        });
-        subtotal += product.price * item.quantity;
-      }
-    }
-    
-    const deliveryFee = deliveryMethod === 'delivery' ? (subtotal > 500 ? 0 : 50) : 0;
-    const tax = subtotal * 0.1;
-    const total = subtotal + deliveryFee + tax;
+    const { items, totalAmount, shippingAddress, paymentMethod } = req.body;
     
     const order = await Order.create({
-      orderId: generateOrderId(),
-      user: req.user._id,
-      items: orderItems,
-      subtotal,
-      deliveryFee,
-      tax,
-      total,
-      paymentMethod,
-      deliveryMethod,
-      address: deliveryMethod === 'delivery' ? address : '',
-      city: deliveryMethod === 'delivery' ? city : '',
-      pickupPoint: deliveryMethod === 'pickup' ? pickupPoint : '',
-      notes,
+      user: req.user.id,
+      userEmail: req.user.email,
+      userName: req.user.name,
+      items: items,
+      totalAmount: totalAmount,
+      shippingAddress: shippingAddress,
+      paymentMethod: paymentMethod || 'cash',
       paymentStatus: 'pending',
-      orderStatus: 'pending'
+      orderStatus: 'pending',
+      orderReference: 'ORD-' + Date.now().toString().slice(-8) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase()
     });
     
-    res.status(201).json({ success: true, order });
+    res.status(201).json({ 
+      success: true, 
+      message: 'Order created successfully',
+      order 
+    });
   } catch (error) {
+    console.error('Order creation error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Get my orders
-// @route   GET /api/orders/my-orders
-// @access  Private
-const getMyOrders = async (req, res) => {
+// Get user orders
+const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort('-createdAt');
+    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json({ success: true, orders });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Get order by ID
-// @route   GET /api/orders/:id
-// @access  Private
-const getOrderById = async (req, res) => {
+// Get order by reference
+const getOrderByReference = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findOne({ orderReference: req.params.reference });
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    if (order.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
     res.json({ success: true, order });
   } catch (error) {
@@ -87,21 +56,44 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// @desc    Update order status (Admin)
-// @route   PUT /api/orders/:id/status
-// @access  Private/Admin
+// Update order status
 const updateOrderStatus = async (req, res) => {
   try {
-    const { orderStatus } = req.body;
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { orderStatus },
-      { new: true }
-    );
-    res.json({ success: true, order });
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    order.orderStatus = req.body.status;
+    await order.save();
+    res.json({ success: true, message: 'Order status updated', order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-module.exports = { createOrder, getMyOrders, getOrderById, updateOrderStatus };
+// Update payment status
+const updatePaymentStatus = async (req, res) => {
+  try {
+    const order = await Order.findOne({ orderReference: req.params.reference });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    order.paymentStatus = req.body.paymentStatus;
+    if (req.body.paymentStatus === 'paid') {
+      order.orderStatus = 'processing';
+      order.paidAt = new Date();
+    }
+    await order.save();
+    res.json({ success: true, message: 'Payment status updated', order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  createOrder,
+  getUserOrders,
+  getOrderByReference,
+  updateOrderStatus,
+  updatePaymentStatus
+};
