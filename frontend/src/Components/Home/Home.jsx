@@ -33,19 +33,36 @@ function Home() {
       const response = await axios.get(`${API_URL}/api/home/public-data`);
       if (response.data.success) {
         setSliders(response.data.sliders || []);
-        // Get featured products (limit to 8)
-        setFeaturedProducts(response.data.featuredProducts?.slice(0, 8) || []);
+        
+        // Get products and ensure images are properly formatted
+        const products = response.data.featuredProducts || [];
+        const productsWithImages = products.map(product => ({
+          ...product,
+          imageUrl: product.imageUrl || (product.image ? `${API_URL}${product.image}` : null)
+        }));
+        setFeaturedProducts(productsWithImages.slice(0, 8));
+        
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
         
         // Get unique categories from products
         const allProducts = response.data.featuredProducts || [];
-        const uniqueCategories = [...new Map(allProducts.map(p => [p.category, { 
-          name: p.category, 
-          count: allProducts.filter(prod => prod.category === p.category).length,
-          image: p.image || p.imageUrl
-        }])).values()];
-        setCategories(uniqueCategories.slice(0, 6));
+        const categoryMap = new Map();
+        
+        allProducts.forEach(product => {
+          if (!categoryMap.has(product.category)) {
+            const categoryProduct = allProducts.find(p => p.category === product.category);
+            categoryMap.set(product.category, {
+              name: product.category,
+              count: allProducts.filter(p => p.category === product.category).length,
+              image: categoryProduct?.image || categoryProduct?.imageUrl,
+              nameAm: getAmharicName(product.category),
+              description: `Fresh organic ${product.category.toLowerCase()} products`
+            });
+          }
+        });
+        
+        setCategories(Array.from(categoryMap.values()).slice(0, 8));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -54,10 +71,35 @@ function Home() {
     }
   };
 
+  const getAmharicName = (category) => {
+    const names = {
+      'Coffee': 'ቡና', 'Grains': 'እህል', 'Honey': 'ማር', 'Dairy': 'ወተት',
+      'Fruits': 'ፍራፍሬ', 'Vegetables': 'አትክልት', 'Spices': 'ቅመም', 'Beverages': 'መጠጥ'
+    };
+    return names[category] || category;
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'Coffee': 'ri-cup-line', 'Grains': 'ri-seedling-line', 'Honey': 'ri-drop-line',
+      'Dairy': 'ri-drinks-line', 'Fruits': 'ri-apple-line', 'Vegetables': 'ri-leaf-line',
+      'Spices': 'ri-fire-line', 'Beverages': 'ri-drinks-2-line'
+    };
+    return icons[category] || 'ri-apps-line';
+  };
+
+  const getProductImage = (product) => {
+    if (product.imageUrl) return product.imageUrl;
+    if (product.image) {
+      if (product.image.startsWith('http')) return product.image;
+      return `${API_URL}${product.image}`;
+    }
+    return null;
+  };
+
   const translations = {
     en: {
-      shopNow: 'Shop Now',
-      callNow: 'Call Now',
+      shopNow: 'Shop Now', callNow: 'Call Now',
       featuresTitle: 'Why Choose Enimegebi?',
       features: [
         { icon: 'ri-farm-line', title: 'Direct from Farmers', desc: 'No middlemen, better prices' },
@@ -74,8 +116,7 @@ function Home() {
       getStarted: 'Get Started'
     },
     am: {
-      shopNow: 'አሁን ይግዙ',
-      callNow: 'አሁን ይደውሉ',
+      shopNow: 'አሁን ይግዙ', callNow: 'አሁን ይደውሉ',
       featuresTitle: 'ለምን እንመገቢን ይመርጣሉ?',
       features: [
         { icon: 'ri-farm-line', title: 'ከአርሶ አደር በቀጥታ', desc: 'ምንም ደላላ የለም, የተሻለ ዋጋ' },
@@ -135,27 +176,38 @@ function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
+      {/* Categories Section - FLIP CARD DESIGN */}
       <section className="categories-section-home">
         <div className="container">
           <div className="section-header-home">
             <h2 className="section-title">{t.categoriesTitle}</h2>
             <Link to="/categories" className="view-all-link">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
           </div>
-          <div className="categories-grid-home">
-            {categories.map((category, index) => (
-              <Link to={`/products?category=${category.name}`} key={index} className="category-card-home">
-                <div className="category-card-front">
-                  <div className="category-image-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-                    <div className="category-overlay"></div>
-                  </div>
-                  <div className="category-info-home">
+          
+          <div className="categories-cards-home">
+            {categories.map((category, idx) => (
+              <div className="category-card-home" key={idx}>
+                <div className="card-front-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+                  <span className="category-badge-home">{category.count} Products</span>
+                  <div className="category-icon-home"><i className={getCategoryIcon(category.name)}></i></div>
+                  <button>{category.name}</button>
+                </div>
+                <div className="card-back-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+                  <div className="price-home"><i className={getCategoryIcon(category.name)}></i><span>{category.name}</span></div>
+                  <div className="card-content-home">
                     <h3>{category.name}</h3>
-                    <p>{category.count} Products</p>
-                    <span className="explore-btn">Explore <i className="ri-arrow-right-line"></i></span>
+                    <p className="amharic-name-home">{category.nameAm}</p>
+                    <div className="category-stats-home">
+                      <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
+                      <span><i className="ri-user-line"></i> Local Farmers</span>
+                    </div>
+                    <p className="category-description-home">{category.description}</p>
+                  </div>
+                  <div className="explore-now-home">
+                    <Link to={`/products?category=${category.name}`}>Explore {category.name}<i className="ri-arrow-right-line"></i></Link>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
@@ -169,21 +221,33 @@ function Home() {
             <Link to="/products" className="view-all-link">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
           </div>
           <div className="products-grid-home">
-            {featuredProducts.map(product => (
-              <div key={product._id} className="product-card-home">
-                <div className="product-image-home">
-                  <img src={getImageUrl(product.imageUrl || product.image) || 'https://placehold.co/400x400/e8c88a/1a1a1e?text=Enimegebi'} alt={product.name} />
-                  {product.stock < 20 && product.stock > 0 && <span className="stock-badge">{product.stock} left</span>}
+            {featuredProducts.map(product => {
+              const productImage = getProductImage(product);
+              return (
+                <div key={product._id} className="product-card-home">
+                  <div className="product-image-home">
+                    {productImage ? (
+                      <img src={productImage} alt={product.name} />
+                    ) : (
+                      <div className="no-image-placeholder">
+                        <i className="ri-image-line"></i>
+                        <span>No Image</span>
+                      </div>
+                    )}
+                    {product.stock < 20 && product.stock > 0 && (
+                      <span className="stock-badge">{product.stock} left</span>
+                    )}
+                  </div>
+                  <div className="product-info-home">
+                    <h3>{product.name}</h3>
+                    <div className="product-price-home">ETB {product.price}</div>
+                    <button onClick={() => addToCart(product)} className="add-to-cart-btn-home">
+                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                    </button>
+                  </div>
                 </div>
-                <div className="product-info-home">
-                  <h3>{product.name}</h3>
-                  <div className="product-price-home">ETB {product.price}</div>
-                  <button onClick={() => addToCart(product)} className="add-to-cart-btn-home">
-                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -195,9 +259,7 @@ function Home() {
           <div className="testimonials-grid-home">
             {testimonials.slice(0, 3).map(testimonial => (
               <div key={testimonial._id} className="testimonial-card-home">
-                <div className="testimonial-image-home">
-                  <img src={getImageUrl(testimonial.image)} alt={testimonial.name} />
-                </div>
+                <div className="testimonial-image-home"><img src={getImageUrl(testimonial.image)} alt={testimonial.name} /></div>
                 <div className="testimonial-rating-home">
                   {[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}
                 </div>

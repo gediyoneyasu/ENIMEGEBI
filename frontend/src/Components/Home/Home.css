@@ -1754,3 +1754,271 @@
   .categories-grid-home { grid-template-columns: 1fr; }
   .category-image-home { height: 120px; }
 }
+
+/* ============================================
+   CATEGORIES FLIP CARD SECTION - SAME AS CATEGORIES PAGE
+============================================ */
+.categories-section-home {
+  padding: 80px 0;
+  background: white;
+}
+
+.categories-cards-home {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  perspective: 1000px;
+}
+
+.category-card-home {
+  height: 380px;
+  position: relative;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+  border-radius: 20px;
+}
+
+.category-card-home:hover {
+  transform: rotateY(180deg);
+}
+
+.card-front-home,
+.card-back-home {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.12);
+}
+
+.card-front-home {
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  pointer-events: none;
+}
+
+.card-front-home .category-badge-home,
+.card-front-home button {
+  pointer-events: auto;
+}
+
+.card-front-home::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  border-radius: 0 0 20px 20px;
+  z-index: 1;
+}
+
+.card-front-home button {
+  position: relative;
+  z-index: 2;
+  background: white;
+  color: #1a1a1a;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.card-front-home button:hover {
+  background: #c9a66b;
+  color: white;
+}
+
+.category-badge-home {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 3;
+  background: rgba(201, 166, 107, 0.95);
+  color: #1a1a1a;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.category-icon-home {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 70px;
+  height: 70px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-icon-home i {
+  font-size: 35px;
+  color: #c9a66b;
+}
+
+.card-back-home {
+  background-size: cover;
+  background-position: center;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-back-home::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.92));
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  z-index: 1;
+}
+
+.card-back-home::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  border: 2px solid rgba(201,166,107,0.3);
+  border-radius: 20px;
+  z-index: 1;
+}
+
+.price-home {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(90deg, #c9a66b, #e8c88a);
+  color: #1a1a1a;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.card-content-home {
+  position: relative;
+  z-index: 2;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.card-content-home h3 {
+  font-size: 1.4rem;
+  margin-bottom: 5px;
+}
+
+.amharic-name-home {
+  font-size: 1rem;
+  color: #c9a66b;
+  margin-bottom: 10px;
+}
+
+.category-stats-home {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 10px 0;
+}
+
+.category-stats-home span {
+  font-size: 0.8rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.category-description-home {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 10px 0;
+}
+
+.explore-now-home {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+}
+
+.explore-now-home a {
+  background: linear-gradient(90deg, #c9a66b, #e8c88a);
+  color: #1a1a1a;
+  padding: 8px 20px;
+  border-radius: 50px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.explore-now-home a:hover {
+  gap: 12px;
+}
+
+/* Responsive for Flip Cards */
+@media (max-width: 1200px) {
+  .categories-cards-home { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 992px) {
+  .categories-cards-home { grid-template-columns: repeat(2, 1fr); }
+  .category-card-home { height: 360px; }
+}
+
+@media (max-width: 576px) {
+  .categories-cards-home { grid-template-columns: 1fr; }
+  .category-card-home { height: 380px; max-width: 320px; margin: 0 auto; }
+}
+
+.no-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+  color: #999;
+}
+
+.no-image-placeholder i {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.no-image-placeholder span {
+  font-size: 12px;
+}
