@@ -56,10 +56,6 @@ const productSchema = new mongoose.Schema({
     enum: ['active', 'inactive'],
     default: 'active'
   },
-  farmer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
   createdAt: {
     type: Date,
     default: Date.now

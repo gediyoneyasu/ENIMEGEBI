@@ -62,8 +62,9 @@ const createProduct = async (req, res) => {
     }
     
     if (req.file) {
-      productData.image = `/uploads/products/${req.file.filename}`;
-      productData.imageUrl = `https://enimegebi-backend.onrender.com/uploads/products/${req.file.filename}`;
+      const imagePath = `/uploads/products/${req.file.filename}`;
+      productData.image = imagePath;
+      productData.imageUrl = `https://enimegebi-backend.onrender.com${imagePath}`;
     }
     
     const product = await Product.create(productData);
@@ -87,8 +88,9 @@ const updateProduct = async (req, res) => {
     }
     
     if (req.file) {
-      productData.image = `/uploads/products/${req.file.filename}`;
-      productData.imageUrl = `https://enimegebi-backend.onrender.com/uploads/products/${req.file.filename}`;
+      const imagePath = `/uploads/products/${req.file.filename}`;
+      productData.image = imagePath;
+      productData.imageUrl = `https://enimegebi-backend.onrender.com${imagePath}`;
     }
     
     Object.assign(product, productData);

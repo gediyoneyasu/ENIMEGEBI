@@ -18,6 +18,7 @@ function Home() {
   const { addToCart } = useCart();
   const [sliders, setSliders] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
@@ -34,6 +35,21 @@ function Home() {
         setFeaturedProducts(response.data.featuredProducts?.slice(0, 8) || []);
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
+        
+        // Extract categories from products
+        const allProducts = response.data.featuredProducts || [];
+        const categoryMap = new Map();
+        
+        allProducts.forEach(product => {
+          if (!categoryMap.has(product.category)) {
+            categoryMap.set(product.category, {
+              name: product.category,
+              count: allProducts.filter(p => p.category === product.category).length,
+              image: product.image || product.imageUrl
+            });
+          }
+        });
+        setCategories(Array.from(categoryMap.values()).slice(0, 6));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -48,6 +64,20 @@ function Home() {
     return `${API_URL}${imagePath}`;
   };
 
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'Coffee': 'ri-cup-line',
+      'Grains': 'ri-seedling-line',
+      'Honey': 'ri-drop-line',
+      'Dairy': 'ri-drinks-line',
+      'Fruits': 'ri-apple-line',
+      'Vegetables': 'ri-leaf-line',
+      'Spices': 'ri-fire-line',
+      'Beverages': 'ri-drinks-2-line'
+    };
+    return icons[category] || 'ri-apps-line';
+  };
+
   const translations = {
     en: {
       shopNow: 'Shop Now',
@@ -60,6 +90,7 @@ function Home() {
         { icon: 'ri-secure-payment-line', title: 'Secure Payment', desc: 'Safe and easy checkout' }
       ],
       categoriesTitle: 'Shop by Category',
+      viewAllCategories: 'View All Categories',
       featuredProducts: 'Featured Products',
       viewAll: 'View All Products',
       addToCart: 'Add to Cart',
@@ -77,6 +108,7 @@ function Home() {
         { icon: 'ri-secure-payment-line', title: 'ደህንነቱ የተጠበቀ ክፍያ', desc: 'አስተማማኝ እና ቀላል ቼክአውት' }
       ],
       categoriesTitle: 'በምድብ ይግዙ',
+      viewAllCategories: 'ሁሉንም ምድቦች ይመልከቱ',
       featuredProducts: 'ታዋቂ ምርቶች',
       viewAll: 'ሁሉንም ምርቶች ይመልከቱ',
       addToCart: 'ወደ ጋሪ ጨምር',
@@ -91,6 +123,7 @@ function Home() {
 
   return (
     <div className="home-page">
+      {/* Hero Slider Section */}
       <div className="hero-slider">
         <Swiper modules={[Autoplay, Pagination, Navigation, EffectFade]} autoplay={{ delay: 4000 }} loop={true} effect="fade" pagination={{ clickable: true }} navigation={true} className="hero-swiper">
           {sliders.map((slider, index) => (
@@ -110,6 +143,7 @@ function Home() {
         </Swiper>
       </div>
 
+      {/* Features Section */}
       <section className="features-section">
         <div className="container">
           <h2 className="section-title">{t.featuresTitle}</h2>
@@ -125,6 +159,49 @@ function Home() {
         </div>
       </section>
 
+      {/* Categories Section */}
+     {/* Categories Section - Flip Card Design */}
+<section className="categories-section">
+  <div className="container">
+    <div className="section-header">
+      <h2>{t.categoriesTitle}</h2>
+      <Link to="/categories" className="view-all">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
+    </div>
+    <div className="categories-grid">
+      {categories.map((category, idx) => (
+        <div className="category-item" key={idx}>
+          {/* Front Card */}
+          <div className="category-card">
+            <div className="category-icon">
+              <i className={getCategoryIcon(category.name)}></i>
+            </div>
+            <h3>{category.name}</h3>
+            <p>{category.count} Products</p>
+          </div>
+          {/* Back Card */}
+          <div className="card-back">
+            <div className="back-price">{category.name}</div>
+            <div className="back-content">
+              <h3>{category.name}</h3>
+              <p>Fresh organic {category.name.toLowerCase()} products</p>
+              <div className="back-stats">
+                <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
+                <span><i className="ri-user-line"></i> Local Farmers</span>
+              </div>
+            </div>
+            <div className="explore-link">
+              <Link to={`/products?category=${category.name}`}>
+                Explore <i className="ri-arrow-right-line"></i>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+      {/* Featured Products Section */}
       <section className="featured-section">
         <div className="container">
           <div className="section-header">
@@ -141,7 +218,7 @@ function Home() {
                   <h3>{product.name}</h3>
                   <div className="product-price">ETB {product.price}</div>
                   <button onClick={() => addToCart(product)} className="add-to-cart-btn">
-                    <i className="ri-shopping-cart-line"></i>
+                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
                   </button>
                 </div>
               </div>
@@ -150,13 +227,16 @@ function Home() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
       <section className="testimonials-section">
         <div className="container">
           <h2 className="section-title">{t.testimonials}</h2>
           <div className="testimonials-grid">
             {testimonials.slice(0, 3).map(testimonial => (
               <div key={testimonial._id} className="testimonial-card">
-                <div className="testimonial-image"><img src={getImageUrl(testimonial.image)} alt={testimonial.name} /></div>
+                <div className="testimonial-image">
+                  <img src={getImageUrl(testimonial.image)} alt={testimonial.name} />
+                </div>
                 <div className="testimonial-rating">
                   {[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}
                 </div>
@@ -169,6 +249,7 @@ function Home() {
         </div>
       </section>
 
+      {/* CTA Section */}
       <section className="cta-section">
         <div className="container">
           <div className="cta-content">

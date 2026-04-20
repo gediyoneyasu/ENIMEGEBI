@@ -70,18 +70,12 @@ const Products = () => {
       
       if (editingProduct) {
         await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, submitData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         setAlert({ type: 'success', message: 'Product updated successfully!' });
       } else {
         await axios.post(`${API_URL}/api/admin/products`, submitData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         setAlert({ type: 'success', message: 'Product added successfully!' });
       }
@@ -91,7 +85,7 @@ const Products = () => {
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setAlert({ type: 'error', message: error.response?.data?.message || 'Failed to save product' });
+      setAlert({ type: 'error', message: 'Failed to save product' });
     }
   };
 
@@ -122,7 +116,7 @@ const Products = () => {
       description: product.description || '',
       status: product.status
     });
-    setImagePreview(product.image ? product.image : '');
+    setImagePreview(product.image ? `${API_URL}${product.image}` : '');
     setImageFile(null);
     setShowModal(true);
   };
@@ -141,8 +135,6 @@ const Products = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingProduct(null);
-    setImageFile(null);
-    setImagePreview('');
   };
 
   if (loading) return <div>Loading products...</div>;
@@ -161,14 +153,14 @@ const Products = () => {
           <div key={product._id} className="product-card">
             <div className="product-image">
               {product.image ? (
-                <img src={product.image} alt={product.name} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
+                <img src={`${API_URL}${product.image}`} alt={product.name} />
               ) : (
                 <div className="no-image"><i className="ri-image-line"></i></div>
               )}
             </div>
             <div className="product-info">
               <h3>{product.name}</h3>
-              <p>{product.category}</p>
+              <p className="product-category">{product.category}</p>
               <div className="product-price">${product.price}</div>
               <div className="product-actions">
                 <button className="btn-edit" onClick={() => handleEdit(product)}>Edit</button>
@@ -181,14 +173,12 @@ const Products = () => {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-content">
             <h3>{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Product Image</label>
-                {imagePreview && (
-                  <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginBottom: '10px' }} />
-                )}
+                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />}
                 <input type="file" accept="image/*" onChange={handleImageChange} />
               </div>
               <div className="form-group"><label>Name (English)</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required /></div>

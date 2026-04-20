@@ -1,21 +1,41 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { uploadSlider, uploadTestimonial } = require('../config/upload');
-const {
-  getPublicHomeData
-} = require('../controllers/homeController');
 const Slider = require('../models/Slider');
 const Testimonial = require('../models/Testimonial');
 const HomeSetting = require('../models/HomeSetting');
+const Product = require('../models/Product');
 
-// Public routes
-router.get('/public-data', getPublicHomeData);
+// Get public home data
+router.get('/public-data', async (req, res) => {
+  try {
+    const sliders = await Slider.find({ active: true }).sort({ order: 1 });
+    const testimonials = await Testimonial.find({ active: true }).sort({ createdAt: -1 });
+    const featuredProducts = await Product.find({ status: 'active' }).sort({ createdAt: -1 }).limit(12);
+    const categories = await Product.aggregate([
+      { $match: { status: 'active' } },
+      { $group: { _id: '$category', count: { $sum: 1 } } }
+    ]);
+    const settings = await HomeSetting.findOne();
+    
+    res.json({
+      success: true,
+      sliders,
+      testimonials,
+      featuredProducts,
+      categories,
+      settings
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // Protected admin routes
 router.use(protect);
 
-// Slider routes
+// Slider routes (without image upload for now)
 router.get('/sliders', async (req, res) => {
   try {
     const sliders = await Slider.find({}).sort({ order: 1 });
@@ -25,28 +45,20 @@ router.get('/sliders', async (req, res) => {
   }
 });
 
-router.post('/sliders', uploadSlider.single('image'), async (req, res) => {
+router.post('/sliders', async (req, res) => {
   try {
-    const sliderData = JSON.parse(req.body.slider);
-    if (req.file) {
-      sliderData.image = `/uploads/sliders/${req.file.filename}`;
-    }
-    const slider = await Slider.create(sliderData);
+    const slider = await Slider.create(req.body);
     res.json({ success: true, slider });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-router.put('/sliders/:id', uploadSlider.single('image'), async (req, res) => {
+router.put('/sliders/:id', async (req, res) => {
   try {
     const slider = await Slider.findById(req.params.id);
     if (!slider) return res.status(404).json({ success: false, message: 'Slider not found' });
-    const sliderData = JSON.parse(req.body.slider);
-    if (req.file) {
-      sliderData.image = `/uploads/sliders/${req.file.filename}`;
-    }
-    Object.assign(slider, sliderData);
+    Object.assign(slider, req.body);
     await slider.save();
     res.json({ success: true, slider });
   } catch (error) {
@@ -73,28 +85,20 @@ router.get('/testimonials', async (req, res) => {
   }
 });
 
-router.post('/testimonials', uploadTestimonial.single('image'), async (req, res) => {
+router.post('/testimonials', async (req, res) => {
   try {
-    const testimonialData = JSON.parse(req.body.testimonial);
-    if (req.file) {
-      testimonialData.image = `/uploads/testimonials/${req.file.filename}`;
-    }
-    const testimonial = await Testimonial.create(testimonialData);
+    const testimonial = await Testimonial.create(req.body);
     res.json({ success: true, testimonial });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-router.put('/testimonials/:id', uploadTestimonial.single('image'), async (req, res) => {
+router.put('/testimonials/:id', async (req, res) => {
   try {
     const testimonial = await Testimonial.findById(req.params.id);
     if (!testimonial) return res.status(404).json({ success: false, message: 'Testimonial not found' });
-    const testimonialData = JSON.parse(req.body.testimonial);
-    if (req.file) {
-      testimonialData.image = `/uploads/testimonials/${req.file.filename}`;
-    }
-    Object.assign(testimonial, testimonialData);
+    Object.assign(testimonial, req.body);
     await testimonial.save();
     res.json({ success: true, testimonial });
   } catch (error) {

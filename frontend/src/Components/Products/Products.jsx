@@ -30,10 +30,13 @@ function Products() {
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${API_URL}${imagePath}`;
+  const getImageUrl = (product) => {
+    if (product.imageUrl) return product.imageUrl;
+    if (product.image) {
+      if (product.image.startsWith('http')) return product.image;
+      return `${API_URL}${product.image}`;
+    }
+    return null;
   };
 
   const handleAddToCart = (product) => {
@@ -120,7 +123,7 @@ function Products() {
           ) : (
             <div className="products-grid">
               {filteredProducts.map(product => {
-                const imageUrl = getImageUrl(product.image || product.imageUrl);
+                const imageUrl = getImageUrl(product);
                 return (
                   <div key={product._id} className="product-card">
                     <div className="product-image">
