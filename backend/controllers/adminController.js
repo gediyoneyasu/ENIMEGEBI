@@ -95,7 +95,6 @@ const updateProduct = async (req, res) => {
     await product.save();
     res.json(product);
   } catch (error) {
-    console.error('Error updating product:', error);
     res.status(500).json({ message: error.message });
   }
 };

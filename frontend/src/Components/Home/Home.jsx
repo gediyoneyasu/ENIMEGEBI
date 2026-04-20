@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
@@ -68,25 +68,8 @@ function Home() {
         setProjects(response.data.projects || []);
       }
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error:', error);
     }
-  };
-
-  const getAmharicName = (category) => {
-    const names = {
-      'Coffee': 'ቡና', 'Grains': 'እህል', 'Honey': 'ማር', 'Dairy': 'ወተት',
-      'Fruits': 'ፍራፍሬ', 'Vegetables': 'አትክልት', 'Spices': 'ቅመም', 'Beverages': 'መጠጥ'
-    };
-    return names[category] || category;
-  };
-
-  const getCategoryIcon = (category) => {
-    const icons = {
-      'Coffee': 'ri-cup-line', 'Grains': 'ri-seedling-line', 'Honey': 'ri-drop-line',
-      'Dairy': 'ri-drinks-line', 'Fruits': 'ri-apple-line', 'Vegetables': 'ri-leaf-line',
-      'Spices': 'ri-fire-line', 'Beverages': 'ri-drinks-2-line'
-    };
-    return icons[category] || 'ri-apps-line';
   };
 
   const translations = {
@@ -177,42 +160,29 @@ function Home() {
       </section>
 
       {/* Categories Section */}
-    <section className="shop-category-container">
-  <div className="container">
-    <small className="shop-category-title">Shop by Category</small>
-    <h2 className="shop-category-heading">Explore Our <span>Categories</span></h2>
-    
-    <div className="shop-categories-cards">
-      {categories.map((category, idx) => (
-        <div className="shop-category-card" key={idx}>
-          {/* Front Card */}
-          <div className="shop-card-front" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-            <span className="shop-category-badge">{category.count} Products</span>
-            <button>{category.name}</button>
+      <section className="categories-section-home">
+        <div className="container">
+          <div className="section-header-home">
+            <h2 className="section-title">{t.categoriesTitle}</h2>
+            <Link to="/categories" className="view-all-link">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
           </div>
-
-          {/* Back Card */}
-          <div className="shop-card-back">
-            <div className="shop-price">{category.name}</div>
-            <div className="shop-card-content">
-              <h3>{category.name}</h3>
-              <p>Fresh organic products</p>
-            </div>
-            <div className="shop-explore-now">
-              <Link to={`/products?category=${category.name}`}>
-                Explore <i className="ri-arrow-right-line"></i>
+          <div className="categories-grid-home">
+            {categories.map((category, idx) => (
+              <Link to={`/products?category=${category.name}`} key={idx} className="category-card-home">
+                <div className="category-card-front">
+                  <div className="category-image-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+                    <div className="category-overlay"></div>
+                  </div>
+                  <div className="category-info-home">
+                    <h3>{category.name}</h3>
+                    <p>{category.count} Products</p>
+                  </div>
+                </div>
               </Link>
-            </div>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-    
-    <div className="shop-view-all">
-      <Link to="/categories">View All Categories <i className="ri-arrow-right-line"></i></Link>
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* Featured Products Section */}
       <section className="featured-section-home">
@@ -239,46 +209,6 @@ function Home() {
           </div>
         </div>
       </section>
-
-      {/* Projects Section */}
-      {projects.length > 0 && (
-        <section className="projects-section-home">
-          <div className="container">
-            <div className="section-header-home">
-              <h2 className="section-title">{t.projects}</h2>
-              <Link to="/projects" className="view-all-link">{t.viewAllProjects} <i className="ri-arrow-right-line"></i></Link>
-            </div>
-            <div className="projects-grid-home">
-              {projects.slice(0, 4).map(project => (
-                <div key={project._id} className="project-card-home">
-                  <div className="project-image-home">
-                    <img src={getImageUrl(project.image)} alt={project.title} />
-                    {project.status === 'locked' && (
-                      <div className="project-locked-overlay">
-                        <i className="ri-lock-line"></i>
-                        <span>{t.locked}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="project-info-home">
-                    <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
-                    <p>{language === 'en' ? project.description?.substring(0, 80) : (project.descriptionAm || project.description)?.substring(0, 80)}...</p>
-                    {project.status === 'locked' ? (
-                      <button className="unlock-btn" onClick={() => navigate('/checkout', { state: { projectId: project._id, amount: project.price } })}>
-                        {t.unlock} ${project.price}
-                      </button>
-                    ) : (
-                      <button className="view-btn" onClick={() => navigate(`/projects/${project._id}`)}>
-                        View Project
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Testimonials Section */}
       <section className="testimonials-section-home">

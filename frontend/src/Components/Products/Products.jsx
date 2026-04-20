@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
+import getImageUrl from '../../utils/imageHelper';
 import './Products.css';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
@@ -22,19 +23,12 @@ function Products() {
   const fetchProducts = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/admin/public-products`);
-      console.log('Products with images:', response.data);
       setProducts(response.data);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const getImageUrl = (product) => {
-    if (product.image) return product.image;
-    if (product.imageUrl) return product.imageUrl;
-    return null;
   };
 
   const handleAddToCart = (product) => {
@@ -121,25 +115,15 @@ function Products() {
           ) : (
             <div className="products-grid">
               {filteredProducts.map(product => {
-                const imageUrl = getImageUrl(product);
+                const imageUrl = getImageUrl(product.image || product.imageUrl);
                 return (
                   <div key={product._id} className="product-card">
                     <div className="product-image">
                       {imageUrl ? (
-                        <img 
-                          src={imageUrl} 
-                          alt={product.name}
-                          onError={(e) => {
-                            console.log('Image failed to load:', imageUrl);
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div className="no-image" style={{ display: imageUrl ? 'none' : 'flex' }}>
-                        <i className="ri-image-line"></i>
-                        <span>No Image</span>
-                      </div>
+                        <img src={imageUrl} alt={product.name} />
+                      ) : (
+                        <div className="no-image"><i className="ri-image-line"></i></div>
+                      )}
                     </div>
                     <div className="product-info">
                       <h3>{product.name}</h3>

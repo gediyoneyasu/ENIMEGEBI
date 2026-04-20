@@ -3,7 +3,6 @@ const Testimonial = require('../models/Testimonial');
 const HomeSetting = require('../models/HomeSetting');
 const Product = require('../models/Product');
 
-// Get public home data
 const getPublicHomeData = async (req, res) => {
   try {
     const sliders = await Slider.find({ active: true }).sort({ order: 1 });
@@ -15,7 +14,6 @@ const getPublicHomeData = async (req, res) => {
     ]);
     const settings = await HomeSetting.findOne();
     
-    // Cloudinary URLs are already full HTTPS URLs
     res.json({
       success: true,
       sliders,
@@ -25,7 +23,7 @@ const getPublicHomeData = async (req, res) => {
       settings
     });
   } catch (error) {
-    console.error('Error fetching home data:', error);
+    console.error('Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
