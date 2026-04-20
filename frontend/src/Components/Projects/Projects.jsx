@@ -10,18 +10,17 @@ const Projects = () => {
   const { language } = useLanguage();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [myProjects, setMyProjects] = useState([]);
-  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchProjects();
-    fetchMyProjects();
   }, []);
 
   const fetchProjects = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/projects/public`);
-      if (response.data.success) setProjects(response.data.projects);
+      if (response.data.success) {
+        setProjects(response.data.projects);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -29,94 +28,34 @@ const Projects = () => {
     }
   };
 
-  const fetchMyProjects = async () => {
-    try {
-      const token = localStorage.getItem('enimegebiToken');
-      if (token) {
-        const response = await axios.get(`${API_URL}/api/projects/my-projects`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (response.data.success) setMyProjects(response.data.projects);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const handleChapaPayment = async (project) => {
-    const token = localStorage.getItem('enimegebiToken');
-    if (!token) {
-      alert('Please login first');
-      window.location.href = '/auth';
-      return;
-    }
-
-    const userData = localStorage.getItem('enimegebiUser');
-    const user = JSON.parse(userData);
-    
-    try {
-      console.log('Initiating payment for project:', project._id);
-      
-      const response = await axios.post(`${API_URL}/api/payment/initialize-project`, {
-        projectId: project._id,
-        amount: project.price,
-        email: user.email,
-        name: user.name,
-        phone: user.phone || ''
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      console.log('Payment response:', response.data);
-
-      if (response.data.success) {
-        window.location.href = response.data.checkout_url;
-      } else {
-        alert(response.data.message || 'Payment initialization failed');
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      alert(error.response?.data?.message || 'Failed to process payment');
-    }
-  };
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${API_URL}${imagePath}`;
+  const getImageUrl = (project) => {
+    if (project.imageUrl) return project.imageUrl;
+    if (project.image) return `${API_URL}${project.image}`;
+    return null;
   };
 
   const translations = {
     en: {
       title: 'Projects',
-      subtitle: 'Browse our premium projects and resources',
-      allProjects: 'All Projects',
-      myProjects: 'My Projects',
+      subtitle: 'Browse our premium projects',
       price: 'Price',
-      unlock: 'Unlock with Chapa',
       locked: 'Locked',
-      view: 'View Project',
-      noProjects: 'No projects available',
-      myProjectsEmpty: 'You haven\'t purchased any projects yet'
+      unlock: 'Unlock',
+      noProjects: 'No projects available'
     },
     am: {
       title: 'ፕሮጀክቶች',
       subtitle: 'የእኛን ፕሪሚየም ፕሮጀክቶች ይመልከቱ',
-      allProjects: 'ሁሉም ፕሮጀክቶች',
-      myProjects: 'የኔ ፕሮጀክቶች',
       price: 'ዋጋ',
-      unlock: 'በቻፓ ክፈት',
       locked: 'ተቆልፏል',
-      view: 'ፕሮጀክት ይመልከቱ',
-      noProjects: 'ምንም ፕሮጀክቶች የሉም',
-      myProjectsEmpty: 'እስካሁን ምንም ፕሮጀክት አልገዙም'
+      unlock: 'ክፈት',
+      noProjects: 'ምንም ፕሮጀክቶች የሉም'
     }
   };
 
   const t = translations[language];
-  const displayProjects = activeTab === 'all' ? projects : myProjects;
 
-  if (loading) return <div className="projects-loading"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
+  if (loading) return <div className="loading-spinner">Loading...</div>;
 
   return (
     <div className="projects-page">
@@ -125,44 +64,41 @@ const Projects = () => {
         <p>{t.subtitle}</p>
       </div>
 
-      <div className="projects-tabs">
-        <button className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>{t.allProjects}</button>
-        <button className={`tab-btn ${activeTab === 'my' ? 'active' : ''}`} onClick={() => setActiveTab('my')}>{t.myProjects}</button>
-      </div>
-
-      {displayProjects.length === 0 ? (
+      {projects.length === 0 ? (
         <div className="no-projects">
-          <i className="ri-folder-image-line"></i>
-          <h3>{activeTab === 'all' ? t.noProjects : t.myProjectsEmpty}</h3>
+          <i className="ri-folder-line"></i>
+          <h3>{t.noProjects}</h3>
         </div>
       ) : (
         <div className="projects-grid">
-          {displayProjects.map(project => (
-            <div key={project._id} className="project-card">
-              <div className="project-image">
-                {getImageUrl(project.image || project.fileUrl) ? (
-                  <img src={getImageUrl(project.image || project.fileUrl)} alt={project.title} />
-                ) : (
-                  <div className="no-image-placeholder"><i className="ri-image-line"></i></div>
-                )}
-                {project.status === 'locked' && !project.isUnlocked && (
-                  <div className="locked-overlay"><i className="ri-lock-line"></i><span>{t.locked}</span></div>
-                )}
-              </div>
-              <div className="project-details">
-                <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
-                <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
-                <div className="project-price">${project.price}</div>
-                {activeTab === 'my' || project.isUnlocked ? (
-                  <Link to={`/projects/${project._id}`} className="view-btn"><i className="ri-eye-line"></i> {t.view}</Link>
-                ) : (
-                  <button className="unlock-btn" onClick={() => handleChapaPayment(project)}>
-                    <i className="ri-lock-unlock-line"></i> {t.unlock} - ${project.price}
+          {projects.map(project => {
+            const imageUrl = getImageUrl(project);
+            return (
+              <div key={project._id} className="project-card">
+                <div className="project-image">
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={project.title} />
+                  ) : (
+                    <div className="no-image"><i className="ri-image-line"></i></div>
+                  )}
+                  {project.status === 'locked' && (
+                    <div className="locked-badge">
+                      <i className="ri-lock-line"></i>
+                      <span>{t.locked}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="project-info">
+                  <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
+                  <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
+                  <div className="project-price">${project.price}</div>
+                  <button className="unlock-btn">
+                    <i className="ri-lock-unlock-line"></i> {t.unlock}
                   </button>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

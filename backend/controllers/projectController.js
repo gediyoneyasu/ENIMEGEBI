@@ -1,46 +1,17 @@
 const Project = require('../models/Project');
 
-// Get public projects (only approved)
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
+// Get public projects
 const getPublicProjects = async (req, res) => {
   try {
-    const projects = await Project.find({ isApproved: true }).sort({ order: 1 });
+    let projects = await Project.find({ isApproved: true }).sort({ order: 1 });
+    // Add full image URL
+    projects = projects.map(p => ({
+      ...p._doc,
+      imageUrl: p.image ? `${API_URL}${p.image}` : null
+    }));
     res.json({ success: true, projects });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Get single project with access check
-const getProjectById = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
-    }
-    
-    // Check if user has purchased access
-    const hasAccess = project.purchasedBy.some(p => 
-      p.user.toString() === req.user.id && p.isUnlocked === true
-    );
-    
-    if (!hasAccess && req.user.role !== 'admin') {
-      return res.json({
-        success: true,
-        project: {
-          _id: project._id,
-          title: project.title,
-          titleAm: project.titleAm,
-          description: project.description,
-          descriptionAm: project.descriptionAm,
-          image: project.image,
-          price: project.price,
-          fileType: project.fileType,
-          status: 'locked'
-        }
-      });
-    }
-    
-    res.json({ success: true, project });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -56,45 +27,47 @@ const getAllProjects = async (req, res) => {
   }
 };
 
-// Create project with file upload
+// Create project with image
 const createProject = async (req, res) => {
   try {
-    let projectData = JSON.parse(req.body.project);
+    let projectData;
+    if (req.body.project) {
+      projectData = JSON.parse(req.body.project);
+    } else {
+      projectData = req.body;
+    }
     
-    // Handle uploaded file
     if (req.file) {
-      projectData.fileUrl = `/uploads/projects/${req.file.filename}`;
-      // Determine file type from extension
-      const ext = req.file.originalname.split('.').pop().toLowerCase();
-      if (ext === 'pdf') projectData.fileType = 'pdf';
-      else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) projectData.fileType = 'video';
-      else projectData.fileType = 'image';
+      const imagePath = `/uploads/projects/${req.file.filename}`;
+      projectData.image = imagePath;
+      projectData.imageUrl = `${API_URL}${imagePath}`;
     }
     
     const project = await Project.create(projectData);
     res.status(201).json({ success: true, project });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error creating project:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Update project
+// Update project with image
 const updateProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    
+    let projectData;
+    if (req.body.project) {
+      projectData = JSON.parse(req.body.project);
+    } else {
+      projectData = req.body;
     }
     
-    let projectData = JSON.parse(req.body.project);
-    
     if (req.file) {
-      projectData.fileUrl = `/uploads/projects/${req.file.filename}`;
-      const ext = req.file.originalname.split('.').pop().toLowerCase();
-      if (ext === 'pdf') projectData.fileType = 'pdf';
-      else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) projectData.fileType = 'video';
-      else projectData.fileType = 'image';
+      const imagePath = `/uploads/projects/${req.file.filename}`;
+      projectData.image = imagePath;
+      projectData.imageUrl = `${API_URL}${imagePath}`;
     }
     
     Object.assign(project, projectData);
@@ -115,31 +88,34 @@ const deleteProject = async (req, res) => {
   }
 };
 
+// Approve project
+const approveProject = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    project.isApproved = true;
+    await project.save();
+    res.json({ success: true, message: 'Project approved' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Purchase project
 const purchaseProject = async (req, res) => {
   try {
     const { projectId, amount } = req.body;
-    const userId = req.user.id;
-    
     const project = await Project.findById(projectId);
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
-    }
-    
-    const alreadyPurchased = project.purchasedBy.some(p => p.user.toString() === userId);
-    if (alreadyPurchased) {
-      return res.json({ success: true, message: 'Already purchased, waiting for approval' });
-    }
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     
     project.purchasedBy.push({
-      user: userId,
+      user: req.user.id,
       amount: amount,
       purchasedAt: new Date(),
       isUnlocked: false
     });
-    
     await project.save();
-    res.json({ success: true, message: 'Purchase request sent, waiting for admin approval' });
+    res.json({ success: true, message: 'Purchase request sent' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -149,11 +125,8 @@ const purchaseProject = async (req, res) => {
 const approvePurchase = async (req, res) => {
   try {
     const { projectId, userId } = req.body;
-    
     const project = await Project.findById(projectId);
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
-    }
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     
     const purchase = project.purchasedBy.find(p => p.user.toString() === userId);
     if (purchase) {
@@ -161,36 +134,7 @@ const approvePurchase = async (req, res) => {
       purchase.approvedAt = new Date();
       await project.save();
     }
-    
-    res.json({ success: true, message: 'Purchase approved, user can now access content' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Approve project
-const approveProject = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
-    }
-    project.isApproved = true;
-    await project.save();
-    res.json({ success: true, message: 'Project approved' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Get user's purchased projects
-const getUserProjects = async (req, res) => {
-  try {
-    const projects = await Project.find({
-      'purchasedBy.user': req.user.id,
-      'purchasedBy.isUnlocked': true
-    });
-    res.json({ success: true, projects });
+    res.json({ success: true, message: 'Purchase approved' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -198,13 +142,11 @@ const getUserProjects = async (req, res) => {
 
 module.exports = {
   getPublicProjects,
-  getProjectById,
   getAllProjects,
   createProject,
   updateProject,
   deleteProject,
-  purchaseProject,
-  approvePurchase,
   approveProject,
-  getUserProjects
+  purchaseProject,
+  approvePurchase
 };
