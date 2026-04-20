@@ -10,24 +10,9 @@ connectDB();
 
 const app = express();
 
-// Allow multiple frontend origins
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'https://enimegebi-zorz.vercel.app',
-  'https://enimegebi.vercel.app',
-  'https://enimegebi-git-main.vercel.app'
-];
-
+// CORS configuration
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://enimegebi-zorz.vercel.app', 'https://enimegebi.vercel.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -37,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files for uploads
+// Serve static files for uploads (fallback)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
@@ -48,16 +33,16 @@ app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/home', require('./routes/homeRoutes'));
 app.use('/api/team', require('./routes/teamRoutes'));
+app.use('/api/projects', require('./routes/projectRoutes'));
 
+// Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!' });
 });
 
+// IMPORTANT: Bind to 0.0.0.0 for Render
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Bound to 0.0.0.0:${PORT}`);
 });
-// Add category routes
-// Add category routes
-app.use('/api/projects', require('./routes/projectRoutes'));
-app.use('/api/projects', require('./routes/projectRoutes'));

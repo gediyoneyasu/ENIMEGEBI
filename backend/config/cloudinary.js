@@ -2,14 +2,14 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-// Configure Cloudinary with your credentials
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configure storage for different types
+// Create storage for different folders
 const createStorage = (folder) => {
   return new CloudinaryStorage({
     cloudinary: cloudinary,
@@ -21,7 +21,7 @@ const createStorage = (folder) => {
   });
 };
 
-// Different upload handlers for different purposes
+// Upload handlers
 const uploadProduct = multer({ storage: createStorage('products') });
 const uploadSlider = multer({ storage: createStorage('sliders') });
 const uploadTestimonial = multer({ storage: createStorage('testimonials') });

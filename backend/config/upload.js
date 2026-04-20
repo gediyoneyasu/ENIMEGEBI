@@ -1,5 +1,4 @@
-// Use Cloudinary for production
+// Use Cloudinary for all uploads
 const cloudinaryConfig = require('./cloudinary');
 
-// Export cloudinary uploaders directly
 module.exports = cloudinaryConfig;
