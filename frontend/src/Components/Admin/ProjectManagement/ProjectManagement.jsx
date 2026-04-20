@@ -10,7 +10,7 @@ const ProjectManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [alert, setAlert] = useState(null);
-  const [fileFile, setFileFile] = useState(null);
+  const [uploadFile, setUploadFile] = useState(null);
   const [filePreview, setFilePreview] = useState('');
   const [formData, setFormData] = useState({
     title: '',
@@ -46,7 +46,7 @@ const ProjectManagement = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFileFile(file);
+      setUploadFile(file);
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => setFilePreview(reader.result);
@@ -62,8 +62,8 @@ const ProjectManagement = () => {
     
     const submitData = new FormData();
     submitData.append('project', JSON.stringify(formData));
-    if (fileFile) {
-      submitData.append('image', fileFile);
+    if (uploadFile) {
+      submitData.append('file', uploadFile);
     }
 
     try {
@@ -127,7 +127,7 @@ const ProjectManagement = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchProjects();
-      setAlert({ type: 'success', message: 'Purchase approved! User can now access.' });
+      setAlert({ type: 'success', message: 'Purchase approved!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       console.error('Error:', error);
@@ -144,8 +144,8 @@ const ProjectManagement = () => {
       price: project.price,
       order: project.order || 0
     });
-    setFilePreview(project.image ? `${API_URL}${project.image}` : (project.fileUrl || ''));
-    setFileFile(null);
+    setFilePreview(project.image ? `${API_URL}${project.image}` : '');
+    setUploadFile(null);
     setShowModal(true);
   };
 
@@ -156,14 +156,14 @@ const ProjectManagement = () => {
       price: '', order: 0
     });
     setFilePreview('');
-    setFileFile(null);
+    setUploadFile(null);
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingProject(null);
-    setFileFile(null);
+    setUploadFile(null);
     setFilePreview('');
   };
 
@@ -189,15 +189,12 @@ const ProjectManagement = () => {
               ) : (
                 <div className="no-image"><i className="ri-image-line"></i></div>
               )}
-              {project.fileType === 'pdf' && <div className="file-type-badge">PDF</div>}
-              {project.fileType === 'video' && <div className="file-type-badge">VIDEO</div>}
             </div>
             <div className="project-admin-info">
               <h3>{project.title}</h3>
               <p className="project-price">Price: ${project.price}</p>
               <p className="project-status">Status: {project.status}</p>
               <p className="project-approved">Approved: {project.isApproved ? '✅ Yes' : '❌ No'}</p>
-              <p className="project-purchases">Purchases: {project.purchasedBy?.length || 0}</p>
               <div className="project-admin-actions">
                 <button className="btn-edit" onClick={() => handleEdit(project)}>Edit</button>
                 {!project.isApproved && (
@@ -242,12 +239,12 @@ const ProjectManagement = () => {
                 )}
                 <input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
               </div>
-              <div className="form-group"><label>Title (English)</label><input type="text" name="title" value={formData.title} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Title (English) *</label><input type="text" name="title" value={formData.title} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Title (Amharic)</label><input type="text" name="titleAm" value={formData.titleAm} onChange={handleInputChange} /></div>
-              <div className="form-group"><label>Description (English)</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required /></div>
+              <div className="form-group"><label>Description (English) *</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required /></div>
               <div className="form-group"><label>Description (Amharic)</label><textarea name="descriptionAm" value={formData.descriptionAm} onChange={handleInputChange} rows="3" /></div>
-              <div className="form-group"><label>Price (ETB)</label><input type="number" name="price" value={formData.price} onChange={handleInputChange} required /></div>
-              <div className="form-group"><label>Order (lower number appears first)</label><input type="number" name="order" value={formData.order} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Price (ETB) *</label><input type="number" name="price" value={formData.price} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Order</label><input type="number" name="order" value={formData.order} onChange={handleInputChange} /></div>
               <div className="modal-actions">
                 <button type="submit" className="btn-save">Save Project</button>
                 <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>

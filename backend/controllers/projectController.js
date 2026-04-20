@@ -2,7 +2,7 @@ const Project = require('../models/Project');
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
 
-// Get public projects (only approved and unlocked)
+// Get public projects
 const getPublicProjects = async (req, res) => {
   try {
     let projects = await Project.find({ isApproved: true }).sort({ order: 1 });
@@ -13,7 +13,7 @@ const getPublicProjects = async (req, res) => {
     }));
     res.json({ success: true, projects });
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    console.error('Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -28,7 +28,7 @@ const getAllProjects = async (req, res) => {
   }
 };
 
-// Get single project by ID
+// Get single project
 const getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -50,8 +50,7 @@ const getProjectById = async (req, res) => {
           image: project.image,
           imageUrl: project.image ? `${API_URL}${project.image}` : null,
           price: project.price,
-          status: 'locked',
-          fileType: project.fileType
+          status: 'locked'
         }
       });
     }
@@ -72,6 +71,9 @@ const getProjectById = async (req, res) => {
 // Create project
 const createProject = async (req, res) => {
   try {
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file);
+    
     let projectData;
     if (req.body.project) {
       projectData = JSON.parse(req.body.project);
@@ -97,6 +99,7 @@ const createProject = async (req, res) => {
     }
     
     const project = await Project.create(projectData);
+    console.log('Project created:', project);
     res.status(201).json({ success: true, project });
   } catch (error) {
     console.error('Error creating project:', error);
@@ -202,14 +205,8 @@ const approvePurchase = async (req, res) => {
       purchase.isUnlocked = true;
       purchase.approvedAt = new Date();
       await project.save();
-      
-      const allUnlocked = project.purchasedBy.every(p => p.isUnlocked === true);
-      if (allUnlocked && project.purchasedBy.length > 0) {
-        project.status = 'unlocked';
-        await project.save();
-      }
     }
-    res.json({ success: true, message: 'Purchase approved, user can now access' });
+    res.json({ success: true, message: 'Purchase approved' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -224,8 +221,7 @@ const getUserProjects = async (req, res) => {
     });
     projects = projects.map(p => ({
       ...p._doc,
-      imageUrl: p.image ? `${API_URL}${p.image}` : null,
-      fileUrl: p.fileUrl ? (p.fileUrl.startsWith('http') ? p.fileUrl : `${API_URL}${p.fileUrl}`) : null
+      imageUrl: p.image ? `${API_URL}${p.image}` : null
     }));
     res.json({ success: true, projects });
   } catch (error) {
