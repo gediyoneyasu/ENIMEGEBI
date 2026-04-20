@@ -25,6 +25,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  fileUrl: {
+    type: String,
+    default: ''
+  },
   price: {
     type: Number,
     required: true,
@@ -47,7 +51,8 @@ const projectSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     amount: Number,
     purchasedAt: Date,
-    isUnlocked: { type: Boolean, default: false }
+    isUnlocked: { type: Boolean, default: false },
+    approvedAt: Date
   }],
   createdAt: {
     type: Date,

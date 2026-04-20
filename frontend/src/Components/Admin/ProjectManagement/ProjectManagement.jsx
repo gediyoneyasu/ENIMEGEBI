@@ -10,15 +10,13 @@ const ProjectManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [alert, setAlert] = useState(null);
-  const [fileFile, setFileFile] = useState(null);
-  const [filePreview, setFilePreview] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     titleAm: '',
     description: '',
     descriptionAm: '',
-    fileType: 'image',
-    youtubeId: '',
     price: '',
     order: 0
   });
@@ -45,18 +43,13 @@ const ProjectManagement = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFileFile(file);
-      // Preview for images
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => setFilePreview(reader.result);
-        reader.readAsDataURL(file);
-      } else {
-        setFilePreview(file.name);
-      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -65,8 +58,8 @@ const ProjectManagement = () => {
     
     const submitData = new FormData();
     submitData.append('project', JSON.stringify(formData));
-    if (fileFile) {
-      submitData.append('file', fileFile);
+    if (imageFile) {
+      submitData.append('image', imageFile);
     }
 
     try {
@@ -76,19 +69,20 @@ const ProjectManagement = () => {
         await axios.put(`${API_URL}/api/projects/${editingProject._id}`, submitData, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
-        setAlert({ type: 'success', message: 'Project updated!' });
+        setAlert({ type: 'success', message: 'Project updated successfully!' });
       } else {
         await axios.post(`${API_URL}/api/projects`, submitData, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
-        setAlert({ type: 'success', message: 'Project added!' });
+        setAlert({ type: 'success', message: 'Project added successfully!' });
       }
       
       fetchProjects();
       closeModal();
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to save project' });
+      console.error('Error:', error);
+      setAlert({ type: 'error', message: error.response?.data?.message || 'Failed to save project' });
     }
   };
 
@@ -129,7 +123,7 @@ const ProjectManagement = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchProjects();
-      setAlert({ type: 'success', message: 'Purchase approved!' });
+      setAlert({ type: 'success', message: 'Purchase approved! User can now access.' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       console.error('Error:', error);
@@ -143,13 +137,11 @@ const ProjectManagement = () => {
       titleAm: project.titleAm || '',
       description: project.description || '',
       descriptionAm: project.descriptionAm || '',
-      fileType: project.fileType || 'image',
-      youtubeId: project.youtubeId || '',
       price: project.price,
       order: project.order || 0
     });
-    setFilePreview(project.fileUrl ? `${API_URL}${project.fileUrl}` : '');
-    setFileFile(null);
+    setImagePreview(project.image ? `${API_URL}${project.image}` : '');
+    setImageFile(null);
     setShowModal(true);
   };
 
@@ -157,25 +149,18 @@ const ProjectManagement = () => {
     setEditingProject(null);
     setFormData({
       title: '', titleAm: '', description: '', descriptionAm: '',
-      fileType: 'image', youtubeId: '', price: '', order: 0
+      price: '', order: 0
     });
-    setFilePreview('');
-    setFileFile(null);
+    setImagePreview('');
+    setImageFile(null);
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingProject(null);
-  };
-
-  const getFileIcon = (fileType) => {
-    switch(fileType) {
-      case 'pdf': return 'ri-file-pdf-line';
-      case 'video': return 'ri-video-line';
-      case 'youtube': return 'ri-youtube-line';
-      default: return 'ri-image-line';
-    }
+    setImageFile(null);
+    setImagePreview('');
   };
 
   if (loading) return <div>Loading projects...</div>;
@@ -185,36 +170,26 @@ const ProjectManagement = () => {
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
       
       <div className="management-header">
-        <h2><i className="ri-folder-line"></i> Project Management</h2>
-        <button className="add-btn" onClick={openModal}>
-          <i className="ri-add-line"></i> Add Project
-        </button>
+        <h2>Project Management</h2>
+        <button className="add-btn" onClick={openModal}>Add Project</button>
       </div>
 
-      <div className="projects-admin-grid">
+      <div className="projects-list">
         {projects.map(project => (
-          <div key={project._id} className="project-admin-card">
-            <div className="project-admin-image">
-              {project.fileUrl ? (
-                project.fileType === 'image' ? (
-                  <img src={`${API_URL}${project.fileUrl}`} alt={project.title} />
-                ) : (
-                  <div className="file-icon">
-                    <i className={getFileIcon(project.fileType)}></i>
-                    <span>{project.fileType.toUpperCase()}</span>
-                  </div>
-                )
+          <div key={project._id} className="project-item">
+            <div className="project-image">
+              {project.image ? (
+                <img src={`${API_URL}${project.image}`} alt={project.title} />
               ) : (
                 <div className="no-image"><i className="ri-image-line"></i></div>
               )}
             </div>
-            <div className="project-admin-info">
+            <div className="project-details">
               <h3>{project.title}</h3>
-              <p className="project-price">Price: ${project.price}</p>
-              <p className="project-type">Type: {project.fileType}</p>
-              <p className="project-status">Approved: {project.isApproved ? '✅ Yes' : '❌ No'}</p>
-              <p className="project-purchases">Purchases: {project.purchasedBy?.length || 0}</p>
-              <div className="project-admin-actions">
+              <p>Price: ${project.price}</p>
+              <p>Status: {project.status} | Approved: {project.isApproved ? 'Yes' : 'No'}</p>
+              <p>Purchases: {project.purchasedBy?.length || 0}</p>
+              <div className="project-actions">
                 <button className="btn-edit" onClick={() => handleEdit(project)}>Edit</button>
                 {!project.isApproved && (
                   <button className="btn-approve" onClick={() => handleApprove(project._id)}>Approve</button>
@@ -227,7 +202,7 @@ const ProjectManagement = () => {
                 <h4>Pending Approvals:</h4>
                 {project.purchasedBy.filter(p => !p.isUnlocked).map(purchase => (
                   <div key={purchase.user} className="pending-purchase">
-                    <span>User: {purchase.user}</span>
+                    <span>User ID: {purchase.user}</span>
                     <span>Amount: ${purchase.amount}</span>
                     <button onClick={() => handleApprovePurchase(project._id, purchase.user)}>
                       Approve
@@ -242,50 +217,22 @@ const ProjectManagement = () => {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-            <h3>{editingProject ? 'Edit Project' : 'Add New Project'}</h3>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>{editingProject ? 'Edit Project' : 'Add Project'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Upload File (Image, PDF, or Video)</label>
-                {filePreview && (
-                  filePreview.startsWith('data:image') ? (
-                    <img src={filePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginBottom: '10px' }} />
-                  ) : typeof filePreview === 'string' && filePreview.includes('/uploads') ? (
-                    <div>Current file: {filePreview.split('/').pop()}</div>
-                  ) : (
-                    <div>File: {filePreview}</div>
-                  )
-                )}
-                <input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
+                <label>Project Image</label>
+                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />}
+                <input type="file" accept="image/*" onChange={handleImageChange} />
               </div>
-              
               <div className="form-group"><label>Title (English)</label><input type="text" name="title" value={formData.title} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Title (Amharic)</label><input type="text" name="titleAm" value={formData.titleAm} onChange={handleInputChange} /></div>
-              <div className="form-group"><label>Description (English)</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" /></div>
+              <div className="form-group"><label>Description (English)</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required /></div>
               <div className="form-group"><label>Description (Amharic)</label><textarea name="descriptionAm" value={formData.descriptionAm} onChange={handleInputChange} rows="3" /></div>
-              
-              <div className="form-group">
-                <label>Content Type</label>
-                <select name="fileType" value={formData.fileType} onChange={handleInputChange}>
-                  <option value="image">Image</option>
-                  <option value="pdf">PDF Document</option>
-                  <option value="video">Video</option>
-                  <option value="youtube">YouTube Video</option>
-                </select>
-              </div>
-              
-              {formData.fileType === 'youtube' && (
-                <div className="form-group">
-                  <label>YouTube Video ID</label>
-                  <input type="text" name="youtubeId" placeholder="e.g., dQw4w9WgXcQ" value={formData.youtubeId} onChange={handleInputChange} />
-                </div>
-              )}
-              
               <div className="form-group"><label>Price (ETB)</label><input type="number" name="price" value={formData.price} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Order (lower = first)</label><input type="number" name="order" value={formData.order} onChange={handleInputChange} /></div>
-              
               <div className="modal-actions">
-                <button type="submit" className="btn-save">{editingProject ? 'Update' : 'Create'}</button>
+                <button type="submit" className="btn-save">Save Project</button>
                 <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>
               </div>
             </form>

@@ -41,7 +41,8 @@ const Projects = () => {
       price: 'Price',
       locked: 'Locked',
       unlock: 'Unlock',
-      noProjects: 'No projects available'
+      noProjects: 'No projects available',
+      comingSoon: 'More projects coming soon'
     },
     am: {
       title: 'ፕሮጀክቶች',
@@ -49,13 +50,16 @@ const Projects = () => {
       price: 'ዋጋ',
       locked: 'ተቆልፏል',
       unlock: 'ክፈት',
-      noProjects: 'ምንም ፕሮጀክቶች የሉም'
+      noProjects: 'ምንም ፕሮጀክቶች የሉም',
+      comingSoon: 'ተጨማሪ ፕሮጀክቶች በቅርቡ'
     }
   };
 
   const t = translations[language];
 
-  if (loading) return <div className="loading-spinner">Loading...</div>;
+  if (loading) {
+    return <div className="projects-loading"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
+  }
 
   return (
     <div className="projects-page">
@@ -68,6 +72,7 @@ const Projects = () => {
         <div className="no-projects">
           <i className="ri-folder-line"></i>
           <h3>{t.noProjects}</h3>
+          <p>{t.comingSoon}</p>
         </div>
       ) : (
         <div className="projects-grid">

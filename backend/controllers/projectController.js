@@ -2,11 +2,10 @@ const Project = require('../models/Project');
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
 
-// Get public projects
+// Get public projects (only approved and unlocked)
 const getPublicProjects = async (req, res) => {
   try {
-    let projects = await Project.find({ isApproved: true }).sort({ order: 1 });
-    // Add full image URL
+    let projects = await Project.find({ isApproved: true, status: 'unlocked' }).sort({ order: 1 });
     projects = projects.map(p => ({
       ...p._doc,
       imageUrl: p.image ? `${API_URL}${p.image}` : null
@@ -27,7 +26,41 @@ const getAllProjects = async (req, res) => {
   }
 };
 
-// Create project with image
+// Get single project
+const getProjectById = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    
+    // Check if user has access
+    const hasAccess = project.purchasedBy.some(p => 
+      p.user.toString() === req.user.id && p.isUnlocked === true
+    );
+    
+    if (!hasAccess && req.user.role !== 'admin') {
+      return res.json({
+        success: true,
+        project: {
+          _id: project._id,
+          title: project.title,
+          titleAm: project.titleAm,
+          description: project.description,
+          descriptionAm: project.descriptionAm,
+          image: project.image,
+          imageUrl: project.imageUrl,
+          price: project.price,
+          status: 'locked'
+        }
+      });
+    }
+    
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Create project
 const createProject = async (req, res) => {
   try {
     let projectData;
@@ -51,7 +84,7 @@ const createProject = async (req, res) => {
   }
 };
 
-// Update project with image
+// Update project
 const updateProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -108,6 +141,11 @@ const purchaseProject = async (req, res) => {
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     
+    const alreadyPurchased = project.purchasedBy.some(p => p.user.toString() === req.user.id);
+    if (alreadyPurchased) {
+      return res.json({ success: true, message: 'Already purchased, waiting for approval' });
+    }
+    
     project.purchasedBy.push({
       user: req.user.id,
       amount: amount,
@@ -115,13 +153,13 @@ const purchaseProject = async (req, res) => {
       isUnlocked: false
     });
     await project.save();
-    res.json({ success: true, message: 'Purchase request sent' });
+    res.json({ success: true, message: 'Purchase request sent, waiting for admin approval' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Approve purchase
+// Approve purchase (admin)
 const approvePurchase = async (req, res) => {
   try {
     const { projectId, userId } = req.body;
@@ -133,8 +171,28 @@ const approvePurchase = async (req, res) => {
       purchase.isUnlocked = true;
       purchase.approvedAt = new Date();
       await project.save();
+      
+      // Check if all purchases are approved, unlock project
+      const allUnlocked = project.purchasedBy.every(p => p.isUnlocked === true);
+      if (allUnlocked && project.purchasedBy.length > 0) {
+        project.status = 'unlocked';
+        await project.save();
+      }
     }
-    res.json({ success: true, message: 'Purchase approved' });
+    res.json({ success: true, message: 'Purchase approved, user can now access' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get user's purchased projects
+const getUserProjects = async (req, res) => {
+  try {
+    const projects = await Project.find({
+      'purchasedBy.user': req.user.id,
+      'purchasedBy.isUnlocked': true
+    });
+    res.json({ success: true, projects });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -143,10 +201,12 @@ const approvePurchase = async (req, res) => {
 module.exports = {
   getPublicProjects,
   getAllProjects,
+  getProjectById,
   createProject,
   updateProject,
   deleteProject,
   approveProject,
   purchaseProject,
-  approvePurchase
+  approvePurchase,
+  getUserProjects
 };

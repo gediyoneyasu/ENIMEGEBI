@@ -56,6 +56,7 @@ const Admin = () => {
   const menuItems = [
     { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
     { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
+    { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
     { path: '/admin', name: 'Dashboard', icon: 'ri-dashboard-line' },
     { path: '/admin/users', name: 'Users', icon: 'ri-user-settings-line' },
     { path: '/admin/products', name: 'Products', icon: 'ri-shopping-bag-3-line' },
