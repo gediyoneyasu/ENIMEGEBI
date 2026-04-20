@@ -27,7 +27,11 @@ const sliderSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    required: true
+    default: ''
+  },
+  imageUrl: {
+    type: String,
+    default: ''
   },
   order: {
     type: Number,

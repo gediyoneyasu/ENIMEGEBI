@@ -36,7 +36,6 @@ function Home() {
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
         
-        // Extract categories from products
         const allProducts = response.data.featuredProducts || [];
         const categoryMap = new Map();
         
@@ -61,7 +60,8 @@ function Home() {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `${API_URL}${imagePath}`;
+    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
+    return null;
   };
 
   const getCategoryIcon = (category) => {
@@ -128,7 +128,7 @@ function Home() {
         <Swiper modules={[Autoplay, Pagination, Navigation, EffectFade]} autoplay={{ delay: 4000 }} loop={true} effect="fade" pagination={{ clickable: true }} navigation={true} className="hero-swiper">
           {sliders.map((slider, index) => (
             <SwiperSlide key={slider._id || index} className="hero-slide">
-              <div className="slide-bg" style={{ backgroundImage: `url(${getImageUrl(slider.image)})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+              <div className="slide-bg" style={{ backgroundImage: `url(${getImageUrl(slider.image || slider.imageUrl)})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
               <div className="hero-content">
                 <small>{language === 'en' ? 'Welcome to Enimegebi' : 'እንኳን ወደ እንመገቢ በደህና መጡ'}</small>
                 <h1>{language === 'en' ? slider.title : (slider.titleAm || slider.title)} <span>{language === 'en' ? 'To Your Table' : 'ወደ ጠረጴዛዎ'}</span></h1>
@@ -159,47 +159,46 @@ function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
-     {/* Categories Section - Flip Card Design */}
-<section className="categories-section">
-  <div className="container">
-    <div className="section-header">
-      <h2>{t.categoriesTitle}</h2>
-      <Link to="/categories" className="view-all">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
-    </div>
-    <div className="categories-grid">
-      {categories.map((category, idx) => (
-        <div className="category-item" key={idx}>
-          {/* Front Card */}
-          <div className="category-card">
-            <div className="category-icon">
-              <i className={getCategoryIcon(category.name)}></i>
-            </div>
-            <h3>{category.name}</h3>
-            <p>{category.count} Products</p>
+      {/* Categories Section - Flip Card Design */}
+      <section className="categories-section">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">{t.categoriesTitle}</h2>
+            <Link to="/categories" className="view-all">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
           </div>
-          {/* Back Card */}
-          <div className="card-back">
-            <div className="back-price">{category.name}</div>
-            <div className="back-content">
-              <h3>{category.name}</h3>
-              <p>Fresh organic {category.name.toLowerCase()} products</p>
-              <div className="back-stats">
-                <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
-                <span><i className="ri-user-line"></i> Local Farmers</span>
+          <div className="categories-grid">
+            {categories.map((category, idx) => (
+              <div className="category-item" key={idx}>
+                {/* Front Card */}
+                <div className="category-card">
+                  <div className="category-icon">
+                    <i className={getCategoryIcon(category.name)}></i>
+                  </div>
+                  <h3>{category.name}</h3>
+                  <p>{category.count} Products</p>
+                </div>
+                {/* Back Card */}
+                <div className="card-back">
+                  <div className="back-price">{category.name}</div>
+                  <div className="back-content">
+                    <h3>{category.name}</h3>
+                    <p>Fresh organic {category.name.toLowerCase()} products</p>
+                    <div className="back-stats">
+                      <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
+                      <span><i className="ri-user-line"></i> Local Farmers</span>
+                    </div>
+                  </div>
+                  <div className="explore-link">
+                    <Link to={`/products?category=${category.name}`}>
+                      Explore <i className="ri-arrow-right-line"></i>
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="explore-link">
-              <Link to={`/products?category=${category.name}`}>
-                Explore <i className="ri-arrow-right-line"></i>
-              </Link>
-            </div>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* Featured Products Section */}
       <section className="featured-section">
@@ -209,20 +208,27 @@ function Home() {
             <Link to="/products" className="view-all">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
           </div>
           <div className="products-grid">
-            {featuredProducts.map(product => (
-              <div key={product._id} className="product-card">
-                <div className="product-image">
-                  <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
+            {featuredProducts.map(product => {
+              const imageUrl = getImageUrl(product.image || product.imageUrl);
+              return (
+                <div key={product._id} className="product-card">
+                  <div className="product-image">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt={product.name} />
+                    ) : (
+                      <div className="no-image"><i className="ri-image-line"></i></div>
+                    )}
+                  </div>
+                  <div className="product-info">
+                    <h3>{product.name}</h3>
+                    <div className="product-price">ETB {product.price}</div>
+                    <button onClick={() => addToCart(product)} className="add-to-cart-btn">
+                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                    </button>
+                  </div>
                 </div>
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-                  <div className="product-price">ETB {product.price}</div>
-                  <button onClick={() => addToCart(product)} className="add-to-cart-btn">
-                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -235,7 +241,7 @@ function Home() {
             {testimonials.slice(0, 3).map(testimonial => (
               <div key={testimonial._id} className="testimonial-card">
                 <div className="testimonial-image">
-                  <img src={getImageUrl(testimonial.image)} alt={testimonial.name} />
+                  <img src={getImageUrl(testimonial.image || testimonial.imageUrl)} alt={testimonial.name} />
                 </div>
                 <div className="testimonial-rating">
                   {[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}

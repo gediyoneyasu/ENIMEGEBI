@@ -22,21 +22,13 @@ function Products() {
   const fetchProducts = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/admin/public-products`);
+      console.log('Products with images:', response.data);
       setProducts(response.data);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const getImageUrl = (product) => {
-    if (product.imageUrl) return product.imageUrl;
-    if (product.image) {
-      if (product.image.startsWith('http')) return product.image;
-      return `${API_URL}${product.image}`;
-    }
-    return null;
   };
 
   const handleAddToCart = (product) => {
@@ -123,15 +115,26 @@ function Products() {
           ) : (
             <div className="products-grid">
               {filteredProducts.map(product => {
-                const imageUrl = getImageUrl(product);
+                // Use imageUrl from backend (already full URL)
+                const imageUrl = product.imageUrl || product.image;
                 return (
                   <div key={product._id} className="product-card">
                     <div className="product-image">
                       {imageUrl ? (
-                        <img src={imageUrl} alt={product.name} />
-                      ) : (
-                        <div className="no-image"><i className="ri-image-line"></i></div>
-                      )}
+                        <img 
+                          src={imageUrl} 
+                          alt={product.name}
+                          onError={(e) => {
+                            console.log('Image failed to load:', imageUrl);
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div className="no-image" style={{ display: imageUrl ? 'none' : 'flex' }}>
+                        <i className="ri-image-line"></i>
+                        <span>No Image</span>
+                      </div>
                     </div>
                     <div className="product-info">
                       <h3>{product.name}</h3>

@@ -3,6 +3,8 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Contact = require('../models/Contact');
 
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
 const getUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
@@ -46,7 +48,12 @@ const deleteUser = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({});
-    res.json(products);
+    // Add full image URL to each product
+    const productsWithUrl = products.map(p => ({
+      ...p._doc,
+      imageUrl: p.image ? `${API_URL}${p.image}` : null
+    }));
+    res.json(productsWithUrl);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -64,7 +71,7 @@ const createProduct = async (req, res) => {
     if (req.file) {
       const imagePath = `/uploads/products/${req.file.filename}`;
       productData.image = imagePath;
-      productData.imageUrl = `https://enimegebi-backend.onrender.com${imagePath}`;
+      productData.imageUrl = `${API_URL}${imagePath}`;
     }
     
     const product = await Product.create(productData);
@@ -90,7 +97,7 @@ const updateProduct = async (req, res) => {
     if (req.file) {
       const imagePath = `/uploads/products/${req.file.filename}`;
       productData.image = imagePath;
-      productData.imageUrl = `https://enimegebi-backend.onrender.com${imagePath}`;
+      productData.imageUrl = `${API_URL}${imagePath}`;
     }
     
     Object.assign(product, productData);
@@ -113,7 +120,12 @@ const deleteProduct = async (req, res) => {
 const getPublicProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: 'active' }).sort({ createdAt: -1 });
-    res.json(products);
+    // Add full image URL to each product
+    const productsWithUrl = products.map(p => ({
+      ...p._doc,
+      imageUrl: p.image ? `${API_URL}${p.image}` : null
+    }));
+    res.json(productsWithUrl);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

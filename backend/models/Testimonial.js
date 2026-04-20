@@ -27,6 +27,10 @@ const testimonialSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  imageUrl: {
+    type: String,
+    default: ''
+  },
   position: {
     type: String,
     default: 'Customer'
