@@ -3,7 +3,6 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Contact = require('../models/Contact');
 
-// ============ USER CONTROLLERS ============
 const getUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
@@ -44,7 +43,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// ============ PRODUCT CONTROLLERS ============
+// PRODUCT CONTROLLERS WITH IMAGE UPLOAD
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({});
@@ -56,7 +55,23 @@ const getProducts = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file);
+    
+    let productData;
+    if (req.body.product) {
+      productData = JSON.parse(req.body.product);
+    } else {
+      productData = req.body;
+    }
+    
+    // If image was uploaded via Cloudinary
+    if (req.file) {
+      productData.image = req.file.path; // Cloudinary URL
+      productData.imageUrl = req.file.path;
+    }
+    
+    const product = await Product.create(productData);
     res.status(201).json(product);
   } catch (error) {
     console.error('Error creating product:', error);
@@ -68,10 +83,24 @@ const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    Object.assign(product, req.body);
+    
+    let productData;
+    if (req.body.product) {
+      productData = JSON.parse(req.body.product);
+    } else {
+      productData = req.body;
+    }
+    
+    if (req.file) {
+      productData.image = req.file.path;
+      productData.imageUrl = req.file.path;
+    }
+    
+    Object.assign(product, productData);
     await product.save();
     res.json(product);
   } catch (error) {
+    console.error('Error updating product:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -94,7 +123,6 @@ const getPublicProducts = async (req, res) => {
   }
 };
 
-// ============ ORDER CONTROLLERS ============
 const getOrders = async (req, res) => {
   try {
     const orders = await Order.find({}).sort({ createdAt: -1 });
@@ -116,7 +144,6 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// ============ CONTACT CONTROLLERS ============
 const getContacts = async (req, res) => {
   try {
     const contacts = await Contact.find({}).sort({ createdAt: -1 });
@@ -147,7 +174,6 @@ const markContactRead = async (req, res) => {
   }
 };
 
-// ============ DASHBOARD CONTROLLER ============
 const getDashboardStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();

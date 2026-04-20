@@ -2,26 +2,23 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-// Configure Cloudinary
+// Configure Cloudinary with your credentials
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: 'enimegeb',
+  api_key: '515252789124868',
+  api_secret: 'YN9k3wUZEk832-aHAs11w9kBfRc'
 });
 
 // Create storage for products
-const productStorage = new CloudinaryStorage({
+const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'enimegebi/products',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
     transformation: [{ width: 800, height: 800, crop: 'limit' }]
   }
 });
 
-const uploadProduct = multer({ storage: productStorage });
+const upload = multer({ storage: storage });
 
-module.exports = {
-  uploadProduct,
-  cloudinary
-};
+module.exports = upload;
