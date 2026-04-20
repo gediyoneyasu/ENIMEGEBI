@@ -10,6 +10,7 @@ connectDB();
 
 const app = express();
 
+// CORS configuration
 app.use(cors({
   origin: ['http://localhost:5173', 'https://enimegebi-zorz.vercel.app', 'https://enimegebi.vercel.app'],
   credentials: true
@@ -30,12 +31,13 @@ app.use('/api/home', require('./routes/homeRoutes'));
 app.use('/api/team', require('./routes/teamRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 
+// Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!' });
 });
 
 // IMPORTANT: Use process.env.PORT (Render default is 10000)
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+const port = process.env.PORT || 10000;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
 });
