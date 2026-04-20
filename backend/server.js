@@ -10,19 +10,16 @@ connectDB();
 
 const app = express();
 
-// CORS configuration
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://enimegebi-zorz.vercel.app', 'https://enimegebi.vercel.app'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: ['http://localhost:5173', 'https://enimegebi-zorz.vercel.app'],
+  credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files for uploads - IMPORTANT: This must be before routes
+// IMPORTANT: Serve static files from uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
@@ -35,13 +32,12 @@ app.use('/api/home', require('./routes/homeRoutes'));
 app.use('/api/team', require('./routes/teamRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 
-// Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!' });
 });
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Uploads available at: http://localhost:${PORT}/uploads`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Uploads available at: http://localhost:${PORT}/uploads`);
 });

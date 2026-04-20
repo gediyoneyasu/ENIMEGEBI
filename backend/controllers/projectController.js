@@ -5,7 +5,7 @@ const API_URL = 'https://enimegebi-backend.onrender.com';
 // Get public projects (only approved and unlocked)
 const getPublicProjects = async (req, res) => {
   try {
-    let projects = await Project.find({ isApproved: true, status: 'unlocked' }).sort({ order: 1 });
+    let projects = await Project.find({ isApproved: true }).sort({ order: 1 });
     projects = projects.map(p => ({
       ...p._doc,
       imageUrl: p.image ? `${API_URL}${p.image}` : null,
@@ -13,6 +13,7 @@ const getPublicProjects = async (req, res) => {
     }));
     res.json({ success: true, projects });
   } catch (error) {
+    console.error('Error fetching projects:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -33,7 +34,6 @@ const getProjectById = async (req, res) => {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     
-    // Check if user has purchased access
     const hasAccess = project.purchasedBy.some(p => 
       p.user.toString() === req.user.id && p.isUnlocked === true
     );
@@ -48,7 +48,7 @@ const getProjectById = async (req, res) => {
           description: project.description,
           descriptionAm: project.descriptionAm,
           image: project.image,
-          imageUrl: project.imageUrl,
+          imageUrl: project.image ? `${API_URL}${project.image}` : null,
           price: project.price,
           status: 'locked',
           fileType: project.fileType
@@ -203,7 +203,6 @@ const approvePurchase = async (req, res) => {
       purchase.approvedAt = new Date();
       await project.save();
       
-      // Check if all purchases are approved, unlock project
       const allUnlocked = project.purchasedBy.every(p => p.isUnlocked === true);
       if (allUnlocked && project.purchasedBy.length > 0) {
         project.status = 'unlocked';
@@ -219,10 +218,15 @@ const approvePurchase = async (req, res) => {
 // Get user's purchased projects
 const getUserProjects = async (req, res) => {
   try {
-    const projects = await Project.find({
+    let projects = await Project.find({
       'purchasedBy.user': req.user.id,
       'purchasedBy.isUnlocked': true
     });
+    projects = projects.map(p => ({
+      ...p._doc,
+      imageUrl: p.image ? `${API_URL}${p.image}` : null,
+      fileUrl: p.fileUrl ? (p.fileUrl.startsWith('http') ? p.fileUrl : `${API_URL}${p.fileUrl}`) : null
+    }));
     res.json({ success: true, projects });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

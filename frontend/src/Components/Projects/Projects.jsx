@@ -23,6 +23,7 @@ const Projects = () => {
     try {
       const response = await axios.get(`${API_URL}/api/projects/public`);
       if (response.data.success) {
+        console.log('Projects with images:', response.data.projects);
         setProjects(response.data.projects);
       }
     } catch (error) {
@@ -46,6 +47,16 @@ const Projects = () => {
     } catch (error) {
       console.error('Error:', error);
     }
+  };
+
+  const getImageUrl = (project) => {
+    // Check all possible image sources
+    if (project.imageUrl) return project.imageUrl;
+    if (project.image) {
+      if (project.image.startsWith('http')) return project.image;
+      return `${API_URL}${project.image}`;
+    }
+    return null;
   };
 
   const handlePurchase = async (project) => {
@@ -72,12 +83,6 @@ const Projects = () => {
       console.error('Purchase error:', error);
       alert('Failed to process purchase');
     }
-  };
-
-  const getImageUrl = (project) => {
-    if (project.imageUrl) return project.imageUrl;
-    if (project.image) return `${API_URL}${project.image}`;
-    return null;
   };
 
   const showProjectDetails = (project) => {
@@ -153,6 +158,7 @@ const Projects = () => {
         <div className="projects-grid">
           {displayProjects.map(project => {
             const imageUrl = getImageUrl(project);
+            console.log('Project image URL:', imageUrl);
             return (
               <div key={project._id} className="project-card" onClick={() => showProjectDetails(project)}>
                 <div className="project-image">
