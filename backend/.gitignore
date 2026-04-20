@@ -4,3 +4,4 @@ uploads/
 dist/
 build/
 npm-debug.log
+.env
