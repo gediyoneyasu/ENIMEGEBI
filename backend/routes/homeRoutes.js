@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
+const { uploadSlider } = require('../config/upload');
 const Slider = require('../models/Slider');
 const Testimonial = require('../models/Testimonial');
 const HomeSetting = require('../models/HomeSetting');
@@ -35,7 +36,7 @@ router.get('/public-data', async (req, res) => {
 // Protected admin routes
 router.use(protect);
 
-// Slider routes (without image upload for now)
+// Slider routes
 router.get('/sliders', async (req, res) => {
   try {
     const sliders = await Slider.find({}).sort({ order: 1 });
@@ -45,20 +46,29 @@ router.get('/sliders', async (req, res) => {
   }
 });
 
-router.post('/sliders', async (req, res) => {
+router.post('/sliders', uploadSlider.single('image'), async (req, res) => {
   try {
-    const slider = await Slider.create(req.body);
+    const sliderData = JSON.parse(req.body.slider);
+    if (req.file) {
+      sliderData.image = `/uploads/sliders/${req.file.filename}`;
+    }
+    const slider = await Slider.create(sliderData);
     res.json({ success: true, slider });
   } catch (error) {
+    console.error('Error creating slider:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-router.put('/sliders/:id', async (req, res) => {
+router.put('/sliders/:id', uploadSlider.single('image'), async (req, res) => {
   try {
     const slider = await Slider.findById(req.params.id);
     if (!slider) return res.status(404).json({ success: false, message: 'Slider not found' });
-    Object.assign(slider, req.body);
+    const sliderData = JSON.parse(req.body.slider);
+    if (req.file) {
+      sliderData.image = `/uploads/sliders/${req.file.filename}`;
+    }
+    Object.assign(slider, sliderData);
     await slider.save();
     res.json({ success: true, slider });
   } catch (error) {

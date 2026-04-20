@@ -35,7 +35,7 @@ const SliderManagement = () => {
       });
       setSliders(response.data.sliders);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching sliders:', error);
     } finally {
       setLoading(false);
     }
@@ -51,50 +51,64 @@ const SliderManagement = () => {
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
       reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     const submitData = new FormData();
     submitData.append('slider', JSON.stringify(formData));
-    if (imageFile) submitData.append('image', imageFile);
+    if (imageFile) {
+      submitData.append('image', imageFile);
+    }
 
     try {
       const token = localStorage.getItem('enimegebiToken');
+      
       if (editingSlider) {
         await axios.put(`${API_URL}/api/home/sliders/${editingSlider._id}`, submitData, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
         });
-        setAlert({ type: 'success', message: 'Slider updated!' });
+        setAlert({ type: 'success', message: 'Slider updated successfully!' });
       } else {
         await axios.post(`${API_URL}/api/home/sliders`, submitData, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
         });
-        setAlert({ type: 'success', message: 'Slider added!' });
+        setAlert({ type: 'success', message: 'Slider added successfully!' });
       }
+      
       fetchSliders();
       closeModal();
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
+      console.error('Error saving slider:', error);
       setAlert({ type: 'error', message: 'Failed to save slider' });
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Delete this slider?')) {
+    if (window.confirm('Are you sure you want to delete this slider?')) {
       try {
         const token = localStorage.getItem('enimegebiToken');
         await axios.delete(`${API_URL}/api/home/sliders/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchSliders();
-        setAlert({ type: 'success', message: 'Slider deleted!' });
+        setAlert({ type: 'success', message: 'Slider deleted successfully!' });
         setTimeout(() => setAlert(null), 3000);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error deleting slider:', error);
       }
     }
   };
@@ -119,8 +133,14 @@ const SliderManagement = () => {
   const openModal = () => {
     setEditingSlider(null);
     setFormData({
-      title: '', titleAm: '', subtitle: '', subtitleAm: '',
-      buttonText: 'Shop Now', buttonTextAm: 'አሁን ይግዙ', order: 0, active: true
+      title: '',
+      titleAm: '',
+      subtitle: '',
+      subtitleAm: '',
+      buttonText: 'Shop Now',
+      buttonTextAm: 'አሁን ይግዙ',
+      order: 0,
+      active: true
     });
     setImagePreview('');
     setImageFile(null);
@@ -130,46 +150,79 @@ const SliderManagement = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingSlider(null);
+    setImageFile(null);
+    setImagePreview('');
   };
 
-  if (loading) return <div>Loading sliders...</div>;
+  if (loading) return <div className="loading-spinner">Loading sliders...</div>;
 
   return (
-    <div>
+    <div className="slider-management">
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
+
       <div className="management-header">
-        <h2>Home Sliders</h2>
-        <button className="add-btn" onClick={openModal}>Add Slider</button>
+        <h2><i className="ri-image-line"></i> Home Sliders</h2>
+        <button className="add-btn" onClick={openModal}>
+          <i className="ri-add-line"></i> Add Slider
+        </button>
       </div>
+
       <div className="sliders-list">
-        {sliders.map(slider => (
+        {sliders.map((slider) => (
           <div key={slider._id} className="slider-item">
-            <img src={`${API_URL}${slider.image}`} alt={slider.title} style={{ width: '150px', height: '80px', objectFit: 'cover' }} />
-            <div><strong>{slider.title}</strong><br/>{slider.subtitle}</div>
-            <div><span className={`status-badge ${slider.active ? 'active' : 'inactive'}`}>{slider.active ? 'Active' : 'Inactive'}</span></div>
-            <div>
-              <button className="btn-edit" onClick={() => handleEdit(slider)}>Edit</button>
-              <button className="btn-delete" onClick={() => handleDelete(slider._id)}>Delete</button>
+            <div className="slider-preview">
+              {slider.image ? (
+                <img src={`${API_URL}${slider.image}`} alt={slider.title} />
+              ) : (
+                <div className="no-image"><i className="ri-image-line"></i></div>
+              )}
+              <span className={`slider-status ${slider.active ? 'active' : 'inactive'}`}>
+                {slider.active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <div className="slider-info">
+              <h3>{slider.title}</h3>
+              <p className="slider-subtitle">{slider.subtitle}</p>
+              <p className="slider-order">Order: {slider.order}</p>
+              <div className="slider-actions">
+                <button className="btn-edit" onClick={() => handleEdit(slider)}>
+                  <i className="ri-edit-line"></i> Edit
+                </button>
+                <button className="btn-delete" onClick={() => handleDelete(slider._id)}>
+                  <i className="ri-delete-bin-line"></i> Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>{editingSlider ? 'Edit Slider' : 'Add Slider'}</h3>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <h3><i className="ri-image-line"></i> {editingSlider ? 'Edit Slider' : 'Add New Slider'}</h3>
             <form onSubmit={handleSubmit}>
-              {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100%', height: '150px', objectFit: 'cover' }} />}
-              <input type="file" accept="image/*" onChange={handleImageChange} required={!editingSlider} />
-              <input type="text" name="title" placeholder="Title (English)" value={formData.title} onChange={handleInputChange} required />
-              <input type="text" name="titleAm" placeholder="Title (Amharic)" value={formData.titleAm} onChange={handleInputChange} />
-              <input type="text" name="subtitle" placeholder="Subtitle" value={formData.subtitle} onChange={handleInputChange} />
-              <input type="number" name="order" placeholder="Order" value={formData.order} onChange={handleInputChange} />
-              <select name="active" value={formData.active} onChange={handleInputChange}>
-                <option value={true}>Active</option><option value={false}>Inactive</option>
-              </select>
+              <div className="form-group">
+                <label>Slider Image</label>
+                {imagePreview && (
+                  <div style={{ marginBottom: '10px' }}>
+                    <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px' }} />
+                  </div>
+                )}
+                <input type="file" accept="image/*" onChange={handleImageChange} required={!editingSlider} />
+              </div>
+              
+              <div className="form-group"><label>Title (English) *</label><input type="text" name="title" value={formData.title} onChange={handleInputChange} required /></div>
+              <div className="form-group"><label>Title (Amharic)</label><input type="text" name="titleAm" value={formData.titleAm} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Subtitle (English)</label><input type="text" name="subtitle" value={formData.subtitle} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Subtitle (Amharic)</label><input type="text" name="subtitleAm" value={formData.subtitleAm} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Button Text (English)</label><input type="text" name="buttonText" value={formData.buttonText} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Button Text (Amharic)</label><input type="text" name="buttonTextAm" value={formData.buttonTextAm} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Order (lower number appears first)</label><input type="number" name="order" value={formData.order} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Status</label><select name="active" value={formData.active} onChange={handleInputChange}><option value={true}>Active</option><option value={false}>Inactive</option></select></div>
+              
               <div className="modal-actions">
-                <button type="submit" className="btn-save">Save</button>
+                <button type="submit" className="btn-save">Save Slider</button>
                 <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>
               </div>
             </form>
