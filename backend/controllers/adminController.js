@@ -54,21 +54,10 @@ const getProducts = async (req, res) => {
   }
 };
 
-const createProductWithImage = async (req, res) => {
+// Simplified: Create product without image
+const createProduct = async (req, res) => {
   try {
-    let productData;
-    if (req.body.product) {
-      productData = JSON.parse(req.body.product);
-    } else {
-      productData = req.body;
-    }
-    
-    // Cloudinary returns the URL in req.file.path
-    if (req.file) {
-      productData.image = req.file.path; // Cloudinary URL
-      productData.imageUrl = req.file.path;
-    }
-    
+    const productData = req.body;
     const product = await Product.create(productData);
     res.status(201).json(product);
   } catch (error) {
@@ -77,28 +66,15 @@ const createProductWithImage = async (req, res) => {
   }
 };
 
-const updateProductWithImage = async (req, res) => {
+// Simplified: Update product without image
+const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    
-    let productData;
-    if (req.body.product) {
-      productData = JSON.parse(req.body.product);
-    } else {
-      productData = req.body;
-    }
-    
-    if (req.file) {
-      productData.image = req.file.path;
-      productData.imageUrl = req.file.path;
-    }
-    
-    Object.assign(product, productData);
+    Object.assign(product, req.body);
     await product.save();
     res.json(product);
   } catch (error) {
-    console.error('Error updating product:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -192,8 +168,8 @@ module.exports = {
   updateUser,
   deleteUser,
   getProducts,
-  createProductWithImage,
-  updateProductWithImage,
+  createProduct,
+  updateProduct,
   deleteProduct,
   getPublicProducts,
   getOrders,
