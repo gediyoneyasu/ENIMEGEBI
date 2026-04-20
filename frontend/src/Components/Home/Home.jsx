@@ -177,29 +177,42 @@ function Home() {
       </section>
 
       {/* Categories Section */}
-      <section className="categories-section-home">
-        <div className="container">
-          <div className="section-header-home">
-            <h2 className="section-title">{t.categoriesTitle}</h2>
-            <Link to="/categories" className="view-all-link">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
+    <section className="shop-category-container">
+  <div className="container">
+    <small className="shop-category-title">Shop by Category</small>
+    <h2 className="shop-category-heading">Explore Our <span>Categories</span></h2>
+    
+    <div className="shop-categories-cards">
+      {categories.map((category, idx) => (
+        <div className="shop-category-card" key={idx}>
+          {/* Front Card */}
+          <div className="shop-card-front" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+            <span className="shop-category-badge">{category.count} Products</span>
+            <button>{category.name}</button>
           </div>
-          <div className="categories-grid-home">
-            {categories.map((category, idx) => (
-              <Link to={`/products?category=${category.name}`} key={idx} className="category-card-home">
-                <div className="category-card-front">
-                  <div className="category-image-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-                    <div className="category-overlay"></div>
-                  </div>
-                  <div className="category-info-home">
-                    <h3>{category.name}</h3>
-                    <p>{category.count} Products</p>
-                  </div>
-                </div>
+
+          {/* Back Card */}
+          <div className="shop-card-back">
+            <div className="shop-price">{category.name}</div>
+            <div className="shop-card-content">
+              <h3>{category.name}</h3>
+              <p>Fresh organic products</p>
+            </div>
+            <div className="shop-explore-now">
+              <Link to={`/products?category=${category.name}`}>
+                Explore <i className="ri-arrow-right-line"></i>
               </Link>
-            ))}
+            </div>
           </div>
         </div>
-      </section>
+      ))}
+    </div>
+    
+    <div className="shop-view-all">
+      <Link to="/categories">View All Categories <i className="ri-arrow-right-line"></i></Link>
+    </div>
+  </div>
+</section>
 
       {/* Featured Products Section */}
       <section className="featured-section-home">
