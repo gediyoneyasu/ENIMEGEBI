@@ -10,8 +10,8 @@ const ProjectManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [alert, setAlert] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [fileFile, setFileFile] = useState(null);
+  const [filePreview, setFilePreview] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     titleAm: '',
@@ -43,13 +43,17 @@ const ProjectManagement = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleImageChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
+      setFileFile(file);
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setFilePreview(reader.result);
+        reader.readAsDataURL(file);
+      } else {
+        setFilePreview(file.name);
+      }
     }
   };
 
@@ -58,8 +62,8 @@ const ProjectManagement = () => {
     
     const submitData = new FormData();
     submitData.append('project', JSON.stringify(formData));
-    if (imageFile) {
-      submitData.append('image', imageFile);
+    if (fileFile) {
+      submitData.append('image', fileFile);
     }
 
     try {
@@ -140,8 +144,8 @@ const ProjectManagement = () => {
       price: project.price,
       order: project.order || 0
     });
-    setImagePreview(project.image ? `${API_URL}${project.image}` : '');
-    setImageFile(null);
+    setFilePreview(project.image ? `${API_URL}${project.image}` : (project.fileUrl || ''));
+    setFileFile(null);
     setShowModal(true);
   };
 
@@ -151,45 +155,50 @@ const ProjectManagement = () => {
       title: '', titleAm: '', description: '', descriptionAm: '',
       price: '', order: 0
     });
-    setImagePreview('');
-    setImageFile(null);
+    setFilePreview('');
+    setFileFile(null);
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingProject(null);
-    setImageFile(null);
-    setImagePreview('');
+    setFileFile(null);
+    setFilePreview('');
   };
 
   if (loading) return <div>Loading projects...</div>;
 
   return (
-    <div className="project-management">
+    <div className="project-management-admin">
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
       
       <div className="management-header">
-        <h2>Project Management</h2>
-        <button className="add-btn" onClick={openModal}>Add Project</button>
+        <h2><i className="ri-folder-line"></i> Project Management</h2>
+        <button className="add-btn" onClick={openModal}>
+          <i className="ri-add-line"></i> Add Project
+        </button>
       </div>
 
-      <div className="projects-list">
+      <div className="projects-admin-grid">
         {projects.map(project => (
-          <div key={project._id} className="project-item">
-            <div className="project-image">
+          <div key={project._id} className="project-admin-card">
+            <div className="project-admin-image">
               {project.image ? (
                 <img src={`${API_URL}${project.image}`} alt={project.title} />
               ) : (
                 <div className="no-image"><i className="ri-image-line"></i></div>
               )}
+              {project.fileType === 'pdf' && <div className="file-type-badge">PDF</div>}
+              {project.fileType === 'video' && <div className="file-type-badge">VIDEO</div>}
             </div>
-            <div className="project-details">
+            <div className="project-admin-info">
               <h3>{project.title}</h3>
-              <p>Price: ${project.price}</p>
-              <p>Status: {project.status} | Approved: {project.isApproved ? 'Yes' : 'No'}</p>
-              <p>Purchases: {project.purchasedBy?.length || 0}</p>
-              <div className="project-actions">
+              <p className="project-price">Price: ${project.price}</p>
+              <p className="project-status">Status: {project.status}</p>
+              <p className="project-approved">Approved: {project.isApproved ? '✅ Yes' : '❌ No'}</p>
+              <p className="project-purchases">Purchases: {project.purchasedBy?.length || 0}</p>
+              <div className="project-admin-actions">
                 <button className="btn-edit" onClick={() => handleEdit(project)}>Edit</button>
                 {!project.isApproved && (
                   <button className="btn-approve" onClick={() => handleApprove(project._id)}>Approve</button>
@@ -201,8 +210,8 @@ const ProjectManagement = () => {
               <div className="pending-purchases">
                 <h4>Pending Approvals:</h4>
                 {project.purchasedBy.filter(p => !p.isUnlocked).map(purchase => (
-                  <div key={purchase.user} className="pending-purchase">
-                    <span>User ID: {purchase.user}</span>
+                  <div key={purchase.user} className="pending-purchase-item">
+                    <span>User: {purchase.user.slice(-8)}</span>
                     <span>Amount: ${purchase.amount}</span>
                     <button onClick={() => handleApprovePurchase(project._id, purchase.user)}>
                       Approve
@@ -217,20 +226,28 @@ const ProjectManagement = () => {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>{editingProject ? 'Edit Project' : 'Add Project'}</h3>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <h3>{editingProject ? 'Edit Project' : 'Add New Project'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Project Image</label>
-                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />}
-                <input type="file" accept="image/*" onChange={handleImageChange} />
+                <label>Upload File (Image, PDF, or Video)</label>
+                {filePreview && (
+                  filePreview.startsWith('data:image') ? (
+                    <img src={filePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', marginBottom: '10px' }} />
+                  ) : typeof filePreview === 'string' && filePreview.includes('/uploads') ? (
+                    <div>Current file: {filePreview.split('/').pop()}</div>
+                  ) : (
+                    <div>File: {filePreview}</div>
+                  )
+                )}
+                <input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
               </div>
               <div className="form-group"><label>Title (English)</label><input type="text" name="title" value={formData.title} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Title (Amharic)</label><input type="text" name="titleAm" value={formData.titleAm} onChange={handleInputChange} /></div>
               <div className="form-group"><label>Description (English)</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" required /></div>
               <div className="form-group"><label>Description (Amharic)</label><textarea name="descriptionAm" value={formData.descriptionAm} onChange={handleInputChange} rows="3" /></div>
               <div className="form-group"><label>Price (ETB)</label><input type="number" name="price" value={formData.price} onChange={handleInputChange} required /></div>
-              <div className="form-group"><label>Order (lower = first)</label><input type="number" name="order" value={formData.order} onChange={handleInputChange} /></div>
+              <div className="form-group"><label>Order (lower number appears first)</label><input type="number" name="order" value={formData.order} onChange={handleInputChange} /></div>
               <div className="modal-actions">
                 <button type="submit" className="btn-save">Save Project</button>
                 <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>

@@ -9,10 +9,14 @@ const API_URL = 'https://enimegebi-backend.onrender.com';
 const Projects = () => {
   const { language } = useLanguage();
   const [projects, setProjects] = useState([]);
+  const [myProjects, setMyProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
+  const [selectedProject, setSelectedProject] = useState(null);
 
   useEffect(() => {
     fetchProjects();
+    fetchMyProjects();
   }, []);
 
   const fetchProjects = async () => {
@@ -28,34 +32,97 @@ const Projects = () => {
     }
   };
 
+  const fetchMyProjects = async () => {
+    try {
+      const token = localStorage.getItem('enimegebiToken');
+      if (token) {
+        const response = await axios.get(`${API_URL}/api/projects/my-projects`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setMyProjects(response.data.projects);
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handlePurchase = async (project) => {
+    const token = localStorage.getItem('enimegebiToken');
+    if (!token) {
+      alert('Please login first');
+      window.location.href = '/auth';
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/api/projects/purchase`, {
+        projectId: project._id,
+        amount: project.price
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        alert('Purchase request sent! Admin will approve after payment verification.');
+        fetchMyProjects();
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      alert('Failed to process purchase');
+    }
+  };
+
   const getImageUrl = (project) => {
     if (project.imageUrl) return project.imageUrl;
     if (project.image) return `${API_URL}${project.image}`;
     return null;
   };
 
+  const showProjectDetails = (project) => {
+    setSelectedProject(project);
+  };
+
+  const closeModal = () => {
+    setSelectedProject(null);
+  };
+
   const translations = {
     en: {
       title: 'Projects',
-      subtitle: 'Browse our premium projects',
+      subtitle: 'Browse our premium projects and resources',
+      allProjects: 'All Projects',
+      myProjects: 'My Projects',
       price: 'Price',
+      unlock: 'Unlock Project',
       locked: 'Locked',
-      unlock: 'Unlock',
+      view: 'View Details',
       noProjects: 'No projects available',
-      comingSoon: 'More projects coming soon'
+      myProjectsEmpty: 'You haven\'t purchased any projects yet',
+      description: 'Description',
+      purchaseRequest: 'Request Purchase',
+      close: 'Close'
     },
     am: {
       title: 'ፕሮጀክቶች',
       subtitle: 'የእኛን ፕሪሚየም ፕሮጀክቶች ይመልከቱ',
+      allProjects: 'ሁሉም ፕሮጀክቶች',
+      myProjects: 'የኔ ፕሮጀክቶች',
       price: 'ዋጋ',
+      unlock: 'ፕሮጀክት ክፈት',
       locked: 'ተቆልፏል',
-      unlock: 'ክፈት',
+      view: 'ዝርዝር',
       noProjects: 'ምንም ፕሮጀክቶች የሉም',
-      comingSoon: 'ተጨማሪ ፕሮጀክቶች በቅርቡ'
+      myProjectsEmpty: 'እስካሁን ምንም ፕሮጀክት አልገዙም',
+      description: 'መግለጫ',
+      purchaseRequest: 'ግዢ ጠይቅ',
+      close: 'ዝጋ'
     }
   };
 
   const t = translations[language];
+  const displayProjects = activeTab === 'all' ? projects : myProjects;
 
   if (loading) {
     return <div className="projects-loading"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
@@ -68,18 +135,26 @@ const Projects = () => {
         <p>{t.subtitle}</p>
       </div>
 
-      {projects.length === 0 ? (
+      <div className="projects-tabs">
+        <button className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
+          {t.allProjects}
+        </button>
+        <button className={`tab-btn ${activeTab === 'my' ? 'active' : ''}`} onClick={() => setActiveTab('my')}>
+          {t.myProjects}
+        </button>
+      </div>
+
+      {displayProjects.length === 0 ? (
         <div className="no-projects">
           <i className="ri-folder-line"></i>
-          <h3>{t.noProjects}</h3>
-          <p>{t.comingSoon}</p>
+          <h3>{activeTab === 'all' ? t.noProjects : t.myProjectsEmpty}</h3>
         </div>
       ) : (
         <div className="projects-grid">
-          {projects.map(project => {
+          {displayProjects.map(project => {
             const imageUrl = getImageUrl(project);
             return (
-              <div key={project._id} className="project-card">
+              <div key={project._id} className="project-card" onClick={() => showProjectDetails(project)}>
                 <div className="project-image">
                   {imageUrl ? (
                     <img src={imageUrl} alt={project.title} />
@@ -95,15 +170,58 @@ const Projects = () => {
                 </div>
                 <div className="project-info">
                   <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
-                  <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
+                  <p>{language === 'en' ? project.description?.substring(0, 80) : (project.descriptionAm || project.description)?.substring(0, 80)}...</p>
                   <div className="project-price">${project.price}</div>
-                  <button className="unlock-btn">
-                    <i className="ri-lock-unlock-line"></i> {t.unlock}
+                  <button className="view-details-btn" onClick={(e) => { e.stopPropagation(); showProjectDetails(project); }}>
+                    <i className="ri-eye-line"></i> {t.view}
                   </button>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Project Details Modal */}
+      {selectedProject && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{language === 'en' ? selectedProject.title : (selectedProject.titleAm || selectedProject.title)}</h2>
+              <button className="close-modal" onClick={closeModal}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-image">
+                {getImageUrl(selectedProject) ? (
+                  <img src={getImageUrl(selectedProject)} alt={selectedProject.title} />
+                ) : (
+                  <div className="no-image"><i className="ri-image-line"></i></div>
+                )}
+              </div>
+              <div className="modal-info">
+                <p><strong>{t.description}:</strong></p>
+                <p>{language === 'en' ? selectedProject.description : (selectedProject.descriptionAm || selectedProject.description)}</p>
+                <p><strong>{t.price}:</strong> ${selectedProject.price}</p>
+                {selectedProject.status === 'locked' ? (
+                  <button className="purchase-btn" onClick={() => handlePurchase(selectedProject)}>
+                    <i className="ri-lock-unlock-line"></i> {t.purchaseRequest}
+                  </button>
+                ) : (
+                  <div className="project-content-preview">
+                    <p>✅ You have access to this project!</p>
+                    {selectedProject.fileType === 'pdf' && selectedProject.fileUrl && (
+                      <a href={selectedProject.fileUrl} target="_blank" rel="noopener noreferrer" className="view-file-btn">
+                        <i className="ri-file-pdf-line"></i> View PDF
+                      </a>
+                    )}
+                    {selectedProject.fileType === 'video' && selectedProject.fileUrl && (
+                      <video controls src={selectedProject.fileUrl} style={{ width: '100%', marginTop: '10px' }} />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

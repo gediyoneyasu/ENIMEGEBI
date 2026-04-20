@@ -8,7 +8,8 @@ const getPublicProjects = async (req, res) => {
     let projects = await Project.find({ isApproved: true, status: 'unlocked' }).sort({ order: 1 });
     projects = projects.map(p => ({
       ...p._doc,
-      imageUrl: p.image ? `${API_URL}${p.image}` : null
+      imageUrl: p.image ? `${API_URL}${p.image}` : null,
+      fileUrl: p.fileUrl ? (p.fileUrl.startsWith('http') ? p.fileUrl : `${API_URL}${p.fileUrl}`) : null
     }));
     res.json({ success: true, projects });
   } catch (error) {
@@ -26,13 +27,13 @@ const getAllProjects = async (req, res) => {
   }
 };
 
-// Get single project
+// Get single project by ID
 const getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     
-    // Check if user has access
+    // Check if user has purchased access
     const hasAccess = project.purchasedBy.some(p => 
       p.user.toString() === req.user.id && p.isUnlocked === true
     );
@@ -49,12 +50,20 @@ const getProjectById = async (req, res) => {
           image: project.image,
           imageUrl: project.imageUrl,
           price: project.price,
-          status: 'locked'
+          status: 'locked',
+          fileType: project.fileType
         }
       });
     }
     
-    res.json({ success: true, project });
+    res.json({ 
+      success: true, 
+      project: {
+        ...project._doc,
+        imageUrl: project.image ? `${API_URL}${project.image}` : null,
+        fileUrl: project.fileUrl ? (project.fileUrl.startsWith('http') ? project.fileUrl : `${API_URL}${project.fileUrl}`) : null
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -71,9 +80,20 @@ const createProject = async (req, res) => {
     }
     
     if (req.file) {
-      const imagePath = `/uploads/projects/${req.file.filename}`;
-      projectData.image = imagePath;
-      projectData.imageUrl = `${API_URL}${imagePath}`;
+      const filePath = `/uploads/projects/${req.file.filename}`;
+      const ext = req.file.originalname.split('.').pop().toLowerCase();
+      
+      if (ext === 'pdf') {
+        projectData.fileType = 'pdf';
+        projectData.fileUrl = filePath;
+      } else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) {
+        projectData.fileType = 'video';
+        projectData.fileUrl = filePath;
+      } else {
+        projectData.fileType = 'image';
+        projectData.image = filePath;
+        projectData.imageUrl = `${API_URL}${filePath}`;
+      }
     }
     
     const project = await Project.create(projectData);
@@ -98,9 +118,20 @@ const updateProject = async (req, res) => {
     }
     
     if (req.file) {
-      const imagePath = `/uploads/projects/${req.file.filename}`;
-      projectData.image = imagePath;
-      projectData.imageUrl = `${API_URL}${imagePath}`;
+      const filePath = `/uploads/projects/${req.file.filename}`;
+      const ext = req.file.originalname.split('.').pop().toLowerCase();
+      
+      if (ext === 'pdf') {
+        projectData.fileType = 'pdf';
+        projectData.fileUrl = filePath;
+      } else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) {
+        projectData.fileType = 'video';
+        projectData.fileUrl = filePath;
+      } else {
+        projectData.fileType = 'image';
+        projectData.image = filePath;
+        projectData.imageUrl = `${API_URL}${filePath}`;
+      }
     }
     
     Object.assign(project, projectData);
@@ -159,7 +190,7 @@ const purchaseProject = async (req, res) => {
   }
 };
 
-// Approve purchase (admin)
+// Approve purchase
 const approvePurchase = async (req, res) => {
   try {
     const { projectId, userId } = req.body;

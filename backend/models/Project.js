@@ -29,6 +29,11 @@ const projectSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  fileType: {
+    type: String,
+    enum: ['image', 'pdf', 'video'],
+    default: 'image'
+  },
   price: {
     type: Number,
     required: true,
