@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
-import getImageUrl from '../../utils/imageHelper';
 import './Products.css';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
@@ -13,7 +12,6 @@ function Products() {
   const { addToCart } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -23,16 +21,24 @@ function Products() {
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
       const response = await axios.get(`${API_URL}/api/admin/public-products`);
-      setProducts(Array.isArray(response.data) ? response.data : []);
-      setError('');
-    } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to load products');
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getImageUrl = (product) => {
+    if (product.imageUrl) return product.imageUrl;
+    if (product.image) return product.image;
+    return null;
+  };
+
+  const handleAddToCart = (product) => {
+    addToCart(product);
+    alert(`${product.name} added to cart!`);
   };
 
   const translations = {
@@ -64,19 +70,14 @@ function Products() {
   const categories = ['all', 'Coffee', 'Grains', 'Honey', 'Dairy', 'Fruits', 'Vegetables', 'Spices', 'Beverages'];
 
   const filteredProducts = products.filter(product => {
-    if (!product) return false;
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const productName = language === 'en' ? product.name : (product.nameAm || product.name);
-    const matchesSearch = productName?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const matchesSearch = productName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch && product.status !== 'inactive';
   });
 
   if (loading) {
     return <div className="products-loading"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
-  }
-
-  if (error) {
-    return <div className="products-error"><p>{error}</p><button onClick={fetchProducts}>Retry</button></div>;
   }
 
   return (
@@ -119,16 +120,20 @@ function Products() {
           ) : (
             <div className="products-grid">
               {filteredProducts.map(product => {
-                const imageUrl = getImageUrl(product.image || product.imageUrl);
+                const imageUrl = getImageUrl(product);
                 return (
                   <div key={product._id} className="product-card">
                     <div className="product-image">
-                      {imageUrl ? <img src={imageUrl} alt={product.name} /> : <div className="no-image"><i className="ri-image-line"></i></div>}
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={product.name} />
+                      ) : (
+                        <div className="no-image"><i className="ri-image-line"></i></div>
+                      )}
                     </div>
                     <div className="product-info">
                       <h3>{product.name}</h3>
                       <div className="product-price">{t.price} {product.price}</div>
-                      <button className="add-to-cart-btn" onClick={() => addToCart(product)} disabled={product.stock === 0}>
+                      <button className="add-to-cart-btn" onClick={() => handleAddToCart(product)} disabled={product.stock === 0}>
                         <i className="ri-shopping-cart-line"></i> {t.addToCart}
                       </button>
                     </div>

@@ -9,32 +9,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Create storage for different folders
-const createStorage = (folder) => {
-  return new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-      folder: `enimegebi/${folder}`,
-      allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp'],
-      transformation: [{ width: 800, height: 800, crop: 'limit' }]
-    }
-  });
-};
+// Create storage for products
+const productStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'enimegebi/products',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp'],
+    transformation: [{ width: 800, height: 800, crop: 'limit' }]
+  }
+});
 
-// Upload handlers
-const uploadProduct = multer({ storage: createStorage('products') });
-const uploadSlider = multer({ storage: createStorage('sliders') });
-const uploadTestimonial = multer({ storage: createStorage('testimonials') });
-const uploadAvatar = multer({ storage: createStorage('avatars') });
-const uploadTeam = multer({ storage: createStorage('team') });
-const uploadProject = multer({ storage: createStorage('projects') });
+const uploadProduct = multer({ storage: productStorage });
 
 module.exports = {
   uploadProduct,
-  uploadSlider,
-  uploadTestimonial,
-  uploadAvatar,
-  uploadTeam,
-  uploadProject,
   cloudinary
 };

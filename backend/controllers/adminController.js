@@ -54,10 +54,23 @@ const getProducts = async (req, res) => {
   }
 };
 
-// Simplified: Create product without image
+// Create product with Cloudinary image upload
 const createProduct = async (req, res) => {
   try {
-    const productData = req.body;
+    let productData;
+    
+    if (req.body.product) {
+      productData = JSON.parse(req.body.product);
+    } else {
+      productData = req.body;
+    }
+    
+    // If image uploaded via Cloudinary
+    if (req.file) {
+      productData.image = req.file.path; // Cloudinary URL
+      productData.imageUrl = req.file.path;
+    }
+    
     const product = await Product.create(productData);
     res.status(201).json(product);
   } catch (error) {
@@ -66,15 +79,29 @@ const createProduct = async (req, res) => {
   }
 };
 
-// Simplified: Update product without image
+// Update product with image
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    Object.assign(product, req.body);
+    
+    let productData;
+    if (req.body.product) {
+      productData = JSON.parse(req.body.product);
+    } else {
+      productData = req.body;
+    }
+    
+    if (req.file) {
+      productData.image = req.file.path;
+      productData.imageUrl = req.file.path;
+    }
+    
+    Object.assign(product, productData);
     await product.save();
     res.json(product);
   } catch (error) {
+    console.error('Error updating product:', error);
     res.status(500).json({ message: error.message });
   }
 };
