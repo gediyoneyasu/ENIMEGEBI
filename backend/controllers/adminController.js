@@ -56,9 +56,6 @@ const getProducts = async (req, res) => {
 
 const createProductWithImage = async (req, res) => {
   try {
-    console.log('Request body:', req.body);
-    console.log('Request file:', req.file);
-    
     let productData;
     if (req.body.product) {
       productData = JSON.parse(req.body.product);
@@ -66,13 +63,13 @@ const createProductWithImage = async (req, res) => {
       productData = req.body;
     }
     
+    // Cloudinary returns the URL in req.file.path
     if (req.file) {
-      const imageUrl = `/uploads/products/${req.file.filename}`;
-      productData.image = imageUrl;
+      productData.image = req.file.path; // Cloudinary URL
+      productData.imageUrl = req.file.path;
     }
     
     const product = await Product.create(productData);
-    console.log('Product created:', product);
     res.status(201).json(product);
   } catch (error) {
     console.error('Error creating product:', error);
@@ -93,8 +90,8 @@ const updateProductWithImage = async (req, res) => {
     }
     
     if (req.file) {
-      const imageUrl = `/uploads/products/${req.file.filename}`;
-      productData.image = imageUrl;
+      productData.image = req.file.path;
+      productData.imageUrl = req.file.path;
     }
     
     Object.assign(product, productData);
