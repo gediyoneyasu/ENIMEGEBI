@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
-import getImageUrl from '../../utils/imageHelper';
 import './Products.css';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
@@ -29,6 +28,12 @@ function Products() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL}${imagePath}`;
   };
 
   const handleAddToCart = (product) => {

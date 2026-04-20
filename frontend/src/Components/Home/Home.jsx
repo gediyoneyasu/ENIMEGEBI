@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
-import getImageUrl from '../../utils/imageHelper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -17,18 +16,14 @@ const API_URL = 'https://enimegebi-backend.onrender.com';
 function Home() {
   const { language } = useLanguage();
   const { addToCart } = useCart();
-  const navigate = useNavigate();
   const [sliders, setSliders] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchHomeData();
-    fetchProjects();
   }, []);
 
   const fetchHomeData = async () => {
@@ -39,20 +34,6 @@ function Home() {
         setFeaturedProducts(response.data.featuredProducts?.slice(0, 8) || []);
         setTestimonials(response.data.testimonials || []);
         setSettings(response.data.settings || {});
-        
-        const allProducts = response.data.featuredProducts || [];
-        const categoryMap = new Map();
-        
-        allProducts.forEach(product => {
-          if (!categoryMap.has(product.category)) {
-            categoryMap.set(product.category, {
-              name: product.category,
-              count: allProducts.filter(p => p.category === product.category).length,
-              image: product.image || product.imageUrl
-            });
-          }
-        });
-        setCategories(Array.from(categoryMap.values()).slice(0, 8));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -61,20 +42,16 @@ function Home() {
     }
   };
 
-  const fetchProjects = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/projects/public`);
-      if (response.data.success) {
-        setProjects(response.data.projects || []);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL}${imagePath}`;
   };
 
   const translations = {
     en: {
-      shopNow: 'Shop Now', callNow: 'Call Now',
+      shopNow: 'Shop Now',
+      callNow: 'Call Now',
       featuresTitle: 'Why Choose Enimegebi?',
       features: [
         { icon: 'ri-farm-line', title: 'Direct from Farmers', desc: 'No middlemen, better prices' },
@@ -83,19 +60,15 @@ function Home() {
         { icon: 'ri-secure-payment-line', title: 'Secure Payment', desc: 'Safe and easy checkout' }
       ],
       categoriesTitle: 'Shop by Category',
-      viewAllCategories: 'View All Categories',
       featuredProducts: 'Featured Products',
       viewAll: 'View All Products',
       addToCart: 'Add to Cart',
       testimonials: 'What Our Customers Say',
-      getStarted: 'Get Started',
-      projects: 'Our Projects',
-      viewAllProjects: 'View All Projects',
-      unlock: 'Unlock',
-      locked: 'Locked'
+      getStarted: 'Get Started'
     },
     am: {
-      shopNow: 'አሁን ይግዙ', callNow: 'አሁን ይደውሉ',
+      shopNow: 'አሁን ይግዙ',
+      callNow: 'አሁን ይደውሉ',
       featuresTitle: 'ለምን እንመገቢን ይመርጣሉ?',
       features: [
         { icon: 'ri-farm-line', title: 'ከአርሶ አደር በቀጥታ', desc: 'ምንም ደላላ የለም, የተሻለ ዋጋ' },
@@ -104,16 +77,11 @@ function Home() {
         { icon: 'ri-secure-payment-line', title: 'ደህንነቱ የተጠበቀ ክፍያ', desc: 'አስተማማኝ እና ቀላል ቼክአውት' }
       ],
       categoriesTitle: 'በምድብ ይግዙ',
-      viewAllCategories: 'ሁሉንም ምድቦች ይመልከቱ',
       featuredProducts: 'ታዋቂ ምርቶች',
       viewAll: 'ሁሉንም ምርቶች ይመልከቱ',
       addToCart: 'ወደ ጋሪ ጨምር',
       testimonials: 'ደንበኞቻችን ምን ይላሉ',
-      getStarted: 'ይጀምሩ',
-      projects: 'የእኛ ፕሮጀክቶች',
-      viewAllProjects: 'ሁሉንም ፕሮጀክቶች ይመልከቱ',
-      unlock: 'ክፈት',
-      locked: 'ተቆልፏል'
+      getStarted: 'ይጀምሩ'
     }
   };
 
@@ -123,7 +91,6 @@ function Home() {
 
   return (
     <div className="home-page">
-      {/* Hero Slider Section */}
       <div className="hero-slider">
         <Swiper modules={[Autoplay, Pagination, Navigation, EffectFade]} autoplay={{ delay: 4000 }} loop={true} effect="fade" pagination={{ clickable: true }} navigation={true} className="hero-swiper">
           {sliders.map((slider, index) => (
@@ -143,7 +110,6 @@ function Home() {
         </Swiper>
       </div>
 
-      {/* Features Section */}
       <section className="features-section">
         <div className="container">
           <h2 className="section-title">{t.featuresTitle}</h2>
@@ -159,49 +125,23 @@ function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="categories-section-home">
+      <section className="featured-section">
         <div className="container">
-          <div className="section-header-home">
-            <h2 className="section-title">{t.categoriesTitle}</h2>
-            <Link to="/categories" className="view-all-link">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
-          </div>
-          <div className="categories-grid-home">
-            {categories.map((category, idx) => (
-              <Link to={`/products?category=${category.name}`} key={idx} className="category-card-home">
-                <div className="category-card-front">
-                  <div className="category-image-home" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-                    <div className="category-overlay"></div>
-                  </div>
-                  <div className="category-info-home">
-                    <h3>{category.name}</h3>
-                    <p>{category.count} Products</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products Section */}
-      <section className="featured-section-home">
-        <div className="container">
-          <div className="section-header-home">
+          <div className="section-header">
             <h2 className="section-title">{t.featuredProducts}</h2>
-            <Link to="/products" className="view-all-link">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
+            <Link to="/products" className="view-all">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
           </div>
-          <div className="products-grid-home">
+          <div className="products-grid">
             {featuredProducts.map(product => (
-              <div key={product._id} className="product-card-home">
-                <div className="product-image-home">
+              <div key={product._id} className="product-card">
+                <div className="product-image">
                   <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
                 </div>
-                <div className="product-info-home">
+                <div className="product-info">
                   <h3>{product.name}</h3>
-                  <div className="product-price-home">ETB {product.price}</div>
-                  <button onClick={() => addToCart(product)} className="add-to-cart-btn-home">
-                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                  <div className="product-price">ETB {product.price}</div>
+                  <button onClick={() => addToCart(product)} className="add-to-cart-btn">
+                    <i className="ri-shopping-cart-line"></i>
                   </button>
                 </div>
               </div>
@@ -210,15 +150,14 @@ function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="testimonials-section-home">
+      <section className="testimonials-section">
         <div className="container">
           <h2 className="section-title">{t.testimonials}</h2>
-          <div className="testimonials-grid-home">
+          <div className="testimonials-grid">
             {testimonials.slice(0, 3).map(testimonial => (
-              <div key={testimonial._id} className="testimonial-card-home">
-                <div className="testimonial-image-home"><img src={getImageUrl(testimonial.image)} alt={testimonial.name} /></div>
-                <div className="testimonial-rating-home">
+              <div key={testimonial._id} className="testimonial-card">
+                <div className="testimonial-image"><img src={getImageUrl(testimonial.image)} alt={testimonial.name} /></div>
+                <div className="testimonial-rating">
                   {[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}
                 </div>
                 <p>"{language === 'en' ? testimonial.comment : (testimonial.commentAm || testimonial.comment)}"</p>
@@ -230,13 +169,11 @@ function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="cta-section-home">
+      <section className="cta-section">
         <div className="container">
-          <div className="cta-content-home">
+          <div className="cta-content">
             <h2>{language === 'en' ? (settings.ctaTitle || 'Fresh Products Delivered to Your Doorstep') : (settings.ctaTitleAm || 'ትኩስ ምርቶች ወደ በርዎ ይደርሳሉ')}</h2>
-            <p>{language === 'en' ? (settings.ctaSubtitle || 'Join thousands of happy customers') : (settings.ctaSubtitleAm || 'በሺዎች ከሚቆጠሩ ደስተኛ ደንበኞች ጋር ይቀላቀሉ')}</p>
-            <Link to="/products" className="cta-btn-home">{t.getStarted} <i className="ri-arrow-right-line"></i></Link>
+            <Link to="/products" className="cta-btn">{t.getStarted} <i className="ri-arrow-right-line"></i></Link>
           </div>
         </div>
       </section>
