@@ -13,17 +13,6 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// Get single project
-router.get('/public/:id', async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
-    res.json({ success: true, project });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
 // Admin routes
 router.get('/', protect, async (req, res) => {
   try {
