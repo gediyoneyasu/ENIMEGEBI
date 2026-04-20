@@ -2,6 +2,8 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Contact = require('../models/Contact');
+const fs = require('fs');
+const { uploadToImgBB } = require('../config/upload');
 
 const getUsers = async (req, res) => {
   try {
@@ -43,7 +45,6 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// PRODUCT CONTROLLERS WITH IMAGE UPLOAD
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({});
@@ -55,9 +56,6 @@ const getProducts = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    console.log('Request body:', req.body);
-    console.log('Request file:', req.file);
-    
     let productData;
     if (req.body.product) {
       productData = JSON.parse(req.body.product);
@@ -65,10 +63,15 @@ const createProduct = async (req, res) => {
       productData = req.body;
     }
     
-    // If image was uploaded via Cloudinary
+    // Upload image to ImgBB if present
     if (req.file) {
-      productData.image = req.file.path; // Cloudinary URL
-      productData.imageUrl = req.file.path;
+      const imageUrl = await uploadToImgBB(req.file.path);
+      if (imageUrl) {
+        productData.image = imageUrl;
+        productData.imageUrl = imageUrl;
+      }
+      // Delete temp file
+      fs.unlinkSync(req.file.path);
     }
     
     const product = await Product.create(productData);
@@ -92,8 +95,12 @@ const updateProduct = async (req, res) => {
     }
     
     if (req.file) {
-      productData.image = req.file.path;
-      productData.imageUrl = req.file.path;
+      const imageUrl = await uploadToImgBB(req.file.path);
+      if (imageUrl) {
+        productData.image = imageUrl;
+        productData.imageUrl = imageUrl;
+      }
+      fs.unlinkSync(req.file.path);
     }
     
     Object.assign(product, productData);

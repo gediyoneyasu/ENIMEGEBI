@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const upload = require('../config/cloudinary');
+const { upload } = require('../config/upload');
 const {
   getUsers,
   getUserById,
