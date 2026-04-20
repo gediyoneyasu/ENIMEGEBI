@@ -2,8 +2,6 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Contact = require('../models/Contact');
-const fs = require('fs');
-const { uploadToImgBB } = require('../config/upload');
 
 const getUsers = async (req, res) => {
   try {
@@ -63,15 +61,9 @@ const createProduct = async (req, res) => {
       productData = req.body;
     }
     
-    // Upload image to ImgBB if present
     if (req.file) {
-      const imageUrl = await uploadToImgBB(req.file.path);
-      if (imageUrl) {
-        productData.image = imageUrl;
-        productData.imageUrl = imageUrl;
-      }
-      // Delete temp file
-      fs.unlinkSync(req.file.path);
+      productData.image = `/uploads/products/${req.file.filename}`;
+      productData.imageUrl = `https://enimegebi-backend.onrender.com/uploads/products/${req.file.filename}`;
     }
     
     const product = await Product.create(productData);
@@ -95,12 +87,8 @@ const updateProduct = async (req, res) => {
     }
     
     if (req.file) {
-      const imageUrl = await uploadToImgBB(req.file.path);
-      if (imageUrl) {
-        productData.image = imageUrl;
-        productData.imageUrl = imageUrl;
-      }
-      fs.unlinkSync(req.file.path);
+      productData.image = `/uploads/products/${req.file.filename}`;
+      productData.imageUrl = `https://enimegebi-backend.onrender.com/uploads/products/${req.file.filename}`;
     }
     
     Object.assign(product, productData);
