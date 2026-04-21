@@ -13,6 +13,7 @@ const Checkout = () => {
   const [success, setSuccess] = useState(false);
   const [orderRef, setOrderRef] = useState('');
   const [user, setUser] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -55,10 +56,38 @@ const Checkout = () => {
 
   const calculateTotal = () => {
     if (!cart || cart.length === 0) return { total: 0 };
-    return { total: getCartTotal() };
+    const subtotal = getCartTotal();
+    const shipping = subtotal > 500 ? 0 : 50;
+    const tax = subtotal * 0.15;
+    return { total: subtotal + shipping + tax };
   };
 
   const totals = calculateTotal();
+
+  const createOrder = async () => {
+    const token = localStorage.getItem('enimegebiToken');
+    const orderData = {
+      items: cart.map(item => ({
+        productId: item.id || item._id,
+        productName: item.name,
+        quantity: item.quantity || 1,
+        price: item.price || 0
+      })),
+      totalAmount: totals.total,
+      shippingAddress: { 
+        street: formData.address, 
+        city: formData.city, 
+        phone: formData.phone 
+      },
+      paymentMethod: paymentMethod,
+      orderReference: 'ORD-' + Date.now().toString().slice(-8) + Math.random().toString(36).substring(2, 6).toUpperCase()
+    };
+
+    const response = await axios.post(`${API_URL}/api/orders`, orderData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data.order;
+  };
 
   const handleChapaPayment = async () => {
     setLoading(true);
@@ -67,31 +96,11 @@ const Checkout = () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
       
-      // First create order
-      const orderData = {
-        items: cart.map(item => ({
-          productId: item.id || item._id,
-          productName: item.name,
-          quantity: item.quantity || 1,
-          price: item.price || 0
-        })),
-        totalAmount: totals.total,
-        shippingAddress: {
-          street: formData.address,
-          city: formData.city,
-          phone: formData.phone
-        },
-        paymentMethod: 'chapa',
-        orderReference: 'ORD-' + Date.now().toString().slice(-8)
-      };
-
-      const orderResponse = await axios.post(`${API_URL}/api/orders`, orderData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // First create the order
+      const order = await createOrder();
+      console.log('Order created:', order);
       
-      const order = orderResponse.data.order;
-      
-      // Initialize Chapa payment
+      // Then initialize Chapa payment
       const paymentResponse = await axios.post(`${API_URL}/api/payment/initialize-order`, {
         orderId: order.orderReference,
         amount: totals.total,
@@ -102,15 +111,19 @@ const Checkout = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (paymentResponse.data.success) {
+      console.log('Payment response:', paymentResponse.data);
+
+      if (paymentResponse.data.success && paymentResponse.data.checkout_url) {
+        // Redirect to Chapa payment page
         window.location.href = paymentResponse.data.checkout_url;
       } else {
-        setError('Payment initialization failed');
+        setError(paymentResponse.data.message || 'Payment initialization failed');
+        setLoading(false);
       }
     } catch (err) {
-      console.error('Error:', err);
-      setError(err.response?.data?.message || 'Payment failed');
-    } finally {
+      console.error('Payment error:', err);
+      console.error('Error response:', err.response?.data);
+      setError(err.response?.data?.message || 'Payment failed. Please try again.');
       setLoading(false);
     }
   };
@@ -120,56 +133,46 @@ const Checkout = () => {
     setError('');
     
     try {
-      const token = localStorage.getItem('enimegebiToken');
-      
-      const orderData = {
-        items: cart.map(item => ({
-          productId: item.id || item._id,
-          productName: item.name,
-          quantity: item.quantity || 1,
-          price: item.price || 0
-        })),
-        totalAmount: totals.total,
-        shippingAddress: {
-          street: formData.address,
-          city: formData.city,
-          phone: formData.phone
-        },
-        paymentMethod: 'cash',
-        orderReference: 'ORD-' + Date.now().toString().slice(-8)
-      };
-
-      const response = await axios.post(`${API_URL}/api/orders`, orderData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data.success) {
-        setOrderRef(response.data.order.orderReference);
-        setSuccess(true);
-        clearCart();
-      }
+      await createOrder();
+      clearCart();
+      setSuccess(true);
     } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to place order');
+      console.error('Order error:', err);
+      setError(err.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!formData.address || !formData.city || !formData.phone) {
       setError('Please fill all shipping information');
       return;
     }
     
-    const paymentMethod = e.nativeEvent.submitter.value;
     if (paymentMethod === 'chapa') {
-      handleChapaPayment();
+      await handleChapaPayment();
     } else {
-      handleCashOnDelivery();
+      await handleCashOnDelivery();
     }
   };
+
+  // Check for payment return
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    
+    if (paymentStatus === 'success') {
+      setSuccess(true);
+      clearCart();
+      window.history.replaceState({}, document.title, '/checkout');
+    } else if (paymentStatus === 'failed') {
+      setError('Payment failed. Please try again.');
+      window.history.replaceState({}, document.title, '/checkout');
+    }
+  }, [clearCart]);
 
   if (!cart || cart.length === 0) {
     return (
@@ -187,7 +190,7 @@ const Checkout = () => {
         <div className="success-card">
           <i className="ri-checkbox-circle-fill"></i>
           <h1>Order Successful!</h1>
-          <p>Order ID: {orderRef}</p>
+          <p>Your order has been placed successfully.</p>
           <Link to="/orders" className="view-orders-btn">View Orders</Link>
           <Link to="/" className="continue-shopping-btn">Continue Shopping</Link>
         </div>
@@ -197,11 +200,11 @@ const Checkout = () => {
 
   return (
     <div className="checkout-container">
-      <h1>Checkout</h1>
+      <h1 className="checkout-title">Checkout</h1>
       {error && <div className="error-alert">{error}</div>}
       
       <div className="checkout-wrapper">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="checkout-form">
           <div className="form-section">
             <h2>Shipping Information</h2>
             <input type="text" name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleChange} required />
@@ -211,27 +214,39 @@ const Checkout = () => {
             <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} required />
           </div>
 
-          <div className="payment-section">
+          <div className="form-section">
             <h2>Payment Method</h2>
-            <button type="submit" name="paymentMethod" value="cash" className="cash-btn" disabled={loading}>
-              Cash on Delivery
-            </button>
-            <button type="submit" name="paymentMethod" value="chapa" className="chapa-btn" disabled={loading}>
-              Pay with Chapa (Card, CBE, Awash, Dashen, Telebirr)
-            </button>
+            <div className="payment-options">
+              <label className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''}`}>
+                <input type="radio" name="payment" value="cash" checked={paymentMethod === 'cash'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                <i className="ri-cash-line"></i>
+                <div><strong>Cash on Delivery</strong><small>Pay when you receive</small></div>
+              </label>
+              <label className={`payment-option ${paymentMethod === 'chapa' ? 'selected' : ''}`}>
+                <input type="radio" name="payment" value="chapa" checked={paymentMethod === 'chapa'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                <i className="ri-bank-card-line"></i>
+                <div><strong>Chapa Payment</strong><small>Pay with CBE, Awash, Dashen, Telebirr, Card</small></div>
+              </label>
+            </div>
           </div>
+
+          <button type="submit" className="place-order-btn" disabled={loading}>
+            {loading ? 'Processing...' : `Place Order - ETB ${totals.total.toFixed(2)}`}
+          </button>
         </form>
 
-        <div className="order-summary">
+        <div className="order-summary-sidebar">
           <h2>Order Summary</h2>
-          {cart.map((item, idx) => (
-            <div key={idx} className="summary-item">
-              <span>{item.name} x{item.quantity}</span>
-              <span>ETB {((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
-            </div>
-          ))}
-          <div className="summary-total">
-            <strong>Total: ETB {totals.total.toFixed(2)}</strong>
+          <div className="summary-items">
+            {cart.map((item, idx) => (
+              <div key={idx} className="summary-item">
+                <span>{item.name} x{item.quantity}</span>
+                <span>ETB {((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="summary-totals">
+            <div className="total-row grand-total"><span>Total:</span><span>ETB {totals.total.toFixed(2)}</span></div>
           </div>
         </div>
       </div>

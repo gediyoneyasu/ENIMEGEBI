@@ -1,11 +1,11 @@
 /* ============================================
-   CHECKOUT PAGE - MODERN CSS
+   CHECKOUT PAGE - MODERN & SMART CSS
 ============================================ */
 
 .checkout-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 80px 20px;
+  padding: 60px 20px;
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
 }
@@ -32,9 +32,21 @@
   border-radius: 2px;
 }
 
+.checkout-title::before {
+  content: '';
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background: linear-gradient(90deg, #e8c88a, #c9a66b);
+  border-radius: 2px;
+}
+
 /* Error Alert */
 .error-alert {
-  background: #f8d7da;
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
   color: #721c24;
   padding: 15px 20px;
   border-radius: 12px;
@@ -46,14 +58,14 @@
   animation: shake 0.5s ease;
 }
 
-.error-alert i {
-  font-size: 20px;
-}
-
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
+}
+
+.error-alert i {
+  font-size: 20px;
 }
 
 /* Checkout Layout */
@@ -473,7 +485,7 @@
 
 @media (max-width: 768px) {
   .checkout-container {
-    padding: 60px 15px;
+    padding: 40px 15px;
   }
   
   .checkout-title {
@@ -550,29 +562,13 @@
   }
 }
 
-/* Loading Animation for Button */
+/* Loading Animation */
 .place-order-btn.loading {
   position: relative;
   pointer-events: none;
 }
 
-.place-order-btn.loading::after {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 2px solid transparent;
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-left: 10px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Custom Scrollbar for Summary */
+/* Custom Scrollbar */
 .summary-items::-webkit-scrollbar {
   width: 5px;
 }
@@ -604,4 +600,61 @@
     box-shadow: none;
     border: 1px solid #ddd;
   }
+}
+
+/* Loading Spinner for Button */
+.place-order-btn:disabled {
+  position: relative;
+}
+
+.place-order-btn:disabled::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-left: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Checkmark Animation */
+.success-card i {
+  animation: checkmark 0.5s ease-in-out;
+}
+
+@keyframes checkmark {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-section,
+.order-summary-sidebar {
+  animation: fadeIn 0.5s ease-out;
 }

@@ -5,20 +5,30 @@ const Project = require('../models/Project');
 const CHAPA_API_URL = 'https://api.chapa.co/v1';
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 
-// Initialize payment for order
+// Initialize payment for order (product checkout)
 const initializeOrderPayment = async (req, res) => {
   try {
+    console.log('Payment request received:', req.body);
+    
     const { orderId, amount, email, name, phone } = req.body;
+    
+    // Validate required fields
+    if (!orderId || !amount || !email || !name) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing required fields: orderId, amount, email, name are required' 
+      });
+    }
     
     const tx_ref = 'ORDER-' + Date.now() + '-' + Math.random().toString(36).substring(7);
     
     const paymentData = {
-      amount: amount,
+      amount: Number(amount),
       currency: 'ETB',
       email: email,
       first_name: name.split(' ')[0] || name,
       last_name: name.split(' ')[1] || 'Customer',
-      phone_number: phone,
+      phone_number: phone || '0000000000',
       tx_ref: tx_ref,
       callback_url: `https://enimegebi-backend.onrender.com/api/payment/verify-order/${tx_ref}`,
       return_url: `https://enimegebi-zorz.vercel.app/orders?payment=success`,
@@ -28,12 +38,16 @@ const initializeOrderPayment = async (req, res) => {
       }
     };
     
+    console.log('Sending to Chapa:', paymentData);
+    
     const response = await axios.post(`${CHAPA_API_URL}/transaction/initialize`, paymentData, {
       headers: {
         'Authorization': `Bearer ${CHAPA_SECRET_KEY}`,
         'Content-Type': 'application/json'
       }
     });
+    
+    console.log('Chapa response:', response.data);
     
     if (response.data.status === 'success') {
       await Order.findOneAndUpdate(
@@ -47,11 +61,14 @@ const initializeOrderPayment = async (req, res) => {
         tx_ref: tx_ref
       });
     } else {
-      res.status(400).json({ success: false, message: response.data.message });
+      res.status(400).json({ success: false, message: response.data.message || 'Payment initialization failed' });
     }
   } catch (error) {
     console.error('Payment error:', error.response?.data || error.message);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: error.response?.data?.message || error.message 
+    });
   }
 };
 
@@ -63,12 +80,12 @@ const initializeProjectPayment = async (req, res) => {
     const tx_ref = 'PROJ-' + Date.now() + '-' + Math.random().toString(36).substring(7);
     
     const paymentData = {
-      amount: amount,
+      amount: Number(amount),
       currency: 'ETB',
       email: email,
       first_name: name.split(' ')[0] || name,
       last_name: name.split(' ')[1] || 'Customer',
-      phone_number: phone,
+      phone_number: phone || '0000000000',
       tx_ref: tx_ref,
       callback_url: `https://enimegebi-backend.onrender.com/api/payment/verify-project/${tx_ref}`,
       return_url: `https://enimegebi-zorz.vercel.app/projects?payment=success`,

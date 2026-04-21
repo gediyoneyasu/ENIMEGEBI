@@ -13,17 +13,29 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   useEffect(() => {
     fetchProjects();
     fetchMyProjects();
+    
+    // Check for payment return
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    if (paymentStatus === 'success') {
+      alert('Payment successful! Your project will be available after admin approval.');
+      window.history.replaceState({}, document.title, '/projects');
+      fetchMyProjects();
+    } else if (paymentStatus === 'failed') {
+      alert('Payment failed. Please try again.');
+      window.history.replaceState({}, document.title, '/projects');
+    }
   }, []);
 
   const fetchProjects = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/projects/public`);
       if (response.data.success) {
-        console.log('Projects with images:', response.data.projects);
         setProjects(response.data.projects);
       }
     } catch (error) {
@@ -50,7 +62,6 @@ const Projects = () => {
   };
 
   const getImageUrl = (project) => {
-    // Check all possible image sources
     if (project.imageUrl) return project.imageUrl;
     if (project.image) {
       if (project.image.startsWith('http')) return project.image;
@@ -59,7 +70,7 @@ const Projects = () => {
     return null;
   };
 
-  const handlePurchase = async (project) => {
+  const handleChapaPayment = async (project) => {
     const token = localStorage.getItem('enimegebiToken');
     if (!token) {
       alert('Please login first');
@@ -67,21 +78,30 @@ const Projects = () => {
       return;
     }
 
+    setProcessingPayment(true);
+    const user = JSON.parse(localStorage.getItem('enimegebiUser'));
+
     try {
-      const response = await axios.post(`${API_URL}/api/projects/purchase`, {
+      const response = await axios.post(`${API_URL}/api/payment/initialize-project`, {
         projectId: project._id,
-        amount: project.price
+        amount: project.price,
+        email: user.email,
+        name: user.name,
+        phone: user.phone || ''
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
-        alert('Purchase request sent! Admin will approve after payment verification.');
-        fetchMyProjects();
+        window.location.href = response.data.checkout_url;
+      } else {
+        alert(response.data.message || 'Payment initialization failed');
+        setProcessingPayment(false);
       }
     } catch (error) {
-      console.error('Purchase error:', error);
-      alert('Failed to process purchase');
+      console.error('Payment error:', error);
+      alert(error.response?.data?.message || 'Failed to process payment');
+      setProcessingPayment(false);
     }
   };
 
@@ -100,14 +120,15 @@ const Projects = () => {
       allProjects: 'All Projects',
       myProjects: 'My Projects',
       price: 'Price',
-      unlock: 'Unlock Project',
+      unlock: 'Unlock with Chapa',
       locked: 'Locked',
       view: 'View Details',
       noProjects: 'No projects available',
-      myProjectsEmpty: 'You haven\'t purchased any projects yet',
+      myProjectsEmpty: "You haven't purchased any projects yet",
       description: 'Description',
-      purchaseRequest: 'Request Purchase',
-      close: 'Close'
+      purchaseRequest: 'Pay with Chapa',
+      close: 'Close',
+      processing: 'Processing...'
     },
     am: {
       title: 'ፕሮጀክቶች',
@@ -115,14 +136,15 @@ const Projects = () => {
       allProjects: 'ሁሉም ፕሮጀክቶች',
       myProjects: 'የኔ ፕሮጀክቶች',
       price: 'ዋጋ',
-      unlock: 'ፕሮጀክት ክፈት',
+      unlock: 'በቻፓ ክፈት',
       locked: 'ተቆልፏል',
       view: 'ዝርዝር',
       noProjects: 'ምንም ፕሮጀክቶች የሉም',
       myProjectsEmpty: 'እስካሁን ምንም ፕሮጀክት አልገዙም',
       description: 'መግለጫ',
-      purchaseRequest: 'ግዢ ጠይቅ',
-      close: 'ዝጋ'
+      purchaseRequest: 'በቻፓ ክፈል',
+      close: 'ዝጋ',
+      processing: 'በሂደት ላይ...'
     }
   };
 
@@ -158,7 +180,6 @@ const Projects = () => {
         <div className="projects-grid">
           {displayProjects.map(project => {
             const imageUrl = getImageUrl(project);
-            console.log('Project image URL:', imageUrl);
             return (
               <div key={project._id} className="project-card" onClick={() => showProjectDetails(project)}>
                 <div className="project-image">
@@ -209,8 +230,8 @@ const Projects = () => {
                 <p>{language === 'en' ? selectedProject.description : (selectedProject.descriptionAm || selectedProject.description)}</p>
                 <p><strong>{t.price}:</strong> ${selectedProject.price}</p>
                 {selectedProject.status === 'locked' ? (
-                  <button className="purchase-btn" onClick={() => handlePurchase(selectedProject)}>
-                    <i className="ri-lock-unlock-line"></i> {t.purchaseRequest}
+                  <button className="purchase-btn" onClick={() => handleChapaPayment(selectedProject)} disabled={processingPayment}>
+                    {processingPayment ? t.processing : t.purchaseRequest}
                   </button>
                 ) : (
                   <div className="project-content-preview">
