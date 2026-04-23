@@ -9,6 +9,12 @@ const Product = require('../models/Product');
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
 
+const getMediaUrl = (pathOrUrl) => {
+  if (!pathOrUrl) return null;
+  if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl;
+  return `${API_URL}${pathOrUrl}`;
+};
+
 // Get public home data
 router.get('/public-data', async (req, res) => {
   try {
@@ -21,15 +27,15 @@ router.get('/public-data', async (req, res) => {
     ]);
     const settings = await HomeSetting.findOne();
     
-    // Add full image URLs
+    // Add full image URLs and preserve remote URLs
     sliders = sliders.map(s => ({
       ...s._doc,
-      imageUrl: s.image ? `${API_URL}${s.image}` : null
+      imageUrl: getMediaUrl(s.imageUrl || s.image)
     }));
     
     testimonials = testimonials.map(t => ({
       ...t._doc,
-      imageUrl: t.image ? `${API_URL}${t.image}` : null
+      imageUrl: getMediaUrl(t.imageUrl || t.image)
     }));
     
     res.json({
@@ -65,6 +71,8 @@ router.post('/sliders', uploadSlider.single('image'), async (req, res) => {
     if (req.file) {
       sliderData.image = `/uploads/sliders/${req.file.filename}`;
       sliderData.imageUrl = `${API_URL}/uploads/sliders/${req.file.filename}`;
+    } else if (sliderData.imageUrl && /^https?:\/\//.test(sliderData.imageUrl)) {
+      sliderData.image = '';
     }
     const slider = await Slider.create(sliderData);
     res.json({ success: true, slider });
@@ -82,6 +90,8 @@ router.put('/sliders/:id', uploadSlider.single('image'), async (req, res) => {
     if (req.file) {
       sliderData.image = `/uploads/sliders/${req.file.filename}`;
       sliderData.imageUrl = `${API_URL}/uploads/sliders/${req.file.filename}`;
+    } else if (sliderData.imageUrl && /^https?:\/\//.test(sliderData.imageUrl)) {
+      sliderData.image = '';
     }
     Object.assign(slider, sliderData);
     await slider.save();
