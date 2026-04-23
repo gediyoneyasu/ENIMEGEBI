@@ -23,7 +23,7 @@ const Projects = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
     if (paymentStatus === 'success') {
-      alert('Payment successful! Your project will be available after admin approval.');
+      alert('Payment successful! Your project is now unlocked.');
       window.history.replaceState({}, document.title, '/projects');
       fetchMyProjects();
     } else if (paymentStatus === 'failed') {
@@ -63,6 +63,7 @@ const Projects = () => {
 
   const getImageUrl = (project) => {
     if (project.imageUrl) return project.imageUrl;
+    if (project.image && project.image.startsWith('/uploads')) return `${API_URL}${project.image}`;
     if (project.image) {
       if (project.image.startsWith('http')) return project.image;
       return `${API_URL}${project.image}`;

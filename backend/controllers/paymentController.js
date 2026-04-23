@@ -4,10 +4,16 @@ const Project = require('../models/Project');
 
 const CHAPA_API_URL = 'https://api.chapa.co/v1';
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://enimegebi-zorz.vercel.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://enimegebi-backend.onrender.com';
 
 // Initialize payment for order (product checkout)
 const initializeOrderPayment = async (req, res) => {
   try {
+    if (!CHAPA_SECRET_KEY) {
+      return res.status(500).json({ success: false, message: 'Chapa secret key is not configured' });
+    }
+
     console.log('Payment request received:', req.body);
     
     const { orderId, amount, email, name, phone } = req.body;
@@ -30,8 +36,8 @@ const initializeOrderPayment = async (req, res) => {
       last_name: name.split(' ')[1] || 'Customer',
       phone_number: phone || '0000000000',
       tx_ref: tx_ref,
-      callback_url: `https://enimegebi-backend.onrender.com/api/payment/verify-order/${tx_ref}`,
-      return_url: `https://enimegebi-zorz.vercel.app/orders?payment=success`,
+      callback_url: `${BACKEND_URL}/api/payment/verify-order/${tx_ref}`,
+      return_url: `${BACKEND_URL}/api/payment/verify-order/${tx_ref}`,
       customization: {
         title: 'Enimegebi Payment',
         description: `Payment for order ${orderId}`
@@ -50,10 +56,13 @@ const initializeOrderPayment = async (req, res) => {
     console.log('Chapa response:', response.data);
     
     if (response.data.status === 'success') {
-      await Order.findOneAndUpdate(
+      const updatedOrder = await Order.findOneAndUpdate(
         { orderReference: orderId },
         { transactionRef: tx_ref, paymentStatus: 'pending' }
       );
+      if (!updatedOrder) {
+        return res.status(404).json({ success: false, message: 'Order not found for payment initialization' });
+      }
       
       res.json({
         success: true,
@@ -75,6 +84,10 @@ const initializeOrderPayment = async (req, res) => {
 // Initialize payment for project
 const initializeProjectPayment = async (req, res) => {
   try {
+    if (!CHAPA_SECRET_KEY) {
+      return res.status(500).json({ success: false, message: 'Chapa secret key is not configured' });
+    }
+
     const { projectId, amount, email, name, phone } = req.body;
     
     const tx_ref = 'PROJ-' + Date.now() + '-' + Math.random().toString(36).substring(7);
@@ -87,8 +100,8 @@ const initializeProjectPayment = async (req, res) => {
       last_name: name.split(' ')[1] || 'Customer',
       phone_number: phone || '0000000000',
       tx_ref: tx_ref,
-      callback_url: `https://enimegebi-backend.onrender.com/api/payment/verify-project/${tx_ref}`,
-      return_url: `https://enimegebi-zorz.vercel.app/projects?payment=success`,
+      callback_url: `${BACKEND_URL}/api/payment/verify-project/${tx_ref}`,
+      return_url: `${BACKEND_URL}/api/payment/verify-project/${tx_ref}`,
       customization: {
         title: 'Enimegebi Project',
         description: `Payment for project ${projectId}`
@@ -105,7 +118,7 @@ const initializeProjectPayment = async (req, res) => {
     if (response.data.status === 'success') {
       await Project.findOneAndUpdate(
         { _id: projectId },
-        { $push: { purchasedBy: { user: req.user.id, amount: amount, purchasedAt: new Date(), isUnlocked: true, tx_ref: tx_ref } } }
+        { $push: { purchasedBy: { user: req.user.id, amount: amount, purchasedAt: new Date(), isUnlocked: false, txRef: tx_ref } } }
       );
       
       res.json({
@@ -125,6 +138,10 @@ const initializeProjectPayment = async (req, res) => {
 // Verify order payment
 const verifyOrderPayment = async (req, res) => {
   try {
+    if (!CHAPA_SECRET_KEY) {
+      return res.redirect(`${FRONTEND_URL}/checkout?payment=failed`);
+    }
+
     const { tx_ref } = req.params;
     
     const response = await axios.get(`${CHAPA_API_URL}/transaction/verify/${tx_ref}`, {
@@ -134,21 +151,38 @@ const verifyOrderPayment = async (req, res) => {
     if (response.data.status === 'success') {
       await Order.findOneAndUpdate(
         { transactionRef: tx_ref },
-        { paymentStatus: 'paid', orderStatus: 'processing', paidAt: new Date() }
+        {
+          paymentStatus: 'paid',
+          orderStatus: 'processing',
+          paidAt: new Date(),
+          chapaData: response.data.data || {}
+        }
       );
-      res.redirect('https://enimegebi-zorz.vercel.app/orders?payment=success');
+      res.redirect(`${FRONTEND_URL}/checkout?payment=success&tx_ref=${tx_ref}`);
     } else {
-      res.redirect('https://enimegebi-zorz.vercel.app/checkout?payment=failed');
+      await Order.findOneAndUpdate(
+        { transactionRef: tx_ref },
+        { paymentStatus: 'failed' }
+      );
+      res.redirect(`${FRONTEND_URL}/checkout?payment=failed&tx_ref=${tx_ref}`);
     }
   } catch (error) {
     console.error('Verification error:', error);
-    res.redirect('https://enimegebi-zorz.vercel.app/checkout?payment=failed');
+    await Order.findOneAndUpdate(
+      { transactionRef: req.params.tx_ref },
+      { paymentStatus: 'failed' }
+    );
+    res.redirect(`${FRONTEND_URL}/checkout?payment=failed&tx_ref=${req.params.tx_ref}`);
   }
 };
 
 // Verify project payment
 const verifyProjectPayment = async (req, res) => {
   try {
+    if (!CHAPA_SECRET_KEY) {
+      return res.redirect(`${FRONTEND_URL}/projects?payment=failed`);
+    }
+
     const { tx_ref } = req.params;
     
     const response = await axios.get(`${CHAPA_API_URL}/transaction/verify/${tx_ref}`, {
@@ -157,16 +191,54 @@ const verifyProjectPayment = async (req, res) => {
     
     if (response.data.status === 'success') {
       await Project.findOneAndUpdate(
-        { 'purchasedBy.tx_ref': tx_ref },
+        { 'purchasedBy.txRef': tx_ref },
         { $set: { 'purchasedBy.$.isUnlocked': true, 'purchasedBy.$.approvedAt': new Date() } }
       );
-      res.redirect('https://enimegebi-zorz.vercel.app/projects?payment=success');
+      res.redirect(`${FRONTEND_URL}/projects?payment=success&tx_ref=${tx_ref}`);
     } else {
-      res.redirect('https://enimegebi-zorz.vercel.app/projects?payment=failed');
+      res.redirect(`${FRONTEND_URL}/projects?payment=failed&tx_ref=${tx_ref}`);
     }
   } catch (error) {
     console.error('Verification error:', error);
-    res.redirect('https://enimegebi-zorz.vercel.app/projects?payment=failed');
+    res.redirect(`${FRONTEND_URL}/projects?payment=failed&tx_ref=${req.params.tx_ref}`);
+  }
+};
+
+const verifyOrderPaymentStatus = async (req, res) => {
+  try {
+    if (!CHAPA_SECRET_KEY) {
+      return res.status(500).json({ success: false, status: 'error', message: 'Chapa secret key is not configured' });
+    }
+
+    const { tx_ref } = req.params;
+    const response = await axios.get(`${CHAPA_API_URL}/transaction/verify/${tx_ref}`, {
+      headers: { Authorization: `Bearer ${CHAPA_SECRET_KEY}` }
+    });
+
+    if (response.data.status === 'success') {
+      await Order.findOneAndUpdate(
+        { transactionRef: tx_ref },
+        {
+          paymentStatus: 'paid',
+          orderStatus: 'processing',
+          paidAt: new Date(),
+          chapaData: response.data.data || {}
+        }
+      );
+      return res.json({ success: true, status: 'paid', data: response.data.data });
+    }
+
+    await Order.findOneAndUpdate(
+      { transactionRef: tx_ref },
+      { paymentStatus: 'failed' }
+    );
+    return res.json({ success: false, status: 'failed', message: 'Payment not completed' });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      status: 'error',
+      message: error.response?.data?.message || error.message
+    });
   }
 };
 
@@ -180,7 +252,7 @@ const webhook = async (req, res) => {
         { paymentStatus: 'paid', orderStatus: 'processing', paidAt: new Date() }
       );
       await Project.findOneAndUpdate(
-        { 'purchasedBy.tx_ref': event.data.tx_ref },
+        { 'purchasedBy.txRef': event.data.tx_ref },
         { $set: { 'purchasedBy.$.isUnlocked': true } }
       );
     }
@@ -196,5 +268,6 @@ module.exports = {
   initializeProjectPayment,
   verifyOrderPayment,
   verifyProjectPayment,
+  verifyOrderPaymentStatus,
   webhook
 };

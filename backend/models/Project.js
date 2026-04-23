@@ -57,7 +57,8 @@ const projectSchema = new mongoose.Schema({
     amount: Number,
     purchasedAt: Date,
     isUnlocked: { type: Boolean, default: false },
-    approvedAt: Date
+    approvedAt: Date,
+    txRef: String
   }],
   createdAt: {
     type: Date,

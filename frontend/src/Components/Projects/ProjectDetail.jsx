@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
+import getImageUrl from '../../utils/imageHelper';
 import './Projects.css';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
@@ -55,7 +56,7 @@ const ProjectDetail = () => {
         return (
           <div className="project-content-viewer">
             <iframe
-              src={`${API_URL}${project.fileUrl}#toolbar=0`}
+              src={`${getImageUrl(project.fileUrl)}#toolbar=0`}
               title={project.title}
               width="100%"
               height="600px"
@@ -66,7 +67,7 @@ const ProjectDetail = () => {
         return (
           <div className="project-content-viewer">
             <video controls width="100%">
-              <source src={`${API_URL}${project.fileUrl}`} />
+              <source src={getImageUrl(project.fileUrl)} />
               Your browser does not support the video tag.
             </video>
           </div>
@@ -75,7 +76,7 @@ const ProjectDetail = () => {
       default:
         return (
           <div className="project-content-viewer">
-            <img src={`${API_URL}${project.fileUrl || project.image}`} alt={project.title} />
+            <img src={getImageUrl(project.fileUrl || project.imageUrl || project.image)} alt={project.title} />
           </div>
         );
     }

@@ -1,15 +1,14 @@
 const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
-  
-  // If it's already a full URL (Cloudinary), return as is
+
   if (imagePath.startsWith('http')) return imagePath;
-  
-  // If it's a local path and in development
-  if (process.env.NODE_ENV !== 'production') {
-    return `http://localhost:5001${imagePath}`;
+
+  if (imagePath.startsWith('/uploads')) {
+    const backendUrl = process.env.BACKEND_URL || 'https://enimegebi-backend.onrender.com';
+    return `${backendUrl}${imagePath}`;
   }
-  
-  return null;
+
+  return imagePath;
 };
 
 module.exports = getImageUrl;

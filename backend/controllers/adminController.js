@@ -2,8 +2,8 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Contact = require('../models/Contact');
-
-const API_URL = 'https://enimegebi-backend.onrender.com';
+const getImageUrl = require('../utils/imageHelper');
+const { uploadToGlobalStorage } = require('../utils/mediaStorage');
 
 const getUsers = async (req, res) => {
   try {
@@ -48,10 +48,9 @@ const deleteUser = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({});
-    // Add full image URL to each product
     const productsWithUrl = products.map(p => ({
       ...p._doc,
-      imageUrl: p.image ? `${API_URL}${p.image}` : null
+      imageUrl: getImageUrl(p.imageUrl || p.image)
     }));
     res.json(productsWithUrl);
   } catch (error) {
@@ -69,9 +68,15 @@ const createProduct = async (req, res) => {
     }
     
     if (req.file) {
-      const imagePath = `/uploads/products/${req.file.filename}`;
-      productData.image = imagePath;
-      productData.imageUrl = `${API_URL}${imagePath}`;
+      const localPath = req.file.path;
+      const imageUrl = await uploadToGlobalStorage(localPath, { folder: 'enimegebi/products' });
+      const fallbackPath = `/uploads/products/${req.file.filename}`;
+      productData.image = imageUrl || fallbackPath;
+      productData.imageUrl = imageUrl || getImageUrl(fallbackPath);
+    } else if (productData.imageUrl && productData.imageUrl.startsWith('http')) {
+      productData.image = productData.imageUrl;
+    } else if (productData.image && productData.image.startsWith('http')) {
+      productData.imageUrl = productData.image;
     }
     
     const product = await Product.create(productData);
@@ -95,9 +100,15 @@ const updateProduct = async (req, res) => {
     }
     
     if (req.file) {
-      const imagePath = `/uploads/products/${req.file.filename}`;
-      productData.image = imagePath;
-      productData.imageUrl = `${API_URL}${imagePath}`;
+      const localPath = req.file.path;
+      const imageUrl = await uploadToGlobalStorage(localPath, { folder: 'enimegebi/products' });
+      const fallbackPath = `/uploads/products/${req.file.filename}`;
+      productData.image = imageUrl || fallbackPath;
+      productData.imageUrl = imageUrl || getImageUrl(fallbackPath);
+    } else if (productData.imageUrl && productData.imageUrl.startsWith('http')) {
+      productData.image = productData.imageUrl;
+    } else if (productData.image && productData.image.startsWith('http')) {
+      productData.imageUrl = productData.image;
     }
     
     Object.assign(product, productData);
@@ -120,10 +131,9 @@ const deleteProduct = async (req, res) => {
 const getPublicProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: 'active' }).sort({ createdAt: -1 });
-    // Add full image URL to each product
     const productsWithUrl = products.map(p => ({
       ...p._doc,
-      imageUrl: p.image ? `${API_URL}${p.image}` : null
+      imageUrl: getImageUrl(p.imageUrl || p.image)
     }));
     res.json(productsWithUrl);
   } catch (error) {

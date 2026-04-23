@@ -11,7 +11,7 @@ const getImageUrl = (imagePath) => {
     return `${API_URL}${imagePath}`;
   }
   
-  return null;
+  return imagePath;
 };
 
 export default getImageUrl;

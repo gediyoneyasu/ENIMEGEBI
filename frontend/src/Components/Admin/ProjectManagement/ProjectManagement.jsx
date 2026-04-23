@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../AdminPages.css';
+import getImageUrl from '../../../utils/imageHelper';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
 
@@ -12,6 +13,7 @@ const ProjectManagement = () => {
   const [alert, setAlert] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
   const [filePreview, setFilePreview] = useState('');
+  const [fileUrlInput, setFileUrlInput] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     titleAm: '',
@@ -47,6 +49,7 @@ const ProjectManagement = () => {
     const file = e.target.files[0];
     if (file) {
       setUploadFile(file);
+      setFileUrlInput('');
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => setFilePreview(reader.result);
@@ -61,7 +64,12 @@ const ProjectManagement = () => {
     e.preventDefault();
     
     const submitData = new FormData();
-    submitData.append('project', JSON.stringify(formData));
+    const payload = {
+      ...formData,
+      fileUrl: fileUrlInput.trim(),
+      imageUrl: fileUrlInput.trim()
+    };
+    submitData.append('project', JSON.stringify(payload));
     if (uploadFile) {
       submitData.append('file', uploadFile);
     }
@@ -144,7 +152,9 @@ const ProjectManagement = () => {
       price: project.price,
       order: project.order || 0
     });
-    setFilePreview(project.image ? `${API_URL}${project.image}` : '');
+    const currentUrl = getImageUrl(project.fileUrl || project.imageUrl || project.image) || '';
+    setFilePreview(currentUrl);
+    setFileUrlInput(currentUrl.startsWith('http') ? currentUrl : '');
     setUploadFile(null);
     setShowModal(true);
   };
@@ -156,6 +166,7 @@ const ProjectManagement = () => {
       price: '', order: 0
     });
     setFilePreview('');
+    setFileUrlInput('');
     setUploadFile(null);
     setShowModal(true);
   };
@@ -165,6 +176,7 @@ const ProjectManagement = () => {
     setEditingProject(null);
     setUploadFile(null);
     setFilePreview('');
+    setFileUrlInput('');
   };
 
   if (loading) return <div>Loading projects...</div>;
@@ -185,7 +197,7 @@ const ProjectManagement = () => {
           <div key={project._id} className="project-admin-card">
             <div className="project-admin-image">
               {project.image ? (
-                <img src={`${API_URL}${project.image}`} alt={project.title} />
+                <img src={getImageUrl(project.imageUrl || project.image)} alt={project.title} />
               ) : (
                 <div className="no-image"><i className="ri-image-line"></i></div>
               )}
@@ -238,6 +250,20 @@ const ProjectManagement = () => {
                   )
                 )}
                 <input type="file" accept="image/*,application/pdf,video/*" onChange={handleFileChange} />
+                <input
+                  type="url"
+                  placeholder="Or paste file URL (image/pdf/video)"
+                  value={fileUrlInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFileUrlInput(value);
+                    if (value.trim()) {
+                      setFilePreview(value.trim());
+                      setUploadFile(null);
+                    }
+                  }}
+                  style={{ marginTop: '10px' }}
+                />
               </div>
               <div className="form-group"><label>Title (English) *</label><input type="text" name="title" value={formData.title} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Title (Amharic)</label><input type="text" name="titleAm" value={formData.titleAm} onChange={handleInputChange} /></div>

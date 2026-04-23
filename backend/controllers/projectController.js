@@ -1,6 +1,13 @@
 const Project = require('../models/Project');
+const getImageUrl = require('../utils/imageHelper');
+const { uploadToGlobalStorage } = require('../utils/mediaStorage');
 
-const API_URL = 'https://enimegebi-backend.onrender.com';
+const inferFileTypeFromUrl = (url = '') => {
+  const lower = url.toLowerCase();
+  if (lower.includes('.pdf')) return 'pdf';
+  if (/\.(mp4|mov|avi|mkv)(\?|$)/.test(lower)) return 'video';
+  return 'image';
+};
 
 // Get public projects
 const getPublicProjects = async (req, res) => {
@@ -8,8 +15,8 @@ const getPublicProjects = async (req, res) => {
     let projects = await Project.find({ isApproved: true }).sort({ order: 1 });
     projects = projects.map(p => ({
       ...p._doc,
-      imageUrl: p.image ? `${API_URL}${p.image}` : null,
-      fileUrl: p.fileUrl ? (p.fileUrl.startsWith('http') ? p.fileUrl : `${API_URL}${p.fileUrl}`) : null
+      imageUrl: getImageUrl(p.imageUrl || p.image),
+      fileUrl: getImageUrl(p.fileUrl)
     }));
     res.json({ success: true, projects });
   } catch (error) {
@@ -22,7 +29,12 @@ const getPublicProjects = async (req, res) => {
 const getAllProjects = async (req, res) => {
   try {
     const projects = await Project.find({}).sort({ order: 1 });
-    res.json({ success: true, projects });
+    const mappedProjects = projects.map(p => ({
+      ...p._doc,
+      imageUrl: getImageUrl(p.imageUrl || p.image),
+      fileUrl: getImageUrl(p.fileUrl)
+    }));
+    res.json({ success: true, projects: mappedProjects });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -48,7 +60,7 @@ const getProjectById = async (req, res) => {
           description: project.description,
           descriptionAm: project.descriptionAm,
           image: project.image,
-          imageUrl: project.image ? `${API_URL}${project.image}` : null,
+          imageUrl: getImageUrl(project.imageUrl || project.image),
           price: project.price,
           status: 'locked'
         }
@@ -59,8 +71,8 @@ const getProjectById = async (req, res) => {
       success: true, 
       project: {
         ...project._doc,
-        imageUrl: project.image ? `${API_URL}${project.image}` : null,
-        fileUrl: project.fileUrl ? (project.fileUrl.startsWith('http') ? project.fileUrl : `${API_URL}${project.fileUrl}`) : null
+        imageUrl: getImageUrl(project.imageUrl || project.image),
+        fileUrl: getImageUrl(project.fileUrl)
       }
     });
   } catch (error) {
@@ -82,8 +94,13 @@ const createProject = async (req, res) => {
     }
     
     if (req.file) {
-      const filePath = `/uploads/projects/${req.file.filename}`;
       const ext = req.file.originalname.split('.').pop().toLowerCase();
+      const uploadedUrl = await uploadToGlobalStorage(req.file.path, {
+        folder: 'enimegebi/projects',
+        resourceType: 'auto'
+      });
+      const fallbackPath = `/uploads/projects/${req.file.filename}`;
+      const filePath = uploadedUrl || fallbackPath;
       
       if (ext === 'pdf') {
         projectData.fileType = 'pdf';
@@ -94,8 +111,16 @@ const createProject = async (req, res) => {
       } else {
         projectData.fileType = 'image';
         projectData.image = filePath;
-        projectData.imageUrl = `${API_URL}${filePath}`;
+        projectData.imageUrl = getImageUrl(filePath);
       }
+    } else if (projectData.fileUrl && projectData.fileUrl.startsWith('http')) {
+      projectData.fileType = inferFileTypeFromUrl(projectData.fileUrl);
+      if (projectData.fileType === 'image') {
+        projectData.image = projectData.fileUrl;
+        projectData.imageUrl = projectData.fileUrl;
+      }
+    } else if (projectData.imageUrl && projectData.imageUrl.startsWith('http')) {
+      projectData.image = projectData.imageUrl;
     }
     
     const project = await Project.create(projectData);
@@ -121,8 +146,13 @@ const updateProject = async (req, res) => {
     }
     
     if (req.file) {
-      const filePath = `/uploads/projects/${req.file.filename}`;
       const ext = req.file.originalname.split('.').pop().toLowerCase();
+      const uploadedUrl = await uploadToGlobalStorage(req.file.path, {
+        folder: 'enimegebi/projects',
+        resourceType: 'auto'
+      });
+      const fallbackPath = `/uploads/projects/${req.file.filename}`;
+      const filePath = uploadedUrl || fallbackPath;
       
       if (ext === 'pdf') {
         projectData.fileType = 'pdf';
@@ -133,8 +163,16 @@ const updateProject = async (req, res) => {
       } else {
         projectData.fileType = 'image';
         projectData.image = filePath;
-        projectData.imageUrl = `${API_URL}${filePath}`;
+        projectData.imageUrl = getImageUrl(filePath);
       }
+    } else if (projectData.fileUrl && projectData.fileUrl.startsWith('http')) {
+      projectData.fileType = inferFileTypeFromUrl(projectData.fileUrl);
+      if (projectData.fileType === 'image') {
+        projectData.image = projectData.fileUrl;
+        projectData.imageUrl = projectData.fileUrl;
+      }
+    } else if (projectData.imageUrl && projectData.imageUrl.startsWith('http')) {
+      projectData.image = projectData.imageUrl;
     }
     
     Object.assign(project, projectData);
@@ -221,7 +259,8 @@ const getUserProjects = async (req, res) => {
     });
     projects = projects.map(p => ({
       ...p._doc,
-      imageUrl: p.image ? `${API_URL}${p.image}` : null
+      imageUrl: getImageUrl(p.imageUrl || p.image),
+      fileUrl: getImageUrl(p.fileUrl)
     }));
     res.json({ success: true, projects });
   } catch (error) {

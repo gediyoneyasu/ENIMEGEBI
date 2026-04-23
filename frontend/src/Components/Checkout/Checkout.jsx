@@ -11,7 +11,6 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [orderRef, setOrderRef] = useState('');
   const [user, setUser] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const navigate = useNavigate();
@@ -164,6 +163,30 @@ const Checkout = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
     
+    const txRef = urlParams.get('tx_ref');
+
+    const verifyReturnedPayment = async () => {
+      if (!txRef || paymentStatus !== 'pending') return;
+
+      try {
+        const token = localStorage.getItem('enimegebiToken');
+        const verifyResponse = await axios.get(`${API_URL}/api/payment/verify-order-status/${txRef}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (verifyResponse.data.success) {
+          setSuccess(true);
+          clearCart();
+          window.history.replaceState({}, document.title, '/checkout');
+        } else {
+          setError('Payment failed or not completed.');
+          window.history.replaceState({}, document.title, '/checkout');
+        }
+      } catch (verifyError) {
+        setError(verifyError.response?.data?.message || 'Could not verify payment status.');
+      }
+    };
+
     if (paymentStatus === 'success') {
       setSuccess(true);
       clearCart();
@@ -171,6 +194,8 @@ const Checkout = () => {
     } else if (paymentStatus === 'failed') {
       setError('Payment failed. Please try again.');
       window.history.replaceState({}, document.title, '/checkout');
+    } else if (paymentStatus === 'pending' && txRef) {
+      verifyReturnedPayment();
     }
   }, [clearCart]);
 

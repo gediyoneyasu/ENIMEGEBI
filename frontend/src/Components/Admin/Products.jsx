@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AdminPages.css';
+import getImageUrl from '../../utils/imageHelper';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
 
@@ -12,6 +13,7 @@ const Products = () => {
   const [alert, setAlert] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     nameAm: '',
@@ -51,6 +53,7 @@ const Products = () => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
+      setImageUrlInput('');
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -63,7 +66,11 @@ const Products = () => {
     e.preventDefault();
     
     const submitData = new FormData();
-    submitData.append('product', JSON.stringify(formData));
+    const payload = {
+      ...formData,
+      imageUrl: imageUrlInput.trim()
+    };
+    submitData.append('product', JSON.stringify(payload));
     if (imageFile) {
       submitData.append('image', imageFile);
     }
@@ -129,7 +136,8 @@ const Products = () => {
       seller: product.seller || '',
       status: product.status
     });
-    setImagePreview(product.image ? `${API_URL}${product.image}` : '');
+    setImagePreview(getImageUrl(product.imageUrl || product.image) || '');
+    setImageUrlInput(product.imageUrl || (product.image?.startsWith('http') ? product.image : ''));
     setImageFile(null);
     setShowModal(true);
   };
@@ -149,6 +157,7 @@ const Products = () => {
       status: 'active'
     });
     setImagePreview('');
+    setImageUrlInput('');
     setImageFile(null);
     setShowModal(true);
   };
@@ -158,6 +167,7 @@ const Products = () => {
     setEditingProduct(null);
     setImageFile(null);
     setImagePreview('');
+    setImageUrlInput('');
   };
 
   if (loading) return <div className="loading-spinner">Loading products...</div>;
@@ -178,7 +188,7 @@ const Products = () => {
           <div key={product._id} className="product-card">
             <div className="product-image">
               {product.image ? (
-                <img src={`${API_URL}${product.image}`} alt={product.name} />
+                <img src={getImageUrl(product.imageUrl || product.image)} alt={product.name} />
               ) : (
                 <div className="no-image"><i className="ri-image-line"></i></div>
               )}
@@ -216,6 +226,19 @@ const Products = () => {
                   </div>
                 )}
                 <input type="file" accept="image/*" onChange={handleImageChange} />
+                <input
+                  type="url"
+                  placeholder="Or paste image URL (https://...)"
+                  value={imageUrlInput}
+                  onChange={(e) => {
+                    setImageUrlInput(e.target.value);
+                    if (e.target.value.trim()) {
+                      setImagePreview(e.target.value.trim());
+                      setImageFile(null);
+                    }
+                  }}
+                  style={{ marginTop: '10px' }}
+                />
               </div>
               
               <div className="form-group"><label>Name (English) *</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required /></div>

@@ -6,6 +6,7 @@ const {
   initializeProjectPayment,
   verifyOrderPayment,
   verifyProjectPayment,
+  verifyOrderPaymentStatus,
   webhook
 } = require('../controllers/paymentController');
 
@@ -15,6 +16,7 @@ router.post('/webhook', webhook);
 // Protected routes
 router.post('/initialize-order', protect, initializeOrderPayment);
 router.post('/initialize-project', protect, initializeProjectPayment);
+router.get('/verify-order-status/:tx_ref', protect, verifyOrderPaymentStatus);
 router.get('/verify-order/:tx_ref', verifyOrderPayment);
 router.get('/verify-project/:tx_ref', verifyProjectPayment);
 
