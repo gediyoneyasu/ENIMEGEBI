@@ -12,6 +12,7 @@ const SliderManagement = () => {
   const [alert, setAlert] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     titleAm: '',
@@ -62,7 +63,7 @@ const SliderManagement = () => {
     e.preventDefault();
     
     const submitData = new FormData();
-    submitData.append('slider', JSON.stringify(formData));
+    submitData.append('slider', JSON.stringify({ ...formData, imageUrl: imageUrlInput.trim() }));
     if (imageFile) {
       submitData.append('image', imageFile);
     }
@@ -125,7 +126,9 @@ const SliderManagement = () => {
       order: slider.order || 0,
       active: slider.active
     });
-    setImagePreview(slider.image ? `${API_URL}${slider.image}` : '');
+    const currentImage = slider.imageUrl || slider.image || '';
+    setImagePreview(currentImage ? (currentImage.startsWith('http') ? currentImage : `${API_URL}${currentImage}`) : '');
+    setImageUrlInput(currentImage && currentImage.startsWith('http') ? currentImage : '');
     setImageFile(null);
     setShowModal(true);
   };
@@ -143,6 +146,7 @@ const SliderManagement = () => {
       active: true
     });
     setImagePreview('');
+    setImageUrlInput('');
     setImageFile(null);
     setShowModal(true);
   };
@@ -152,6 +156,7 @@ const SliderManagement = () => {
     setEditingSlider(null);
     setImageFile(null);
     setImagePreview('');
+    setImageUrlInput('');
   };
 
   if (loading) return <div className="loading-spinner">Loading sliders...</div>;
@@ -171,8 +176,8 @@ const SliderManagement = () => {
         {sliders.map((slider) => (
           <div key={slider._id} className="slider-item">
             <div className="slider-preview">
-              {slider.image ? (
-                <img src={`${API_URL}${slider.image}`} alt={slider.title} />
+              {(slider.imageUrl || slider.image) ? (
+                <img src={(slider.imageUrl || slider.image).startsWith('http') ? (slider.imageUrl || slider.image) : `${API_URL}${slider.imageUrl || slider.image}`} alt={slider.title} />
               ) : (
                 <div className="no-image"><i className="ri-image-line"></i></div>
               )}
@@ -209,7 +214,20 @@ const SliderManagement = () => {
                     <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px' }} />
                   </div>
                 )}
-                <input type="file" accept="image/*" onChange={handleImageChange} required={!editingSlider} />
+                <input type="file" accept="image/*" onChange={handleImageChange} />
+                <input
+                  type="url"
+                  placeholder="Or paste image URL (optional)"
+                  value={imageUrlInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setImageUrlInput(value);
+                    if (value.trim()) {
+                      setImagePreview(value.trim());
+                      setImageFile(null);
+                    }
+                  }}
+                />
               </div>
               
               <div className="form-group"><label>Title (English) *</label><input type="text" name="title" value={formData.title} onChange={handleInputChange} required /></div>

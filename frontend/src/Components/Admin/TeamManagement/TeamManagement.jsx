@@ -12,6 +12,7 @@ const TeamManagement = () => {
   const [alert, setAlert] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [formData, setFormData] = useState({
     name: '', nameAm: '', role: '', roleAm: '', bio: '', bioAm: '', order: 0, active: true
   });
@@ -52,7 +53,7 @@ const TeamManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const submitData = new FormData();
-    submitData.append('team', JSON.stringify(formData));
+    submitData.append('team', JSON.stringify({ ...formData, imageUrl: imageUrlInput.trim() }));
     if (imageFile) submitData.append('image', imageFile);
 
     try {
@@ -98,7 +99,9 @@ const TeamManagement = () => {
       name: member.name, nameAm: member.nameAm || '', role: member.role, roleAm: member.roleAm || '',
       bio: member.bio || '', bioAm: member.bioAm || '', order: member.order || 0, active: member.active
     });
-    setImagePreview(member.image ? `${API_URL}${member.image}` : '');
+    const currentImage = member.imageUrl || member.image || '';
+    setImagePreview(currentImage ? (currentImage.startsWith('http') ? currentImage : `${API_URL}${currentImage}`) : '');
+    setImageUrlInput(currentImage && currentImage.startsWith('http') ? currentImage : '');
     setImageFile(null);
     setShowModal(true);
   };
@@ -107,6 +110,7 @@ const TeamManagement = () => {
     setEditingMember(null);
     setFormData({ name: '', nameAm: '', role: '', roleAm: '', bio: '', bioAm: '', order: 0, active: true });
     setImagePreview('');
+    setImageUrlInput('');
     setImageFile(null);
     setShowModal(true);
   };
@@ -128,7 +132,7 @@ const TeamManagement = () => {
       <div className="team-grid-admin">
         {team.map(member => (
           <div key={member._id} className="team-card-admin">
-            <img src={member.image ? `${API_URL}${member.image}` : 'https://via.placeholder.com/80'} alt={member.name} style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
+            <img src={(member.imageUrl || member.image) ? ((member.imageUrl || member.image).startsWith('http') ? (member.imageUrl || member.image) : `${API_URL}${member.imageUrl || member.image}`) : 'https://via.placeholder.com/80'} alt={member.name} style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
             <div><strong>{member.name}</strong><br/>{member.role}<br/>{member.bio?.substring(0, 50)}</div>
             <div><span className={`status-badge ${member.active ? 'active' : 'inactive'}`}>{member.active ? 'Active' : 'Inactive'}</span></div>
             <div>
@@ -145,6 +149,19 @@ const TeamManagement = () => {
             <form onSubmit={handleSubmit}>
               {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '80px', height: '80px', borderRadius: '50%' }} />}
               <input type="file" accept="image/*" onChange={handleImageChange} />
+              <input
+                type="url"
+                placeholder="Or paste image URL (optional)"
+                value={imageUrlInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setImageUrlInput(value);
+                  if (value.trim()) {
+                    setImagePreview(value.trim());
+                    setImageFile(null);
+                  }
+                }}
+              />
               <input type="text" name="name" placeholder="Name (English)" value={formData.name} onChange={handleInputChange} required />
               <input type="text" name="nameAm" placeholder="Name (Amharic)" value={formData.nameAm} onChange={handleInputChange} />
               <input type="text" name="role" placeholder="Role (English)" value={formData.role} onChange={handleInputChange} required />

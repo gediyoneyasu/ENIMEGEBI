@@ -6,6 +6,7 @@ const Slider = require('../models/Slider');
 const Testimonial = require('../models/Testimonial');
 const HomeSetting = require('../models/HomeSetting');
 const Product = require('../models/Product');
+const { uploadToGlobalStorage } = require('../utils/mediaStorage');
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
 
@@ -69,10 +70,16 @@ router.post('/sliders', uploadSlider.single('image'), async (req, res) => {
   try {
     const sliderData = JSON.parse(req.body.slider);
     if (req.file) {
-      sliderData.image = `/uploads/sliders/${req.file.filename}`;
-      sliderData.imageUrl = `${API_URL}/uploads/sliders/${req.file.filename}`;
+      const uploadedUrl = await uploadToGlobalStorage(req.file.path, { folder: 'enimegebi/sliders' });
+      const fallbackPath = `/uploads/sliders/${req.file.filename}`;
+      const filePath = uploadedUrl || fallbackPath;
+      sliderData.image = filePath;
+      sliderData.imageUrl = getMediaUrl(filePath);
     } else if (sliderData.imageUrl && /^https?:\/\//.test(sliderData.imageUrl)) {
+      sliderData.image = sliderData.imageUrl;
+    } else if (!sliderData.imageUrl) {
       sliderData.image = '';
+      sliderData.imageUrl = '';
     }
     const slider = await Slider.create(sliderData);
     res.json({ success: true, slider });
@@ -88,10 +95,13 @@ router.put('/sliders/:id', uploadSlider.single('image'), async (req, res) => {
     if (!slider) return res.status(404).json({ success: false, message: 'Slider not found' });
     const sliderData = JSON.parse(req.body.slider);
     if (req.file) {
-      sliderData.image = `/uploads/sliders/${req.file.filename}`;
-      sliderData.imageUrl = `${API_URL}/uploads/sliders/${req.file.filename}`;
+      const uploadedUrl = await uploadToGlobalStorage(req.file.path, { folder: 'enimegebi/sliders' });
+      const fallbackPath = `/uploads/sliders/${req.file.filename}`;
+      const filePath = uploadedUrl || fallbackPath;
+      sliderData.image = filePath;
+      sliderData.imageUrl = getMediaUrl(filePath);
     } else if (sliderData.imageUrl && /^https?:\/\//.test(sliderData.imageUrl)) {
-      sliderData.image = '';
+      sliderData.image = sliderData.imageUrl;
     }
     Object.assign(slider, sliderData);
     await slider.save();
@@ -124,8 +134,16 @@ router.post('/testimonials', uploadTestimonial.single('image'), async (req, res)
   try {
     const testimonialData = JSON.parse(req.body.testimonial);
     if (req.file) {
-      testimonialData.image = `/uploads/testimonials/${req.file.filename}`;
-      testimonialData.imageUrl = `${API_URL}/uploads/testimonials/${req.file.filename}`;
+      const uploadedUrl = await uploadToGlobalStorage(req.file.path, { folder: 'enimegebi/testimonials' });
+      const fallbackPath = `/uploads/testimonials/${req.file.filename}`;
+      const filePath = uploadedUrl || fallbackPath;
+      testimonialData.image = filePath;
+      testimonialData.imageUrl = getMediaUrl(filePath);
+    } else if (testimonialData.imageUrl && /^https?:\/\//.test(testimonialData.imageUrl)) {
+      testimonialData.image = testimonialData.imageUrl;
+    } else if (!testimonialData.imageUrl) {
+      testimonialData.image = '';
+      testimonialData.imageUrl = '';
     }
     const testimonial = await Testimonial.create(testimonialData);
     res.json({ success: true, testimonial });
@@ -141,8 +159,13 @@ router.put('/testimonials/:id', uploadTestimonial.single('image'), async (req, r
     if (!testimonial) return res.status(404).json({ success: false, message: 'Testimonial not found' });
     const testimonialData = JSON.parse(req.body.testimonial);
     if (req.file) {
-      testimonialData.image = `/uploads/testimonials/${req.file.filename}`;
-      testimonialData.imageUrl = `${API_URL}/uploads/testimonials/${req.file.filename}`;
+      const uploadedUrl = await uploadToGlobalStorage(req.file.path, { folder: 'enimegebi/testimonials' });
+      const fallbackPath = `/uploads/testimonials/${req.file.filename}`;
+      const filePath = uploadedUrl || fallbackPath;
+      testimonialData.image = filePath;
+      testimonialData.imageUrl = getMediaUrl(filePath);
+    } else if (testimonialData.imageUrl && /^https?:\/\//.test(testimonialData.imageUrl)) {
+      testimonialData.image = testimonialData.imageUrl;
     }
     Object.assign(testimonial, testimonialData);
     await testimonial.save();

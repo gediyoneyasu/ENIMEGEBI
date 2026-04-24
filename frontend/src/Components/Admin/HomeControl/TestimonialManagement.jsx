@@ -12,6 +12,7 @@ const TestimonialManagement = () => {
   const [alert, setAlert] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [formData, setFormData] = useState({
     name: '', nameAm: '', comment: '', commentAm: '', rating: 5, position: 'Customer', positionAm: 'ደንበኛ', active: true
   });
@@ -52,7 +53,7 @@ const TestimonialManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const submitData = new FormData();
-    submitData.append('testimonial', JSON.stringify(formData));
+    submitData.append('testimonial', JSON.stringify({ ...formData, imageUrl: imageUrlInput.trim() }));
     if (imageFile) submitData.append('image', imageFile);
 
     try {
@@ -98,7 +99,9 @@ const TestimonialManagement = () => {
       name: t.name, nameAm: t.nameAm || '', comment: t.comment, commentAm: t.commentAm || '',
       rating: t.rating || 5, position: t.position || 'Customer', positionAm: t.positionAm || 'ደንበኛ', active: t.active
     });
-    setImagePreview(t.image ? `${API_URL}${t.image}` : '');
+    const currentImage = t.imageUrl || t.image || '';
+    setImagePreview(currentImage ? (currentImage.startsWith('http') ? currentImage : `${API_URL}${currentImage}`) : '');
+    setImageUrlInput(currentImage && currentImage.startsWith('http') ? currentImage : '');
     setImageFile(null);
     setShowModal(true);
   };
@@ -110,6 +113,7 @@ const TestimonialManagement = () => {
       position: 'Customer', positionAm: 'ደንበኛ', active: true
     });
     setImagePreview('');
+    setImageUrlInput('');
     setImageFile(null);
     setShowModal(true);
   };
@@ -133,7 +137,7 @@ const TestimonialManagement = () => {
       <div className="testimonials-grid">
         {testimonials.map(t => (
           <div key={t._id} className="testimonial-card-admin">
-            <img src={t.image ? `${API_URL}${t.image}` : 'https://via.placeholder.com/50'} alt={t.name} style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
+            <img src={(t.imageUrl || t.image) ? ((t.imageUrl || t.image).startsWith('http') ? (t.imageUrl || t.image) : `${API_URL}${t.imageUrl || t.image}`) : 'https://via.placeholder.com/50'} alt={t.name} style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
             <div><strong>{t.name}</strong><br/>{t.comment.substring(0, 50)}...<br/>{renderStars(t.rating)}</div>
             <div><span className={`status-badge ${t.active ? 'active' : 'inactive'}`}>{t.active ? 'Active' : 'Inactive'}</span></div>
             <div>
@@ -150,6 +154,19 @@ const TestimonialManagement = () => {
             <form onSubmit={handleSubmit}>
               {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '80px', height: '80px', borderRadius: '50%' }} />}
               <input type="file" accept="image/*" onChange={handleImageChange} />
+              <input
+                type="url"
+                placeholder="Or paste image URL (optional)"
+                value={imageUrlInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setImageUrlInput(value);
+                  if (value.trim()) {
+                    setImagePreview(value.trim());
+                    setImageFile(null);
+                  }
+                }}
+              />
               <input type="text" name="name" placeholder="Name (English)" value={formData.name} onChange={handleInputChange} required />
               <input type="text" name="nameAm" placeholder="Name (Amharic)" value={formData.nameAm} onChange={handleInputChange} />
               <textarea name="comment" placeholder="Comment (English)" value={formData.comment} onChange={handleInputChange} required />
