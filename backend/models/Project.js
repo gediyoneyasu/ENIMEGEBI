@@ -31,8 +31,12 @@ const projectSchema = new mongoose.Schema({
   },
   fileType: {
     type: String,
-    enum: ['image', 'pdf', 'video'],
+    enum: ['image', 'pdf', 'video', 'youtube'],
     default: 'image'
+  },
+  youtubeId: {
+    type: String,
+    default: ''
   },
   price: {
     type: Number,

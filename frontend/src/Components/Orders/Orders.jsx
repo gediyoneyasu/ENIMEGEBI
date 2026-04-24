@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './Orders.css';
 
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ const Orders = () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('import.meta.env.VITE_API_URL/api/orders/my-orders', {
+      const response = await axios.get(`${API_URL}/api/orders/my-orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrders(response.data.orders || []);

@@ -22,6 +22,7 @@ const Projects = () => {
     // Check for payment return
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
+    const txRef = urlParams.get('tx_ref');
     if (paymentStatus === 'success') {
       alert('Payment successful! Your project is now unlocked.');
       window.history.replaceState({}, document.title, '/projects');
@@ -29,8 +30,31 @@ const Projects = () => {
     } else if (paymentStatus === 'failed') {
       alert('Payment failed. Please try again.');
       window.history.replaceState({}, document.title, '/projects');
+    } else if (paymentStatus === 'pending' && txRef) {
+      verifyProjectPayment(txRef);
     }
   }, []);
+
+  const verifyProjectPayment = async (txRef) => {
+    try {
+      const token = localStorage.getItem('enimegebiToken');
+      if (!token) return;
+      const response = await axios.get(`${API_URL}/api/payment/verify-project-status/${txRef}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        alert('Payment successful! Your project is now unlocked.');
+        fetchProjects();
+        fetchMyProjects();
+      } else {
+        alert('Payment failed. Please try again.');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Could not verify payment status.');
+    } finally {
+      window.history.replaceState({}, document.title, '/projects');
+    }
+  };
 
   const fetchProjects = async () => {
     try {

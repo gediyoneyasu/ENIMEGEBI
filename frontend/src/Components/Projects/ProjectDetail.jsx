@@ -14,6 +14,7 @@ const ProjectDetail = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   useEffect(() => {
     fetchProject();
@@ -45,7 +46,7 @@ const ProjectDetail = () => {
         return (
           <div className="project-content-viewer">
             <iframe
-              src={`https://www.youtube.com/embed/${project.youtubeId}`}
+              src={`https://www.youtube.com/embed/${project.youtubeId || ''}`}
               title={project.title}
               frameBorder="0"
               allowFullScreen
@@ -101,6 +102,76 @@ const ProjectDetail = () => {
 
   const t = translations[language];
 
+  const handleChapaPayment = async () => {
+    const token = localStorage.getItem('enimegebiToken');
+    if (!token) {
+      navigate('/auth');
+      return;
+    }
+
+    const user = JSON.parse(localStorage.getItem('enimegebiUser') || '{}');
+    setProcessingPayment(true);
+    setError('');
+
+    try {
+      const response = await axios.post(`${API_URL}/api/payment/initialize-project`, {
+        projectId: project._id,
+        amount: project.price,
+        email: user.email,
+        name: user.name,
+        phone: user.phone || ''
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success && response.data.checkout_url) {
+        window.location.href = response.data.checkout_url;
+      } else {
+        setError(response.data.message || 'Payment initialization failed');
+        setProcessingPayment(false);
+      }
+    } catch (paymentError) {
+      setError(paymentError.response?.data?.message || 'Failed to process payment');
+      setProcessingPayment(false);
+    }
+  };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const txRef = urlParams.get('tx_ref');
+
+    const verifyReturnedPayment = async () => {
+      if (!txRef || paymentStatus !== 'pending') return;
+      try {
+        const token = localStorage.getItem('enimegebiToken');
+        const verifyResponse = await axios.get(`${API_URL}/api/payment/verify-project-status/${txRef}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (verifyResponse.data.success) {
+          await fetchProject();
+          window.history.replaceState({}, document.title, `/projects/${id}`);
+        } else {
+          setError('Payment failed or not completed.');
+          window.history.replaceState({}, document.title, `/projects/${id}`);
+        }
+      } catch (verifyError) {
+        setError(verifyError.response?.data?.message || 'Could not verify payment status.');
+      }
+    };
+
+    if (paymentStatus === 'success') {
+      fetchProject();
+      window.history.replaceState({}, document.title, `/projects/${id}`);
+    } else if (paymentStatus === 'failed') {
+      setError('Payment failed. Please try again.');
+      window.history.replaceState({}, document.title, `/projects/${id}`);
+    } else if (paymentStatus === 'pending' && txRef) {
+      verifyReturnedPayment();
+    }
+  }, [id]);
+
   if (loading) return <div className="loading-spinner">Loading...</div>;
   if (error) return <div className="error-message">{error}</div>;
   if (!project) return <div className="error-message">Project not found</div>;
@@ -121,8 +192,8 @@ const ProjectDetail = () => {
           <i className="ri-lock-line"></i>
           <h2>{t.locked}</h2>
           <p>{t.unlock}{project.price}</p>
-          <button className="purchase-btn" onClick={() => alert('Contact admin for payment')}>
-            {t.unlock} ${project.price}
+          <button className="purchase-btn" onClick={handleChapaPayment} disabled={processingPayment}>
+            {processingPayment ? 'Processing...' : `${t.unlock} ${project.price}`}
           </button>
         </div>
       ) : (

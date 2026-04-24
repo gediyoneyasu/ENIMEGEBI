@@ -37,7 +37,7 @@ const initializeOrderPayment = async (req, res) => {
       phone_number: phone || '0000000000',
       tx_ref: tx_ref,
       callback_url: `${BACKEND_URL}/api/payment/verify-order/${tx_ref}`,
-      return_url: `${BACKEND_URL}/api/payment/verify-order/${tx_ref}`,
+      return_url: `${FRONTEND_URL}/checkout?payment=pending&tx_ref=${tx_ref}`,
       customization: {
         title: 'Enimegebi Payment',
         description: `Payment for order ${orderId}`
@@ -101,7 +101,7 @@ const initializeProjectPayment = async (req, res) => {
       phone_number: phone || '0000000000',
       tx_ref: tx_ref,
       callback_url: `${BACKEND_URL}/api/payment/verify-project/${tx_ref}`,
-      return_url: `${BACKEND_URL}/api/payment/verify-project/${tx_ref}`,
+      return_url: `${FRONTEND_URL}/projects?payment=pending&tx_ref=${tx_ref}`,
       customization: {
         title: 'Enimegebi Project',
         description: `Payment for project ${projectId}`
@@ -242,6 +242,35 @@ const verifyOrderPaymentStatus = async (req, res) => {
   }
 };
 
+const verifyProjectPaymentStatus = async (req, res) => {
+  try {
+    if (!CHAPA_SECRET_KEY) {
+      return res.status(500).json({ success: false, status: 'error', message: 'Chapa secret key is not configured' });
+    }
+
+    const { tx_ref } = req.params;
+    const response = await axios.get(`${CHAPA_API_URL}/transaction/verify/${tx_ref}`, {
+      headers: { Authorization: `Bearer ${CHAPA_SECRET_KEY}` }
+    });
+
+    if (response.data.status === 'success') {
+      await Project.findOneAndUpdate(
+        { 'purchasedBy.txRef': tx_ref },
+        { $set: { 'purchasedBy.$.isUnlocked': true, 'purchasedBy.$.approvedAt': new Date() } }
+      );
+      return res.json({ success: true, status: 'paid', data: response.data.data });
+    }
+
+    return res.json({ success: false, status: 'failed', message: 'Payment not completed' });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      status: 'error',
+      message: error.response?.data?.message || error.message
+    });
+  }
+};
+
 // Webhook
 const webhook = async (req, res) => {
   try {
@@ -269,5 +298,6 @@ module.exports = {
   verifyOrderPayment,
   verifyProjectPayment,
   verifyOrderPaymentStatus,
+  verifyProjectPaymentStatus,
   webhook
 };

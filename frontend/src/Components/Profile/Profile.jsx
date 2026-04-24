@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useLanguage } from '../../main'
 import './Profile.css';
 
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
 function Profile() {
   const { language, changeLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState('profile');
@@ -175,7 +177,7 @@ function Profile() {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('import.meta.env.VITE_API_URL/api/users/profile', {
+      const response = await axios.get(`${API_URL}/api/users/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -215,7 +217,7 @@ function Profile() {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.get('import.meta.env.VITE_API_URL/api/users/orders', {
+      const response = await axios.get(`${API_URL}/api/orders/my-orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrders(response.data.orders || []);
@@ -244,7 +246,7 @@ function Profile() {
 
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.post('import.meta.env.VITE_API_URL/api/users/avatar', formDataImg, {
+      const response = await axios.post(`${API_URL}/api/users/avatar`, formDataImg, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -267,7 +269,7 @@ function Profile() {
   const handleSaveProfile = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      const response = await axios.put('import.meta.env.VITE_API_URL/api/users/profile', formData, {
+      const response = await axios.put(`${API_URL}/api/users/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -292,7 +294,7 @@ function Profile() {
 
     try {
       const token = localStorage.getItem('enimegebiToken');
-      await axios.put('import.meta.env.VITE_API_URL/api/users/password', {
+      await axios.put(`${API_URL}/api/users/password`, {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       }, {
@@ -312,7 +314,7 @@ function Profile() {
     if (window.confirm(t.deleteConfirm)) {
       try {
         const token = localStorage.getItem('enimegebiToken');
-        await axios.delete('import.meta.env.VITE_API_URL/api/users/account', {
+        await axios.delete(`${API_URL}/api/users/account`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -330,7 +332,7 @@ function Profile() {
   const handleSaveSettings = async () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
-      await axios.put('import.meta.env.VITE_API_URL/api/users/settings', notificationSettings, {
+      await axios.put(`${API_URL}/api/users/settings`, notificationSettings, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert(t.settingsSaved);
@@ -457,6 +459,18 @@ function Profile() {
                       <span className="order-ref">{order.orderReference}</span>
                       <span className="order-date">{new Date(order.createdAt).toLocaleDateString()}</span>
                       <span className="order-status" style={{ backgroundColor: getStatusColor(order.orderStatus) }}>{getStatusText(order.orderStatus)}</span>
+                    </div>
+                    <div className="order-items-preview">
+                      <div className="order-preview-item">
+                        <span>Payment</span>
+                        <span>{order.paymentStatus || 'pending'}</span>
+                      </div>
+                      {order.transactionRef && (
+                        <div className="order-preview-item">
+                          <span>Receipt Ref</span>
+                          <span>{order.transactionRef}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="order-items-preview">
                       {order.items.slice(0, 2).map((item, idx) => (

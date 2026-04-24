@@ -4,9 +4,15 @@ const { uploadToGlobalStorage } = require('../utils/mediaStorage');
 
 const inferFileTypeFromUrl = (url = '') => {
   const lower = url.toLowerCase();
+  if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'youtube';
   if (lower.includes('.pdf')) return 'pdf';
   if (/\.(mp4|mov|avi|mkv)(\?|$)/.test(lower)) return 'video';
   return 'image';
+};
+
+const extractYoutubeId = (url = '') => {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?/]+)/i);
+  return match ? match[1] : '';
 };
 
 // Get public projects
@@ -46,11 +52,12 @@ const getProjectById = async (req, res) => {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     
-    const hasAccess = project.purchasedBy.some(p => 
-      p.user.toString() === req.user.id && p.isUnlocked === true
-    );
+    const userId = req.user?.id;
+    const hasAccess = userId
+      ? project.purchasedBy.some(p => p.user.toString() === userId && p.isUnlocked === true)
+      : false;
     
-    if (!hasAccess && req.user.role !== 'admin') {
+    if (!hasAccess && req.user?.role !== 'admin') {
       return res.json({
         success: true,
         project: {
@@ -61,6 +68,9 @@ const getProjectById = async (req, res) => {
           descriptionAm: project.descriptionAm,
           image: project.image,
           imageUrl: getImageUrl(project.imageUrl || project.image),
+          fileType: project.fileType,
+          fileUrl: getImageUrl(project.fileUrl),
+          youtubeId: project.youtubeId || '',
           price: project.price,
           status: 'locked'
         }
@@ -115,7 +125,9 @@ const createProject = async (req, res) => {
       }
     } else if (projectData.fileUrl && projectData.fileUrl.startsWith('http')) {
       projectData.fileType = inferFileTypeFromUrl(projectData.fileUrl);
-      if (projectData.fileType === 'image') {
+      if (projectData.fileType === 'youtube') {
+        projectData.youtubeId = extractYoutubeId(projectData.fileUrl);
+      } else if (projectData.fileType === 'image') {
         projectData.image = projectData.fileUrl;
         projectData.imageUrl = projectData.fileUrl;
       }
@@ -167,7 +179,9 @@ const updateProject = async (req, res) => {
       }
     } else if (projectData.fileUrl && projectData.fileUrl.startsWith('http')) {
       projectData.fileType = inferFileTypeFromUrl(projectData.fileUrl);
-      if (projectData.fileType === 'image') {
+      if (projectData.fileType === 'youtube') {
+        projectData.youtubeId = extractYoutubeId(projectData.fileUrl);
+      } else if (projectData.fileType === 'image') {
         projectData.image = projectData.fileUrl;
         projectData.imageUrl = projectData.fileUrl;
       }
