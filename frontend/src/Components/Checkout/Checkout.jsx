@@ -9,6 +9,7 @@ const API_URL = 'https://enimegebi-backend.onrender.com';
 const Checkout = () => {
   const { cart, clearCart, getCartTotal } = useCart();
   const [loading, setLoading] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [user, setUser] = useState(null);
@@ -167,6 +168,7 @@ const Checkout = () => {
 
     const verifyReturnedPayment = async () => {
       if (!txRef || paymentStatus !== 'pending') return;
+      setVerifyingPayment(true);
 
       try {
         const token = localStorage.getItem('enimegebiToken');
@@ -184,6 +186,8 @@ const Checkout = () => {
         }
       } catch (verifyError) {
         setError(verifyError.response?.data?.message || 'Could not verify payment status.');
+      } finally {
+        setVerifyingPayment(false);
       }
     };
 
@@ -199,12 +203,10 @@ const Checkout = () => {
     }
   }, [clearCart]);
 
-  if (!cart || cart.length === 0) {
+  if (verifyingPayment) {
     return (
-      <div className="empty-cart">
-        <i className="ri-shopping-cart-line"></i>
-        <h2>Your cart is empty</h2>
-        <Link to="/products" className="shop-now-btn">Shop Now</Link>
+      <div className="loading-spinner">
+        Verifying payment...
       </div>
     );
   }
@@ -219,6 +221,16 @@ const Checkout = () => {
           <Link to="/orders" className="view-orders-btn">View Orders</Link>
           <Link to="/" className="continue-shopping-btn">Continue Shopping</Link>
         </div>
+      </div>
+    );
+  }
+
+  if (!cart || cart.length === 0) {
+    return (
+      <div className="empty-cart">
+        <i className="ri-shopping-cart-line"></i>
+        <h2>Your cart is empty</h2>
+        <Link to="/products" className="shop-now-btn">Shop Now</Link>
       </div>
     );
   }

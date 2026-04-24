@@ -104,15 +104,11 @@ const Projects = () => {
     }
 
     setProcessingPayment(true);
-    const user = JSON.parse(localStorage.getItem('enimegebiUser'));
 
     try {
       const response = await axios.post(`${API_URL}/api/payment/initialize-project`, {
         projectId: project._id,
-        amount: project.price,
-        email: user.email,
-        name: user.name,
-        phone: user.phone || ''
+        amount: Number(project.price)
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
