@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
@@ -14,8 +14,6 @@ function Categories() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -24,14 +22,30 @@ function Categories() {
     try {
       // Fetch products
       const productsRes = await axios.get(`${API_URL}/api/admin/public-products`);
-      setProducts(productsRes.data);
+      const activeProducts = Array.isArray(productsRes.data)
+        ? productsRes.data.filter((p) => p?.status === 'active')
+        : [];
+      setProducts(activeProducts);
       
       // Extract unique categories from products
-      const uniqueCategories = [...new Map(productsRes.data.map(p => [p.category, {
-        name: p.category,
-        count: productsRes.data.filter(prod => prod.category === p.category).length,
-        image: p.image || p.imageUrl
-      }])).values()];
+      const categoryMap = new Map();
+      activeProducts.forEach((p) => {
+        if (!p?.category) return;
+        if (!categoryMap.has(p.category)) {
+          categoryMap.set(p.category, {
+            name: p.category,
+            count: 1,
+            image: p.imageUrl || p.image || ''
+          });
+        } else {
+          const existing = categoryMap.get(p.category);
+          existing.count += 1;
+          if (!existing.image) {
+            existing.image = p.imageUrl || p.image || '';
+          }
+        }
+      });
+      const uniqueCategories = Array.from(categoryMap.values());
       
       setCategories(uniqueCategories);
     } catch (error) {
@@ -44,7 +58,8 @@ function Categories() {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    if (!imagePath.startsWith('/uploads')) return `${API_URL}/uploads/${imagePath}`;
+    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
+    if (!imagePath.startsWith('/')) return `${API_URL}/uploads/${imagePath}`;
     return `${API_URL}${imagePath}`;
   };
 

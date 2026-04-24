@@ -19,7 +19,9 @@ function Home() {
   const [sliders, setSliders] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -29,26 +31,48 @@ function Home() {
 
   const fetchHomeData = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/home/public-data`);
-      if (response.data.success) {
-        setSliders(response.data.sliders || []);
-        setFeaturedProducts(response.data.featuredProducts?.slice(0, 8) || []);
-        setTestimonials(response.data.testimonials || []);
-        setSettings(response.data.settings || {});
-        
-        const allProducts = response.data.featuredProducts || [];
-        const categoryMap = new Map();
-        
-        allProducts.forEach(product => {
-          if (!categoryMap.has(product.category)) {
-            categoryMap.set(product.category, {
-              name: product.category,
-              count: allProducts.filter(p => p.category === product.category).length,
-              image: product.image || product.imageUrl
-            });
+      const [homeRes, productsRes, teamRes, projectsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/home/public-data`),
+        axios.get(`${API_URL}/api/admin/public-products`),
+        axios.get(`${API_URL}/api/team/public`),
+        axios.get(`${API_URL}/api/projects/public`)
+      ]);
+
+      if (homeRes.data.success) {
+        setSliders(homeRes.data.sliders || []);
+        setFeaturedProducts(homeRes.data.featuredProducts?.slice(0, 8) || []);
+        setTestimonials(homeRes.data.testimonials || []);
+        setSettings(homeRes.data.settings || {});
+      }
+
+      const allProducts = Array.isArray(productsRes.data)
+        ? productsRes.data.filter((p) => p?.status === 'active')
+        : [];
+      const categoryMap = new Map();
+      allProducts.forEach((product) => {
+        if (!product?.category) return;
+        if (!categoryMap.has(product.category)) {
+          categoryMap.set(product.category, {
+            name: product.category,
+            count: 1,
+            image: product.imageUrl || product.image || ''
+          });
+        } else {
+          const existing = categoryMap.get(product.category);
+          existing.count += 1;
+          if (!existing.image) {
+            existing.image = product.imageUrl || product.image || '';
           }
-        });
-        setCategories(Array.from(categoryMap.values()).slice(0, 6));
+        }
+      });
+      setCategories(Array.from(categoryMap.values()).slice(0, 6));
+
+      if (teamRes.data.success) {
+        setTeamMembers(teamRes.data.team || []);
+      }
+
+      if (projectsRes.data.success) {
+        setProjects((projectsRes.data.projects || []).slice(0, 4));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -61,6 +85,7 @@ function Home() {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
     if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
+    if (!imagePath.startsWith('/')) return `${API_URL}/uploads/${imagePath}`;
     return null;
   };
 
@@ -94,6 +119,8 @@ function Home() {
       featuredProducts: 'Featured Products',
       viewAll: 'View All Products',
       addToCart: 'Add to Cart',
+      projects: 'Projects',
+      viewAllProjects: 'View All Projects',
       testimonials: 'What Our Customers Say',
       getStarted: 'Get Started'
     },
@@ -112,6 +139,8 @@ function Home() {
       featuredProducts: 'ታዋቂ ምርቶች',
       viewAll: 'ሁሉንም ምርቶች ይመልከቱ',
       addToCart: 'ወደ ጋሪ ጨምር',
+      projects: 'ፕሮጀክቶች',
+      viewAllProjects: 'ሁሉንም ፕሮጀክቶች ይመልከቱ',
       testimonials: 'ደንበኞቻችን ምን ይላሉ',
       getStarted: 'ይጀምሩ'
     }
@@ -170,15 +199,15 @@ function Home() {
             {categories.map((category, idx) => (
               <div className="category-item" key={idx}>
                 {/* Front Card */}
-                <div className="category-card">
-                  <div className="category-icon">
-                    <i className={getCategoryIcon(category.name)}></i>
+                <div className="category-card" style={{ backgroundImage: `url(${getImageUrl(category.image) || ''})` }}>
+                  <div className="category-overlay"></div>
+                  <span className="category-badge-front">{category.count} Products</span>
+                  <div className="category-front-content">
+                    <button type="button">{category.name}</button>
                   </div>
-                  <h3>{category.name}</h3>
-                  <p>{category.count} Products</p>
                 </div>
                 {/* Back Card */}
-                <div className="card-back">
+                <div className="card-back" style={{ backgroundImage: `url(${getImageUrl(category.image) || ''})` }}>
                   <div className="back-price">{category.name}</div>
                   <div className="back-content">
                     <h3>{category.name}</h3>
@@ -233,15 +262,45 @@ function Home() {
         </div>
       </section>
 
+      {/* Projects Section */}
+      {projects.length > 0 && (
+        <section className="projects-section-home">
+          <div className="container">
+            <div className="section-header-home">
+              <h2 className="section-title">{t.projects}</h2>
+              <Link to="/projects" className="view-all-link">
+                {t.viewAllProjects} <i className="ri-arrow-right-line"></i>
+              </Link>
+            </div>
+            <div className="projects-grid-home">
+              {projects.map((project) => (
+                <div key={project._id} className="project-card-home">
+                  <div className="project-image-home">
+                    <img src={getImageUrl(project.imageUrl || project.image)} alt={project.title} />
+                  </div>
+                  <div className="project-info-home">
+                    <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
+                    <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
+                    <Link to="/projects" className="view-btn">
+                      {language === 'en' ? 'View Project' : 'ፕሮጀክት ይመልከቱ'}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Testimonials Section */}
       <section className="testimonials-section">
         <div className="container">
           <h2 className="section-title">{t.testimonials}</h2>
           <div className="testimonials-grid">
-            {testimonials.slice(0, 3).map(testimonial => (
+            {testimonials.map(testimonial => (
               <div key={testimonial._id} className="testimonial-card">
                 <div className="testimonial-image">
-                  <img src={getImageUrl(testimonial.image || testimonial.imageUrl)} alt={testimonial.name} />
+                  <img src={getImageUrl(testimonial.image || testimonial.imageUrl) || 'https://via.placeholder.com/120?text=User'} alt={testimonial.name} />
                 </div>
                 <div className="testimonial-rating">
                   {[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}
@@ -254,6 +313,24 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {/* Team Section */}
+      {teamMembers.length > 0 && (
+        <section className="home-team-section">
+          <div className="container">
+            <h2 className="section-title">{language === 'en' ? 'Our Team' : 'ቡድናችን'}</h2>
+            <div className="home-team-grid">
+              {teamMembers.map((member) => (
+                <div key={member._id} className="home-team-card">
+                  <img src={getImageUrl(member.imageUrl || member.image) || 'https://via.placeholder.com/140?text=Team'} alt={member.name} />
+                  <h3>{language === 'en' ? member.name : (member.nameAm || member.name)}</h3>
+                  <p>{language === 'en' ? member.role : (member.roleAm || member.role)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="cta-section">

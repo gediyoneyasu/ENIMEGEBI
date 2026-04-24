@@ -2598,3 +2598,180 @@
     flex-direction: row;
   }
 }
+
+/* ===== Home fixes: header overlap + dynamic category + team ===== */
+.home-page {
+  padding-top: 80px;
+}
+
+.hero-slider,
+.hero-slide {
+  height: calc(100vh - 80px);
+}
+
+.category-card {
+  background-size: cover;
+  background-position: center;
+}
+
+.category-card::before {
+  background: linear-gradient(135deg, rgba(248, 249, 250, 0.92), rgba(255, 255, 255, 0.84));
+}
+
+.category-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.category-item .card-back {
+  background-size: cover;
+  background-position: center;
+}
+
+.testimonial-card {
+  border: 1px solid #ececec;
+}
+
+.testimonial-image {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #e8c88a;
+}
+
+.testimonial-image img {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.home-team-section {
+  padding: 80px 0;
+  background: #f8f9fa;
+}
+
+.home-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.home-team-card {
+  background: #fff;
+  border-radius: 16px;
+  text-align: center;
+  padding: 24px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+}
+
+.home-team-card img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+  border: 3px solid #e8c88a;
+}
+
+.home-team-card h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.home-team-card p {
+  margin: 0;
+  color: #666;
+  font-weight: 600;
+}
+
+/* Front category card exactly image-first style */
+.category-card {
+  justify-content: flex-end;
+  align-items: flex-start;
+  background-color: #dfe6df;
+  box-shadow: none !important;
+}
+
+.category-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.1));
+}
+
+.category-card::before {
+  background: transparent !important;
+}
+
+.category-badge-front {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  background: rgba(201, 166, 107, 0.96);
+  color: #1a1a1a;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.category-front-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.category-front-content button {
+  background: #fff;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+/* Better slider behavior for long titles */
+.hero-content h1,
+.hero-content p {
+  text-wrap: balance;
+}
+
+/* Testimonials stable layout when admin adds many/long entries */
+.testimonials-grid {
+  align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.testimonial-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 330px;
+  height: 100%;
+}
+
+.testimonial-card p {
+  flex: 1;
+}
+
+/* Team cards robust for longer names/roles */
+.home-team-card {
+  min-height: 265px;
+  height: 100%;
+}
+
+.home-team-card h3,
+.home-team-card p {
+  word-break: break-word;
+}
