@@ -102,10 +102,10 @@ const Checkout = () => {
       // Then initialize Chapa payment
       const paymentResponse = await axios.post(`${API_URL}/api/payment/initialize-order`, {
         orderId: order.orderReference,
-        amount: totals.total,
-        email: formData.email,
-        name: formData.fullName,
-        phone: formData.phone
+        amount: Number(totals.total),
+        email: formData.email || user?.email,
+        name: formData.fullName || user?.name,
+        phone: formData.phone || user?.phone || ''
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });

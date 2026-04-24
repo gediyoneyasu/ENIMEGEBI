@@ -7,6 +7,16 @@ const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://enimegebi-zorz.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://enimegebi-backend.onrender.com';
 
+const getSafeNameParts = (name = '') => {
+  const clean = String(name || '').trim();
+  if (!clean) return { firstName: 'Customer', lastName: 'User' };
+  const parts = clean.split(/\s+/);
+  return {
+    firstName: parts[0] || 'Customer',
+    lastName: parts.slice(1).join(' ') || 'User'
+  };
+};
+
 // Initialize payment for order (product checkout)
 const initializeOrderPayment = async (req, res) => {
   try {
@@ -26,15 +36,24 @@ const initializeOrderPayment = async (req, res) => {
       });
     }
     
+    const customerEmail = email || req.user?.email;
+    const customerName = name || req.user?.name;
+    const customerPhone = phone || req.user?.phone || '0000000000';
+    const { firstName, lastName } = getSafeNameParts(customerName);
+
+    if (!customerEmail) {
+      return res.status(400).json({ success: false, message: 'Customer email is required for payment' });
+    }
+
     const tx_ref = 'ORDER-' + Date.now() + '-' + Math.random().toString(36).substring(7);
     
     const paymentData = {
       amount: Number(amount),
       currency: 'ETB',
-      email: email,
-      first_name: name.split(' ')[0] || name,
-      last_name: name.split(' ')[1] || 'Customer',
-      phone_number: phone || '0000000000',
+      email: customerEmail,
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: customerPhone,
       tx_ref: tx_ref,
       callback_url: `${BACKEND_URL}/api/payment/verify-order/${tx_ref}`,
       return_url: `${FRONTEND_URL}/checkout?payment=pending&tx_ref=${tx_ref}`,
@@ -89,16 +108,29 @@ const initializeProjectPayment = async (req, res) => {
     }
 
     const { projectId, amount, email, name, phone } = req.body;
+
+    if (!projectId || !amount) {
+      return res.status(400).json({ success: false, message: 'projectId and amount are required' });
+    }
+
+    const customerEmail = email || req.user?.email;
+    const customerName = name || req.user?.name;
+    const customerPhone = phone || req.user?.phone || '0000000000';
+    const { firstName, lastName } = getSafeNameParts(customerName);
+
+    if (!customerEmail) {
+      return res.status(400).json({ success: false, message: 'Customer email is required for payment' });
+    }
     
     const tx_ref = 'PROJ-' + Date.now() + '-' + Math.random().toString(36).substring(7);
     
     const paymentData = {
       amount: Number(amount),
       currency: 'ETB',
-      email: email,
-      first_name: name.split(' ')[0] || name,
-      last_name: name.split(' ')[1] || 'Customer',
-      phone_number: phone || '0000000000',
+      email: customerEmail,
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: customerPhone,
       tx_ref: tx_ref,
       callback_url: `${BACKEND_URL}/api/payment/verify-project/${tx_ref}`,
       return_url: `${FRONTEND_URL}/projects?payment=pending&tx_ref=${tx_ref}`,
