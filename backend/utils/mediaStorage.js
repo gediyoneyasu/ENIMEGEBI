@@ -1,7 +1,10 @@
 const fs = require('fs');
 const { v2: cloudinary } = require('cloudinary');
 
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.ENIMEGEBI_IMG_CLOUD_NAME;
+const cloudName =
+  process.env.CLOUDINARY_CLOUD_NAME ||
+  process.env.ENIMEGEBI_IMG_CLOUD_NAME ||
+  process.env.ENIMEGEBI_IMG;
 const apiKey = process.env.CLOUDINARY_API_KEY || process.env.ENIMEGEBI_IMG_API_KEY;
 const apiSecret = process.env.CLOUDINARY_API_SECRET || process.env.ENIMEGEBI_IMG_API_SECRET;
 
