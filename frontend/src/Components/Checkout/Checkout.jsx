@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useCart } from '../../main';
 import './Checkout.css';
 
-const API_URL = 'https://enimegebi-backend.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://enimegebi-backend.onrender.com';
 
 const Checkout = () => {
   const { cart, clearCart, getCartTotal } = useCart();
