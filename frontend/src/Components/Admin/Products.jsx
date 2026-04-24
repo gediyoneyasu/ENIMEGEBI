@@ -27,6 +27,10 @@ const Products = () => {
     status: 'active'
   });
 
+  const getProductCategory = (product) =>
+    (product?.category || product?.categoryName || '').trim();
+
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -127,7 +131,7 @@ const Products = () => {
     setFormData({
       name: product.name,
       nameAm: product.nameAm || '',
-      category: product.category,
+      category: getProductCategory(product),
       price: product.price,
       stock: product.stock,
       description: product.description || '',
@@ -197,7 +201,7 @@ const Products = () => {
             <div className="product-info">
               <h3>{product.name}</h3>
               {product.nameAm && <p className="product-name-am">{product.nameAm}</p>}
-              <span className="product-category">{product.category}</span>
+              <span className="product-category">{getProductCategory(product) || 'Uncategorized'}</span>
               <div className="product-price">${product.price}</div>
               <div className="product-stock">Stock: {product.stock} units</div>
               <div className="product-actions">
@@ -243,7 +247,16 @@ const Products = () => {
               
               <div className="form-group"><label>Name (English) *</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Name (Amharic)</label><input type="text" name="nameAm" value={formData.nameAm} onChange={handleInputChange} /></div>
-              <div className="form-group"><label>Category *</label><input type="text" name="category" value={formData.category} onChange={handleInputChange} required /></div>
+              <div className="form-group">
+                <label>Category *</label>
+                <input
+                  type="text"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
               <div className="form-group"><label>Price *</label><input type="number" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Stock *</label><input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required /></div>
               <div className="form-group"><label>Description (English)</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="3"></textarea></div>
