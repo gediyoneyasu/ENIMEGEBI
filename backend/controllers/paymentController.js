@@ -26,7 +26,7 @@ const initializeOrderPayment = async (req, res) => {
 
     console.log('Payment request received:', req.body);
     
-    const { orderId, amount, email, name, phone } = req.body;
+    const { orderId, amount, email, name, phone, returnUrl } = req.body;
     
     // Validate required fields
     if (!orderId || !amount || !email || !name) {
@@ -47,6 +47,10 @@ const initializeOrderPayment = async (req, res) => {
 
     const tx_ref = 'ORDER-' + Date.now() + '-' + Math.random().toString(36).substring(7);
     
+    const resolvedReturnUrl = returnUrl && /^https?:\/\//i.test(returnUrl)
+      ? `${returnUrl}?payment=pending&tx_ref=${tx_ref}`
+      : `${FRONTEND_URL}/checkout?payment=pending&tx_ref=${tx_ref}`;
+
     const paymentData = {
       amount: Number(amount),
       currency: 'ETB',
@@ -56,7 +60,7 @@ const initializeOrderPayment = async (req, res) => {
       phone_number: customerPhone,
       tx_ref: tx_ref,
       callback_url: `${BACKEND_URL}/api/payment/verify-order/${tx_ref}`,
-      return_url: `${FRONTEND_URL}/checkout?payment=pending&tx_ref=${tx_ref}`,
+      return_url: resolvedReturnUrl,
       customization: {
         title: 'Enimegebi Payment',
         description: `Payment for order ${orderId}`
@@ -75,6 +79,11 @@ const initializeOrderPayment = async (req, res) => {
     console.log('Chapa response:', response.data);
     
     if (response.data.status === 'success') {
+      const checkoutUrl = response.data?.data?.checkout_url || response.data?.checkout_url || null;
+      if (!checkoutUrl) {
+        return res.status(502).json({ success: false, message: 'Chapa did not return checkout URL' });
+      }
+
       const updatedOrder = await Order.findOneAndUpdate(
         { orderReference: orderId },
         { transactionRef: tx_ref, paymentStatus: 'pending' }
@@ -85,7 +94,7 @@ const initializeOrderPayment = async (req, res) => {
       
       res.json({
         success: true,
-        checkout_url: response.data.data.checkout_url,
+        checkout_url: checkoutUrl,
         tx_ref: tx_ref
       });
     } else {

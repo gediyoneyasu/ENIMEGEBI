@@ -106,16 +106,18 @@ const Checkout = () => {
         amount: Number(totals.total),
         email: formData.email || user?.email,
         name: formData.fullName || user?.name,
-        phone: formData.phone || user?.phone || ''
+        phone: formData.phone || user?.phone || '',
+        returnUrl: `${window.location.origin}/checkout`
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       console.log('Payment response:', paymentResponse.data);
 
-      if (paymentResponse.data.success && paymentResponse.data.checkout_url) {
+      const checkoutUrl = paymentResponse.data.checkout_url;
+      if (paymentResponse.data.success && checkoutUrl) {
         // Redirect to Chapa payment page
-        window.location.href = paymentResponse.data.checkout_url;
+        window.location.assign(checkoutUrl);
       } else {
         setError(paymentResponse.data.message || 'Payment initialization failed');
         setLoading(false);
