@@ -1,43 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const { uploadProduct } = require('../config/upload');
-const {
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-  getProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  getOrders,
-  updateOrderStatus,
-  getContacts,
-  createContact,
-  markContactRead,
-  getDashboardStats,
-  getPublicProducts
-} = require('../controllers/adminController');
+const multer = require('multer');
+const path = require('path');
 
-// Public routes
-router.post('/contacts', createContact);
-router.get('/public-products', getPublicProducts);
+// Import controller
+const productController = require('../controllers/productController');
 
-// Protected routes
-router.use(protect);
-router.get('/dashboard', getDashboardStats);
-router.get('/users', getUsers);
-router.get('/users/:id', getUserById);
-router.put('/users/:id', updateUser);
-router.delete('/users/:id', deleteUser);
-router.get('/products', getProducts);
-router.post('/products', uploadProduct.single('image'), createProduct);
-router.put('/products/:id', uploadProduct.single('image'), updateProduct);
-router.delete('/products/:id', deleteProduct);
-router.get('/orders', getOrders);
-router.put('/orders/:id/status', updateOrderStatus);
-router.get('/contacts', getContacts);
-router.put('/contacts/:id/read', markContactRead);
+// ========== CONFIGURE MULTER FOR FILE UPLOADS ==========
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage }).array('images', 10);
+
+// ========== TEST ROUTES ==========
+router.get('/test', (req, res) => {
+  res.json({ message: 'Admin route is working!' });
+});
+
+router.get('/test-controller', productController.test);
+
+// ========== PRODUCT ROUTES WITH UPLOAD MIDDLEWARE ==========
+router.get('/products', productController.getProducts);
+router.post('/products', upload, productController.createProduct);  // ← ADDED upload
+router.put('/products/:id', upload, productController.updateProduct); // ← ADDED upload
+router.delete('/products/:id', productController.deleteProduct);
 
 module.exports = router;

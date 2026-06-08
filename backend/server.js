@@ -31,6 +31,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/home', require('./routes/homeRoutes'));
 app.use('/api/team', require('./routes/teamRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/products', require('./routes/productRoutes'));  // ← ADD THIS LINE
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!' });

@@ -14,20 +14,19 @@ function Categories() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      // Fetch products
       const productsRes = await axios.get(`${API_URL}/api/admin/public-products`);
       const activeProducts = Array.isArray(productsRes.data)
         ? productsRes.data.filter((p) => p?.status === 'active')
         : [];
       setProducts(activeProducts);
       
-      // Extract unique categories from products
       const categoryMap = new Map();
       activeProducts.forEach((p) => {
         if (!p?.category) return;
@@ -46,7 +45,6 @@ function Categories() {
         }
       });
       const uniqueCategories = Array.from(categoryMap.values());
-      
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error:', error);
@@ -63,13 +61,26 @@ function Categories() {
     return `${API_URL}${imagePath}`;
   };
 
+  const getCategoryIcon = (categoryName) => {
+    const icons = {
+      'ELECTRONICS': 'ri-smartphone-line',
+      'FASHION': 'ri-shirt-line',
+      'HOME & KITCHEN': 'ri-home-smile-line',
+      'BOOKS': 'ri-book-open-line',
+      'GROCERIES': 'ri-shopping-basket-line',
+      'AGRICULTURAL': 'ri-seedling-line',
+      'BUSINESS': 'ri-briefcase-line',
+      'DELIVERY': 'ri-truck-line',
+    };
+    return icons[categoryName] || 'ri-folder-line';
+  };
+
   const getProductsByCategory = (categoryName) => {
     return products.filter(p => p.category === categoryName && p.status === 'active');
   };
 
   const handleAddToCart = (product) => {
     addToCart(product);
-    alert(`${product.name} added to cart!`);
   };
 
   const translations = {
@@ -81,7 +92,9 @@ function Categories() {
       price: 'ETB',
       addToCart: 'Add to Cart',
       inStock: 'In Stock',
-      outOfStock: 'Out of Stock'
+      outOfStock: 'Out of Stock',
+      explore: 'Explore',
+      items: 'items'
     },
     am: {
       title: 'በምድብ ይግዙ',
@@ -91,46 +104,63 @@ function Categories() {
       price: 'ብር',
       addToCart: 'ወደ ጋሪ ጨምር',
       inStock: 'ክምችት አለ',
-      outOfStock: 'ክምችት የለም'
+      outOfStock: 'ክምችት የለም',
+      explore: 'ያስሱ',
+      items: 'ዕቃዎች'
     }
   };
 
   const t = translations[language];
 
-  // If a category is selected, show products for that category
+  // Show products for selected category
   if (selectedCategory) {
     const categoryProducts = getProductsByCategory(selectedCategory.name);
     
     return (
-      <div className="categories-products-page">
-        <div className="categories-products-header">
-          <button className="back-btn" onClick={() => setSelectedCategory(null)}>
+      <div className="ae-category-products">
+        <div className="ae-category-products-header">
+          <button className="ae-back-btn" onClick={() => setSelectedCategory(null)}>
             <i className="ri-arrow-left-line"></i> {t.backToCategories}
           </button>
-          <h1>{selectedCategory.name}</h1>
-          <p>{categoryProducts.length} {t.products}</p>
+          <div className="ae-category-title-section">
+            <h1>{selectedCategory.name}</h1>
+            <p>{categoryProducts.length} {t.products}</p>
+          </div>
         </div>
 
-        <div className="products-grid-category">
+        <div className="ae-products-grid-category">
           {categoryProducts.map(product => {
             const imageUrl = getImageUrl(product.image || product.imageUrl);
+            const discount = Math.floor(Math.random() * 20) + 5;
+            const originalPrice = Math.floor(product.price * (1 + discount / 100));
+            
             return (
-              <div key={product._id} className="product-card-category">
-                <div className="product-image-category">
+              <div key={product._id} className="ae-product-card-category">
+                <div className="ae-product-img-category">
                   {imageUrl ? (
                     <img src={imageUrl} alt={product.name} />
                   ) : (
-                    <div className="no-image"><i className="ri-image-line"></i></div>
+                    <div className="ae-no-image"><i className="ri-image-line"></i></div>
+                  )}
+                  {discount > 10 && (
+                    <span className="ae-discount-tag">-{discount}%</span>
                   )}
                 </div>
-                <div className="product-info-category">
+                <div className="ae-product-info-category">
                   <h3>{language === 'en' ? product.name : (product.nameAm || product.name)}</h3>
-                  <div className="product-price-category">{t.price} {product.price}</div>
-                  <div className="product-stock-category">
-                    {product.stock > 0 ? t.inStock : t.outOfStock}
+                  <div className="ae-price-row">
+                    <span className="ae-current-price">{t.price} {product.price}</span>
+                    <span className="ae-old-price">{t.price} {originalPrice}</span>
+                  </div>
+                  <div className="ae-stock-status">
+                    {product.stock > 0 ? (
+                      <span className="ae-in-stock"><i className="ri-checkbox-circle-line"></i> {t.inStock}</span>
+                    ) : (
+                      <span className="ae-out-stock"><i className="ri-close-circle-line"></i> {t.outOfStock}</span>
+                    )}
                   </div>
                   <button 
-                    className="add-to-cart-btn-category" 
+                    className="ae-add-cart-btn" 
                     onClick={() => handleAddToCart(product)} 
                     disabled={product.stock === 0}
                   >
@@ -143,7 +173,7 @@ function Categories() {
         </div>
 
         {categoryProducts.length === 0 && (
-          <div className="no-products-category">
+          <div className="ae-no-products">
             <i className="ri-shopping-bag-line"></i>
             <p>No products found in this category</p>
           </div>
@@ -152,41 +182,62 @@ function Categories() {
     );
   }
 
-  // Show all categories (flip card view)
-  if (loading) return <div className="loading-spinner"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
-
-  return (
-    <div className="categories-container">
-      <div className="categories-header">
-        <h1>{t.title}</h1>
-        <p>{t.subtitle}</p>
+  // Loading state
+  if (loading) {
+    return (
+      <div className="ae-loading-categories">
+        <div className="ae-loading-spinner"></div>
+        <p>Loading categories...</p>
       </div>
+    );
+  }
 
-      <div className="categories-grid-main">
-        {categories.map((category) => (
-          <div className="category-card-main" key={category.name} onClick={() => setSelectedCategory(category)}>
-            <div className="card-front-main" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-              <span className="category-badge-main">{category.count} Products</span>
-              <div className="category-icon-main">
-                <i className="ri-apps-line"></i>
-              </div>
-              <button>{category.name}</button>
-            </div>
-            <div className="card-back-main">
-              <div className="price-main">{category.name}</div>
-              <div className="card-content-main">
-                <h3>{category.name}</h3>
-                <div className="category-stats-main">
-                  <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
+  // Show all categories (main view)
+  return (
+    <div className="ae-categories-page">
+      <div className="ae-categories-container">
+        <div className="ae-categories-header">
+          <h1>{t.title}</h1>
+          <p>{t.subtitle}</p>
+        </div>
+
+        <div className="ae-categories-grid">
+          {categories.map((category) => (
+            <div className="ae-category-flip-card" key={category.name} onClick={() => setSelectedCategory(category)}>
+              <div className="ae-flip-card-inner">
+                {/* Front Side */}
+                <div className="ae-flip-front" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
+                  <div className="ae-front-overlay"></div>
+                  <div className="ae-front-content">
+                    <div className="ae-category-icon-front">
+                      <i className={getCategoryIcon(category.name)}></i>
+                    </div>
+                    <div className="ae-category-name-front">{category.name}</div>
+                    <div className="ae-category-count-front">{category.count} {t.items}</div>
+                    <button className="ae-explore-front">{t.explore} →</button>
+                  </div>
                 </div>
-                <p>Click to view all {category.name} products</p>
-              </div>
-              <div className="explore-main">
-                <span>Explore <i className="ri-arrow-right-line"></i></span>
+                
+                {/* Back Side */}
+                <div className="ae-flip-back">
+                  <div className="ae-back-content">
+                    <div className="ae-back-icon">
+                      <i className={getCategoryIcon(category.name)}></i>
+                    </div>
+                    <h3>{category.name}</h3>
+                    <div className="ae-back-stats">
+                      <span><i className="ri-shopping-bag-line"></i> {category.count} {t.products}</span>
+                    </div>
+                    <p>Click to explore all {category.name.toLowerCase()} products</p>
+                    <div className="ae-back-explore">
+                      {t.explore} <i className="ri-arrow-right-line"></i>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { useLanguage } from '../../main';
+import axios from 'axios';
 import './Footer.css';
 
 const Footer = () => {
@@ -15,10 +15,10 @@ const Footer = () => {
 
   const fetchFooterData = async () => {
     try {
-      const response = await axios.get('import.meta.env.VITE_API_URL/api/home/public-data');
+      const response = await axios.get('https://enimegebi-backend.onrender.com/api/home/public-data');
       if (response.data.success) {
         setSettings(response.data.settings || {});
-        const categoryList = (response.data.categories || []).slice(0, 6).map(cat => cat._id);
+        const categoryList = (response.data.categories || []).slice(0, 6);
         setCategories(categoryList);
       }
     } catch (error) {
@@ -28,8 +28,8 @@ const Footer = () => {
 
   const translations = {
     en: {
-      aboutUs: 'About Us',
-      aboutText: 'Enimegebi is Ethiopia\'s premier online marketplace for fresh, organic, and locally sourced products. We connect farmers directly with consumers.',
+      aboutUs: 'About E-MARKATO',
+      aboutText: 'E-MARKATO is Ethiopia\'s premier online marketplace connecting buyers and sellers. Shop smart, shop local.',
       quickLinks: 'Quick Links',
       home: 'Home',
       products: 'Products',
@@ -40,26 +40,29 @@ const Footer = () => {
       profile: 'My Profile',
       orders: 'My Orders',
       wishlist: 'Wishlist',
-      login: 'Login',
+      login: 'Sign In',
       contactUs: 'Contact Us',
       phone: 'Phone',
       email: 'Email',
       address: 'Address',
-      workingHours: 'Working Hours',
-      monFri: 'Mon - Fri: 9:00 AM - 6:00 PM',
-      sat: 'Saturday: 10:00 AM - 4:00 PM',
-      sun: 'Sunday: Closed',
+      helpCenter: 'Help Center',
+      paymentMethods: 'Payment Methods',
+      shippingInfo: 'Shipping Info',
+      returns: 'Returns & Refunds',
+      faq: 'FAQ',
       followUs: 'Follow Us',
       newsletter: 'Newsletter',
       newsletterText: 'Subscribe to get special offers and updates',
       subscribe: 'Subscribe',
       yourEmail: 'Your Email',
       rights: 'All Rights Reserved',
-      developedBy: 'Developed by'
+      developedBy: 'Developed by',
+      downloadApp: 'Download App',
+      comingSoon: 'Coming Soon'
     },
     am: {
-      aboutUs: 'ስለእኛ',
-      aboutText: 'እንመገቢ የኢትዮጵያ ቀዳሚ የመስመር ላይ ገበያ ነው ለትኩስ፣ ኦርጋኒክ እና የአገር ውስጥ ምርቶች። አርሶ አደሮችን በቀጥታ ከደንበኞች ጋር እናገናኛለን።',
+      aboutUs: 'ስለ ኢ-ማርካቶ',
+      aboutText: 'ኢ-ማርካቶ የኢትዮጵያ ቀዳሚ የመስመር ላይ ገበያ ነው ገዢዎችን እና ሻጮችን የሚያገናኝ። ስማርት ይግዙ፣ አገር በቀል ይግዙ።',
       quickLinks: 'ፈጣን አገናኞች',
       home: 'መነሻ',
       products: 'ምርቶች',
@@ -75,17 +78,20 @@ const Footer = () => {
       phone: 'ስልክ',
       email: 'ኢሜይል',
       address: 'አድራሻ',
-      workingHours: 'የስራ ሰዓት',
-      monFri: 'ሰኞ - አርብ: 9:00 ጠዋት - 6:00 ማታ',
-      sat: 'ቅዳሜ: 10:00 ጠዋት - 4:00 ማታ',
-      sun: 'እሁድ: ዝግ ነው',
+      helpCenter: 'የእርዳታ ማዕከል',
+      paymentMethods: 'የክፍያ መንገዶች',
+      shippingInfo: 'የአቅርቦት መረጃ',
+      returns: 'መመለስ እና ተመላሽ',
+      faq: 'ተደጋጋሚ ጥያቄዎች',
       followUs: 'ተከተሉን',
       newsletter: 'ጋዜጣ',
       newsletterText: 'ልዩ ቅናሾችን እና ዝማኔዎችን ለማግኘት ይመዝገቡ',
       subscribe: 'ይመዝገቡ',
       yourEmail: 'ኢሜይልዎ',
       rights: 'መብቱ በህግ የተጠበቀ ነው',
-      developedBy: 'የተገነባው በ'
+      developedBy: 'የተገነባው በ',
+      downloadApp: 'አፕል ያውርዱ',
+      comingSoon: 'በቅርቡ'
     }
   };
 
@@ -93,22 +99,38 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="footer">
-      <div className="footer-container">
-        <div className="footer-section">
-          <h3>Enimegebi</h3>
-          <p>{t.aboutText}</p>
-          <div className="social-links">
-            <a href={settings.facebook || 'https://facebook.com'} target="_blank" rel="noopener noreferrer" className="social-icon"><i className="ri-facebook-line"></i></a>
-            <a href={settings.twitter || 'https://twitter.com'} target="_blank" rel="noopener noreferrer" className="social-icon"><i className="ri-twitter-line"></i></a>
-            <a href={settings.instagram || 'https://instagram.com'} target="_blank" rel="noopener noreferrer" className="social-icon"><i className="ri-instagram-line"></i></a>
-            <a href={settings.telegram || 'https://t.me'} target="_blank" rel="noopener noreferrer" className="social-icon"><i className="ri-telegram-line"></i></a>
+    <footer className="ae-footer">
+      <div className="ae-footer-container">
+        {/* About Section */}
+        <div className="ae-footer-col">
+          <div className="ae-footer-logo">
+            <span className="ae-footer-logo-e">E</span>
+            <span className="ae-footer-logo-text">MARKATO</span>
+          </div>
+          <p className="ae-footer-about">{t.aboutText}</p>
+          <div className="ae-social-links">
+            <a href={settings.facebook || 'https://facebook.com'} target="_blank" rel="noopener noreferrer" className="ae-social-icon">
+              <i className="ri-facebook-line"></i>
+            </a>
+            <a href={settings.twitter || 'https://twitter.com'} target="_blank" rel="noopener noreferrer" className="ae-social-icon">
+              <i className="ri-twitter-x-line"></i>
+            </a>
+            <a href={settings.instagram || 'https://instagram.com'} target="_blank" rel="noopener noreferrer" className="ae-social-icon">
+              <i className="ri-instagram-line"></i>
+            </a>
+            <a href={settings.telegram || 'https://t.me'} target="_blank" rel="noopener noreferrer" className="ae-social-icon">
+              <i className="ri-telegram-line"></i>
+            </a>
+            <a href={settings.youtube || 'https://youtube.com'} target="_blank" rel="noopener noreferrer" className="ae-social-icon">
+              <i className="ri-youtube-line"></i>
+            </a>
           </div>
         </div>
 
-        <div className="footer-section">
-          <h3>{t.quickLinks}</h3>
-          <ul>
+        {/* Quick Links */}
+        <div className="ae-footer-col">
+          <h3 className="ae-footer-title">{t.quickLinks}</h3>
+          <ul className="ae-footer-links">
             <li><Link to="/">{t.home}</Link></li>
             <li><Link to="/products">{t.products}</Link></li>
             <li><Link to="/categories">{t.categories}</Link></li>
@@ -117,43 +139,90 @@ const Footer = () => {
           </ul>
         </div>
 
-        <div className="footer-section">
-          <h3>{t.myAccount}</h3>
-          <ul>
+        {/* My Account */}
+        <div className="ae-footer-col">
+          <h3 className="ae-footer-title">{t.myAccount}</h3>
+          <ul className="ae-footer-links">
             <li><Link to="/profile">{t.profile}</Link></li>
             <li><Link to="/orders">{t.orders}</Link></li>
             <li><Link to="/auth">{t.login}</Link></li>
           </ul>
         </div>
 
-        <div className="footer-section">
-          <h3>{t.contactUs}</h3>
-          <div className="contact-info">
-            <p><i className="ri-phone-line"></i> {settings.phone || '+251 96 411 3416'}</p>
-            <p><i className="ri-mail-line"></i> {settings.email || 'info@enimegebi.com'}</p>
-            <p><i className="ri-map-pin-line"></i> {language === 'en' ? (settings.address || 'Addis Ababa, Ethiopia') : (settings.addressAm || 'አዲስ አበባ፣ ኢትዮጵያ')}</p>
-          </div>
-          <div className="working-hours">
-            <p><i className="ri-time-line"></i> {t.monFri}</p>
-            <p>{t.sat}</p>
-            <p>{t.sun}</p>
-          </div>
+        {/* Help Center */}
+        <div className="ae-footer-col">
+          <h3 className="ae-footer-title">{t.helpCenter}</h3>
+          <ul className="ae-footer-links">
+            <li><Link to="/faq">{t.faq}</Link></li>
+            <li><Link to="/shipping">{t.shippingInfo}</Link></li>
+            <li><Link to="/returns">{t.returns}</Link></li>
+            <li><Link to="/payment">{t.paymentMethods}</Link></li>
+          </ul>
         </div>
 
-        <div className="footer-section">
-          <h3>{t.newsletter}</h3>
-          <p>{t.newsletterText}</p>
-          <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
-            <input type="email" placeholder={t.yourEmail} />
-            <button type="submit">{t.subscribe} <i className="ri-arrow-right-line"></i></button>
-          </form>
+        {/* Contact Info */}
+        <div className="ae-footer-col">
+          <h3 className="ae-footer-title">{t.contactUs}</h3>
+          <ul className="ae-footer-contact">
+            <li>
+              <i className="ri-phone-line"></i>
+              <span>{settings.phone || '+251 972 383 620'}</span>
+            </li>
+            <li>
+              <i className="ri-mail-line"></i>
+              <span>{settings.email || 'info@emarkato.com'}</span>
+            </li>
+            <li>
+              <i className="ri-map-pin-line"></i>
+              <span>{language === 'en' ? (settings.address || 'Addis Ababa, Ethiopia') : (settings.addressAm || 'አዲስ አበባ፣ ኢትዮጵያ')}</span>
+            </li>
+          </ul>
         </div>
       </div>
 
-      <div className="footer-bottom">
-        <div className="footer-bottom-container">
-          <p>&copy; {currentYear} Enimegebi. {t.rights}.</p>
-          <p>{t.developedBy} <strong>Gediyon Eyasu</strong></p>
+      {/* Newsletter Section */}
+      <div className="ae-footer-newsletter">
+        <div className="ae-footer-container">
+          <div className="ae-newsletter-wrapper">
+            <div className="ae-newsletter-text">
+              <i className="ri-mail-send-line"></i>
+              <div>
+                <h4>{t.newsletter}</h4>
+                <p>{t.newsletterText}</p>
+              </div>
+            </div>
+            <form className="ae-newsletter-form" onSubmit={(e) => e.preventDefault()}>
+              <input type="email" placeholder={t.yourEmail} />
+              <button type="submit">{t.subscribe} <i className="ri-arrow-right-line"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Methods */}
+      <div className="ae-footer-payment">
+        <div className="ae-footer-container">
+          <div className="ae-payment-wrapper">
+            <span>{t.paymentMethods}:</span>
+            <div className="ae-payment-icons">
+              <i className="ri-bank-card-line"></i>
+              <i className="ri-smartphone-line"></i>
+              <i className="ri-wallet-line"></i>
+              <span className="ae-payment-text">Chapa</span>
+              <span className="ae-payment-text">CBE Birr</span>
+              <span className="ae-payment-text">TeleBirr</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="ae-footer-bottom">
+        <div className="ae-footer-container">
+          <div className="ae-bottom-wrapper">
+            <p>&copy; {currentYear} E-MARKATO. {t.rights}.</p>
+            <p>{t.developedBy} <strong>Gediyon Eyasu & Bereket Gelane</strong></p>
+          </div>
         </div>
       </div>
     </footer>

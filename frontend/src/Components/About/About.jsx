@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useLanguage } from '../../main'
+import { useLanguage } from '../../main';
 import axios from 'axios';
 import './About.css';
+
+const API_URL = 'https://enimegebi-backend.onrender.com';
 
 function About() {
   const { language } = useLanguage();
   const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_URL = 'import.meta.env.VITE_API_URL';
 
   useEffect(() => {
     fetchTeamMembers();
@@ -20,50 +20,74 @@ function About() {
       const response = await axios.get(`${API_URL}/api/team/public`);
       if (response.data.success) {
         setTeamMembers(response.data.team);
+      } else {
+        setFallbackTeam();
       }
     } catch (error) {
       console.error('Error fetching team members:', error);
-      // Fallback team data
-      setTeamMembers([
-        { id: 1, name: 'Gedu', nameAm: 'ገዱ', role: 'Founder & CEO', roleAm: 'መስራች እና ዋና ስራ አስፈፃሚ', image: 'https://randomuser.me/api/portraits/men/1.jpg', bio: 'Passionate about connecting farmers to markets' },
-        { id: 2, name: 'Sarah Johnson', nameAm: 'ሳራ ጆንሰን', role: 'Operations Director', roleAm: 'የክዋኔ ዳይሬክተር', image: 'https://randomuser.me/api/portraits/women/2.jpg', bio: 'Supply chain expert with 10+ years experience' }
-      ]);
+      setFallbackTeam();
     } finally {
       setLoading(false);
     }
   };
 
+  const setFallbackTeam = () => {
+    setTeamMembers([
+      { 
+        id: 1, 
+        name: 'Gediyon Eyasu', 
+        nameAm: 'ጌዲዮን ኢያሱ', 
+        role: 'Co-Founder & CEO', 
+        roleAm: 'ተባባሪ መሥራች እና ዋና ሥራ አስፈጻሚ', 
+        image: 'https://randomuser.me/api/portraits/men/1.jpg',
+        bio: 'Passionate about connecting Ethiopian businesses to the digital marketplace',
+        bioAm: 'የኢትዮጵያ ንግዶችን ከዲጂታል ገበያ ጋር በማገናኘት ላይ ያለ ቁርጠኝነት'
+      },
+      { 
+        id: 2, 
+        name: 'Bereket Gelane', 
+        nameAm: 'በረከት ገላኔ', 
+        role: 'Co-Founder & CTO', 
+        roleAm: 'ተባባሪ መሥራች እና ዋና ቴክኖሎጂ ኃላፊ', 
+        image: 'https://randomuser.me/api/portraits/men/2.jpg',
+        bio: 'Building innovative tech solutions for Ethiopian e-commerce',
+        bioAm: 'ለኢትዮጵያ ኢ-ኮሜርስ አዳዲስ የቴክኖሎጂ መፍትሄዎችን መገንባት'
+      }
+    ]);
+  };
+
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://randomuser.me/api/portraits/men/1.jpg';
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `${API_URL}${imagePath}`;
+    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
+    return `${API_URL}/uploads/${imagePath}`;
   };
 
   const translations = {
     en: {
-      title: 'About Enimegebi',
-      subtitle: 'Connecting Farmers to Your Table',
+      title: 'About E-MARKATO',
+      subtitle: 'Your Trusted Ethiopian Online Marketplace',
       ourStory: 'Our Story',
-      storyTitle: 'Fresh from Farm to Your Doorstep',
-      storyText1: 'Enimegebi (Let\'s Eat It) was founded with a simple mission: to connect local farmers directly with consumers, eliminating middlemen and ensuring fair prices for everyone.',
-      storyText2: 'What started as a small initiative in Hawassa has grown into a vibrant marketplace serving thousands of customers across Ethiopia. We believe in supporting local agriculture and promoting healthy, organic food choices.',
-      storyText3: 'Our platform empowers farmers to reach wider markets while giving consumers access to fresh, affordable, and authentic Ethiopian products.',
+      storyTitle: 'SHOP SMART • SHOP LOCAL',
+      storyText1: 'E-MARKATO was born from a simple idea: create a trusted marketplace where Ethiopians can buy and sell products easily and securely.',
+      storyText2: 'What started as a vision to support local businesses has grown into a comprehensive marketplace offering everything from electronics to agricultural products.',
+      storyText3: 'Our platform bridges the gap between traditional commerce and modern e-commerce, empowering local entrepreneurs and making online shopping accessible to every Ethiopian.',
       mission: 'Our Mission',
-      missionText: 'To create a sustainable food ecosystem that benefits farmers, consumers, and the environment by making fresh, local produce accessible to everyone.',
+      missionText: 'To connect Ethiopian buyers and sellers through a reliable, easy-to-use online marketplace that promotes local businesses and provides quality products at competitive prices.',
       vision: 'Our Vision',
-      visionText: 'A Ethiopia where every household has access to fresh, affordable, and nutritious local food while supporting sustainable agriculture.',
+      visionText: 'To become Ethiopia\'s leading e-commerce platform, empowering local entrepreneurs and making online shopping accessible to every Ethiopian.',
       values: 'Our Values',
-      value1: 'Quality First',
-      value1Desc: 'We ensure only the freshest, highest quality products reach our customers.',
-      value2: 'Fair Trade',
-      value2Desc: 'Farmers receive fair prices for their hard work and dedication.',
-      value3: 'Sustainability',
-      value3Desc: 'We promote eco-friendly farming practices and reduce food waste.',
-      value4: 'Community',
-      value4Desc: 'Building strong connections between farmers and local communities.',
+      value1: 'Trust & Security',
+      value1Desc: 'Safe and secure transactions for all users',
+      value2: 'Support Local',
+      value2Desc: 'Empowering Ethiopian businesses directly',
+      value3: 'Fast Delivery',
+      value3Desc: 'Quick and reliable delivery across Ethiopia',
+      value4: '24/7 Support',
+      value4Desc: 'We are here to help you anytime',
       stats: 'Our Impact',
-      farmers: 'Farmers',
-      farmersCount: '500+',
+      sellers: 'Active Sellers',
+      sellersCount: '500+',
       customers: 'Happy Customers',
       customersCount: '10,000+',
       products: 'Products Sold',
@@ -71,58 +95,64 @@ function About() {
       cities: 'Cities Served',
       citiesCount: '15+',
       team: 'Meet Our Team',
-      teamTitle: 'The People Behind Enimegebi',
-      teamDesc: 'Passionate individuals working to revolutionize Ethiopia\'s food supply chain.',
+      teamTitle: 'The People Behind E-MARKATO',
+      teamDesc: 'Passionate individuals working to revolutionize Ethiopia\'s e-commerce landscape.',
       joinUs: 'Join Our Mission',
-      joinTitle: 'Become Part of the Enimegebi Family',
-      joinText: 'Whether you\'re a farmer, supplier, or food lover, there\'s a place for you in our community.',
-      partnerBtn: 'Become a Partner',
+      joinTitle: 'Become Part of the E-MARKATO Family',
+      joinText: 'Whether you\'re a seller, buyer, or partner, there\'s a place for you in our growing community.',
+      partnerBtn: 'Become a Seller',
       contactBtn: 'Contact Us',
-      ctaTitle: 'Ready to Experience Fresh Local Food?',
-      ctaSubtitle: 'Join thousands of satisfied customers who trust Enimegebi for their daily food needs.',
-      shopNow: 'Shop Now'
+      ctaTitle: 'Ready to Start Shopping?',
+      ctaSubtitle: 'Join thousands of satisfied customers who trust E-MARKATO for their shopping needs.',
+      shopNow: 'Shop Now',
+      freeShipping: 'Free Shipping',
+      bestPrices: 'Best Prices',
+      securePayment: 'Secure Payment'
     },
     am: {
-      title: 'ስለ እንመገቢ',
-      subtitle: 'አርሶ አደሮችን ወደ ጠረጴዛዎ በማገናኘት ላይ',
+      title: 'ስለ ኢ-ማርካቶ',
+      subtitle: 'የእርስዎ ታማኝ የኢትዮጵያ የመስመር ላይ ገበያ',
       ourStory: 'ታሪካችን',
-      storyTitle: 'ትኩስ ከእርሻ ወደ በርዎ',
-      storyText1: 'እንመገቢ የተመሰረተው የአገር ውስጥ አርሶ አደሮችን በቀጥታ ከሸማቾች ጋር በማገናኘት ደላላዎችን በማስወገድ ለሁሉም ፍትሃዊ ዋጋ ለማረጋገጥ ነው።',
-      storyText2: 'በሀዋሳ እንደ ትንሽ ተነሳሽነት የጀመረው በመላው ኢትዮጵያ በሺዎች ለሚቆጠሩ ደንበኞች እያገለገለ ወደሚገኝ ገበያ አድጓል።',
-      storyText3: 'የእኛ መድረክ አርሶ አደሮችን ሰፊ ገበያ እንዲደርሱ እያገዘ ሸማቾች ትኩስ፣ ተመጣጣኝ እና ትክክለኛ የኢትዮጵያ ምርቶች እንዲያገኙ ያስችላል።',
+      storyTitle: 'ስማርት ይግዙ • አገር በቀል ይግዙ',
+      storyText1: 'ኢ-ማርካቶ የተወለደው ኢትዮጵያውያን በቀላሉ እና በደህና ምርቶችን መግዛት እና መሸጥ የሚችሉበት አስተማማኝ ገበያ ከሚል ቀላል ሀሳብ ነው።',
+      storyText2: 'የአካባቢ ንግዶችን ለመደገፍ ባለው ራዕይ በመነሳት፣ ከኤሌክትሮኒክስ እስከ ግብርና ምርቶች ድረስ ሁሉን አቀፍ የገበያ ቦታ ሆነን አድገናል።',
+      storyText3: 'የእኛ መድረክ በባህላዊ ንግድ እና በዘመናዊ ኢ-ኮሜርስ መካከል ያለውን ልዩነት ያስተካክላል፣ የአካባቢ ሥራ ፈጣሪዎችን በማብቃት እና የመስመር ላይ ግብይት ለኢትዮጵያውያን ሁሉ ተደራሽ ያደርጋል።',
       mission: 'ተልዕኮአችን',
-      missionText: 'አርሶ አደሮችን፣ ሸማቾችን እና አካባቢን ተጠቃሚ የሚያደርግ ዘላቂ የምግብ ሥርዓት ለመፍጠር ትኩስ፣ የአገር ውስጥ ምርቶችን ለሁሉም ተደራሽ ለማድረግ።',
+      missionText: 'ኢትዮጵያውያን ገዢዎችን እና ሻጮችን አስተማማኝ፣ ለአጠቃቀም ቀላል በሆነ የመስመር ላይ ገበያ ለማገናኘት፣ የአካባቢ ንግዶችን ለማስተዋወቅ እና ጥራት ያላቸውን ምርቶች በተመጣጣኝ ዋጋ ለማቅረብ።',
       vision: 'ራዕያችን',
-      visionText: 'እያንዳንዱ ቤተሰብ ትኩስ፣ ተመጣጣኝ እና ገንቢ የሆነ የአገር ውስጥ ምግብ የሚያገኝበት ኢትዮጵያ ማየት።',
+      visionText: 'የኢትዮጵያ መሪ የኢ-ኮሜርስ መድረክ ለመሆን፣ የአካባቢ ሥራ ፈጣሪዎችን ማብቃት እና የመስመር ላይ ግብይት ለኢትዮጵያውያን ሁሉ ተደራሽ ማድረግ።',
       values: 'እሴቶቻችን',
-      value1: 'ጥራት ቀዳሚ',
-      value1Desc: 'ከፍተኛ ጥራት ያላቸው ምርቶች ብቻ ደንበኞቻችን እንዲደርሱ እናረጋግጣለን።',
-      value2: 'ፍትሃዊ ንግድ',
-      value2Desc: 'አርሶ አደሮች ለትጋታቸው ፍትሃዊ ዋጋ ያገኛሉ።',
-      value3: 'ዘላቂነት',
-      value3Desc: 'ለአካባቢ ተስማሚ የሆኑ የእርሻ ልምዶችን እናዳብራለን እንዲሁም የምግብ ብክነትን እንቀንሳለን።',
-      value4: 'ማህበረሰብ',
-      value4Desc: 'በአርሶ አደሮች እና በአካባቢ ማህበረሰቦች መካከል ጠንካራ ትስስር መፍጠር።',
+      value1: 'መተማመን እና ደህንነት',
+      value1Desc: 'ደህንነቱ የተጠበቀ እና አስተማማኝ ግብይቶች',
+      value2: 'የአካባቢ ድጋፍ',
+      value2Desc: 'የኢትዮጵያ ንግዶችን በቀጥታ ማብቃት',
+      value3: 'ፈጣን አቅርቦት',
+      value3Desc: 'ፈጣን እና አስተማማኝ አቅርቦት በመላ ኢትዮጵያ',
+      value4: '24/7 ድጋፍ',
+      value4Desc: 'በማንኛውም ሰዓት እርዳታ ለማግኘት',
       stats: 'ተጽኖአችን',
-      farmers: 'አርሶ አደሮች',
-      farmersCount: '500+',
+      sellers: 'ንቁ ሻጮች',
+      sellersCount: '500+',
       customers: 'ደስተኛ ደንበኞች',
       customersCount: '10,000+',
       products: 'የተሸጡ ምርቶች',
       productsCount: '50,000+',
-      cities: 'ከተሞች',
+      cities: 'የምናገለግላቸው ከተሞች',
       citiesCount: '15+',
-      team: 'ቡድናችን',
-      teamTitle: 'ከእንመገቢ በስተጀርባ ያሉ ሰዎች',
-      teamDesc: 'የኢትዮጵያን የምግብ አቅርቦት ሰንሰለት ለማሻሻል የሚሰሩ ተመራማሪ ግለሰቦች።',
+      team: 'ቡድናችንን ይገናኙ',
+      teamTitle: 'ከኢ-ማርካቶ በስተጀርባ ያሉ ሰዎች',
+      teamDesc: 'የኢትዮጵያን የኢ-ኮሜርስ መልክዓ ምድር ለማሻሻል የሚሰሩ ተመራማሪ ግለሰቦች።',
       joinUs: 'ተልዕኮአችን ይቀላቀሉ',
-      joinTitle: 'የእንመገቢ ቤተሰብ አካል ይሁኑ',
-      joinText: 'አርሶ አደር፣ አቅራቢ ወይም ምግብ ወዳድ ቢሆኑ፣ በማህበረሰባችን ውስጥ ቦታ አለዎት።',
-      partnerBtn: 'አጋር ይሁኑ',
+      joinTitle: 'የኢ-ማርካቶ ቤተሰብ አካል ይሁኑ',
+      joinText: 'ሻጭ፣ ገዢ ወይም አጋር ቢሆኑ፣ በማደግ ላይ ባለው ማህበረሰባችን ውስጥ ቦታ አለዎት።',
+      partnerBtn: 'ሻጭ ይሁኑ',
       contactBtn: 'ያግኙን',
-      ctaTitle: 'ትኩስ የአገር ውስጥ ምግብ ለመቅመስ ዝግጁ ነዎት?',
-      ctaSubtitle: 'በየቀኑ የምግብ ፍላጎታቸው እንመገቢን ከሚተማመኑ በሺዎች ከሚቆጠሩ ደስተኛ ደንበኞች ጋር ይቀላቀሉ።',
-      shopNow: 'አሁን ይግዙ'
+      ctaTitle: 'ለመግዛት ዝግጁ ነዎት?',
+      ctaSubtitle: 'ለግዢ ፍላጎቶቻቸው ኢ-ማርካቶን ከሚተማመኑ በሺዎች ከሚቆጠሩ ደስተኛ ደንበኞች ጋር ይቀላቀሉ።',
+      shopNow: 'አሁን ይግዙ',
+      freeShipping: 'ነጻ አቅርቦት',
+      bestPrices: 'ምርጥ ዋጋዎች',
+      securePayment: 'ደህንነቱ የተጠበቀ ክፍያ'
     }
   };
 
@@ -130,131 +160,148 @@ function About() {
 
   if (loading) {
     return (
-      <div className="loading-spinner">
-        <i className="ri-loader-4-line ri-spin"></i>
-        <p>Loading...</p>
+      <div className="ae-loading-about">
+        <div className="ae-loading-spinner"></div>
+        <p>Loading amazing content...</p>
       </div>
     );
   }
 
   return (
-    <div className="about-page">
+    <div className="ae-about-page">
       {/* Hero Section */}
-      <div className="about-hero">
-        <div className="about-hero-content">
+      <div className="ae-about-hero">
+        <div className="ae-about-hero-content">
+          <div className="ae-hero-badge">SHOP SMART • SHOP LOCAL</div>
           <h1>{t.title}</h1>
           <p>{t.subtitle}</p>
         </div>
       </div>
 
-      {/* Our Story Section */}
-      <section className="story-section">
-        <div className="container">
-          <div className="story-grid">
-            <div className="story-image">
-              <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=500" alt="Farmers" />
+      <div className="ae-about-container">
+        {/* Our Story Section */}
+        <div className="ae-story-section">
+          <div className="ae-story-content">
+            <div className="ae-story-icon">
+              <i className="ri-history-line"></i>
             </div>
-            <div className="story-text">
-              <small>{t.ourStory}</small>
-              <h2>{t.storyTitle}</h2>
-              <p>{t.storyText1}</p>
-              <p>{t.storyText2}</p>
-              <p>{t.storyText3}</p>
+            <h2>{t.storyTitle}</h2>
+            <p>{t.storyText1}</p>
+            <p>{t.storyText2}</p>
+            <p>{t.storyText3}</p>
+          </div>
+          <div className="ae-story-image">
+            <div className="ae-story-placeholder">
+              <i className="ri-store-3-line"></i>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Mission & Vision */}
-      <section className="mission-vision">
-        <div className="container">
-          <div className="mission-vision-grid">
-            <div className="mission-card">
-              <i className="ri-flag-line"></i>
-              <h3>{t.mission}</h3>
-              <p>{t.missionText}</p>
+        {/* Mission & Vision */}
+        <div className="ae-mission-vision">
+          <div className="ae-mission-card">
+            <div className="ae-mission-icon">
+              <i className="ri-rocket-line"></i>
             </div>
-            <div className="vision-card">
+            <h3>{t.mission}</h3>
+            <p>{t.missionText}</p>
+          </div>
+          <div className="ae-vision-card">
+            <div className="ae-vision-icon">
               <i className="ri-eye-line"></i>
-              <h3>{t.vision}</h3>
-              <p>{t.visionText}</p>
             </div>
+            <h3>{t.vision}</h3>
+            <p>{t.visionText}</p>
           </div>
         </div>
-      </section>
 
-      {/* Values Section */}
-      <section className="values-section">
-        <div className="container">
-          <h2 className="section-title">{t.values}</h2>
-          <div className="values-grid">
-            <div className="value-card">
-              <i className="ri-star-line"></i>
+        {/* Values Section */}
+        <div className="ae-values-section">
+          <h2 className="ae-values-title">{t.values}</h2>
+          <div className="ae-values-grid">
+            <div className="ae-value-card">
+              <div className="ae-value-icon">
+                <i className="ri-shield-check-line"></i>
+              </div>
               <h3>{t.value1}</h3>
               <p>{t.value1Desc}</p>
             </div>
-            <div className="value-card">
-              <i className="ri-hand-heart-line"></i>
+            <div className="ae-value-card">
+              <div className="ae-value-icon">
+                <i className="ri-store-line"></i>
+              </div>
               <h3>{t.value2}</h3>
               <p>{t.value2Desc}</p>
             </div>
-            <div className="value-card">
-              <i className="ri-leaf-line"></i>
+            <div className="ae-value-card">
+              <div className="ae-value-icon">
+                <i className="ri-truck-line"></i>
+              </div>
               <h3>{t.value3}</h3>
               <p>{t.value3Desc}</p>
             </div>
-            <div className="value-card">
-              <i className="ri-group-line"></i>
+            <div className="ae-value-card">
+              <div className="ae-value-icon">
+                <i className="ri-customer-service-line"></i>
+              </div>
               <h3>{t.value4}</h3>
               <p>{t.value4Desc}</p>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="stats-section">
-        <div className="container">
-          <h2 className="section-title">{t.stats}</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-number">{t.farmersCount}</div>
-              <div className="stat-label">{t.farmers}</div>
+        {/* Statistics Section */}
+        <div className="ae-stats-section">
+          <h2 className="ae-stats-title">{t.stats}</h2>
+          <div className="ae-stats-grid">
+            <div className="ae-stat-card">
+              <div className="ae-stat-icon">
+                <i className="ri-store-2-line"></i>
+              </div>
+              <div className="ae-stat-number">{t.sellersCount}</div>
+              <div className="ae-stat-label">{t.sellers}</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{t.customersCount}</div>
-              <div className="stat-label">{t.customers}</div>
+            <div className="ae-stat-card">
+              <div className="ae-stat-icon">
+                <i className="ri-user-heart-line"></i>
+              </div>
+              <div className="ae-stat-number">{t.customersCount}</div>
+              <div className="ae-stat-label">{t.customers}</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{t.productsCount}</div>
-              <div className="stat-label">{t.products}</div>
+            <div className="ae-stat-card">
+              <div className="ae-stat-icon">
+                <i className="ri-shopping-bag-line"></i>
+              </div>
+              <div className="ae-stat-number">{t.productsCount}</div>
+              <div className="ae-stat-label">{t.products}</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{t.citiesCount}</div>
-              <div className="stat-label">{t.cities}</div>
+            <div className="ae-stat-card">
+              <div className="ae-stat-icon">
+                <i className="ri-map-pin-line"></i>
+              </div>
+              <div className="ae-stat-number">{t.citiesCount}</div>
+              <div className="ae-stat-label">{t.cities}</div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Team Section - Styled like Testimonials */}
-      <section className="team-section-about">
-        <div className="container">
-          <small className="team-subtitle-about">{t.team}</small>
-          <h2 className="team-title-about">{t.teamTitle}</h2>
-          <p className="team-desc-about">{t.teamDesc}</p>
+        {/* Team Section */}
+        <div className="ae-team-section">
+          <small className="ae-team-subtitle">{t.team}</small>
+          <h2 className="ae-team-title">{t.teamTitle}</h2>
+          <p className="ae-team-desc">{t.teamDesc}</p>
           
-          <div className="team-grid-about">
+          <div className="ae-team-grid">
             {teamMembers.map((member) => (
-              <div key={member._id || member.id} className="team-card-about">
-                <div className="team-image-about">
+              <div key={member._id || member.id} className="ae-team-card">
+                <div className="ae-team-avatar">
                   <img src={getImageUrl(member.image)} alt={member.name} />
                 </div>
-                <div className="team-content-about">
+                <div className="ae-team-info">
                   <h3>{language === 'en' ? member.name : (member.nameAm || member.name)}</h3>
-                  <p className="team-role-about">{language === 'en' ? member.role : (member.roleAm || member.role)}</p>
-                  <div className="team-bio-about">
-                    <i className="ri-double-quotes-L"></i>
+                  <p className="ae-team-role">{language === 'en' ? member.role : (member.roleAm || member.role)}</p>
+                  <div className="ae-team-bio">
+                    <i className="ri-double-quotes-l"></i>
                     <p>{language === 'en' ? member.bio : (member.bioAm || member.bio)}</p>
                   </div>
                 </div>
@@ -262,32 +309,39 @@ function About() {
             ))}
           </div>
         </div>
-      </section>
 
-      {/* Join Us Section */}
-      <section className="join-section">
-        <div className="container">
-          <div className="join-content">
+        {/* Join Section */}
+        <div className="ae-join-section">
+          <div className="ae-join-content">
             <h2>{t.joinTitle}</h2>
             <p>{t.joinText}</p>
-            <div className="join-buttons">
-              <Link to="/contact" className="join-btn">{t.partnerBtn}</Link>
-              <Link to="/contact" className="contact-btn">{t.contactBtn}</Link>
+            <div className="ae-join-buttons">
+              <Link to="/auth" className="ae-join-btn">{t.partnerBtn}</Link>
+              <Link to="/contact" className="ae-contact-btn">{t.contactBtn}</Link>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="cta-section-about">
-        <div className="container">
-          <div className="cta-content-about">
+        {/* CTA Section */}
+        <div className="ae-cta-section">
+          <div className="ae-cta-content">
             <h2>{t.ctaTitle}</h2>
             <p>{t.ctaSubtitle}</p>
-            <Link to="/products" className="cta-btn-about">{t.shopNow} <i className="ri-arrow-right-line"></i></Link>
+            <div className="ae-cta-features">
+              <span><i className="ri-truck-line"></i> {t.freeShipping}</span>
+              <span><i className="ri-price-tag-line"></i> {t.bestPrices}</span>
+              <span><i className="ri-shield-check-line"></i> {t.securePayment}</span>
+            </div>
+            <Link to="/products" className="ae-cta-btn">{t.shopNow} <i className="ri-arrow-right-line"></i></Link>
           </div>
         </div>
-      </section>
+
+        {/* Trust Badge */}
+        <div className="ae-trust-badge">
+          <i className="ri-shield-check-line"></i>
+          YOUR TRUSTED MARKETPLACE IN ETHIOPIA
+        </div>
+      </div>
     </div>
   );
 }

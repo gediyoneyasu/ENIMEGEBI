@@ -3,9 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../main';
 import './Cart.css';
 
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
   const navigate = useNavigate();
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
+    return `${API_URL}/uploads/${imagePath}`;
+  };
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity < 1) {
@@ -58,27 +67,49 @@ const Cart = () => {
           {cart.map((item) => (
             <div key={item.id || item._id} className="cart-item">
               <div className="cart-item-info">
+                <div className="cart-item-image">
+                  {item.imageUrl || item.image ? (
+                    <img 
+                      src={getImageUrl(item.imageUrl || item.image)} 
+                      alt={item.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="no-image" style={{ display: (item.imageUrl || item.image) ? 'none' : 'flex' }}>
+                    <i className="ri-image-line"></i>
+                  </div>
+                </div>
                 <div className="cart-item-details">
                   <h3>{item.name}</h3>
+                  {item.category && <p className="item-category">{item.category}</p>}
                 </div>
               </div>
               
               <div className="cart-item-price">
-                ${(item.price || 0).toFixed(2)}
+                ETB {(item.price || 0).toLocaleString()}
               </div>
               
               <div className="cart-item-quantity">
-                <button onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) - 1)} className="qty-btn">
+                <button 
+                  onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) - 1)} 
+                  className="qty-btn"
+                >
                   <i className="ri-subtract-line"></i>
                 </button>
                 <span className="qty-value">{item.quantity || 1}</span>
-                <button onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) + 1)} className="qty-btn">
+                <button 
+                  onClick={() => handleQuantityChange(item.id || item._id, (item.quantity || 1) + 1)} 
+                  className="qty-btn"
+                >
                   <i className="ri-add-line"></i>
                 </button>
               </div>
               
               <div className="cart-item-total">
-                ${calculateItemTotal(item).toFixed(2)}
+                ETB {calculateItemTotal(item).toLocaleString()}
               </div>
               
               <div className="cart-item-remove">
@@ -105,12 +136,16 @@ const Cart = () => {
           <h2>Order Summary</h2>
           <div className="summary-row">
             <span>Subtotal:</span>
-            <span>${cartTotal.toFixed(2)}</span>
+            <span>ETB {cartTotal.toLocaleString()}</span>
+          </div>
+          <div className="summary-row">
+            <span>Shipping:</span>
+            <span>Free</span>
           </div>
           <div className="summary-divider"></div>
           <div className="summary-row total">
             <span>Total:</span>
-            <span>${cartTotal.toFixed(2)}</span>
+            <span>ETB {cartTotal.toLocaleString()}</span>
           </div>
           <button onClick={handleCheckout} className="checkout-btn">
             Proceed to Checkout

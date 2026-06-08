@@ -1,7 +1,37 @@
+/* ============================================
+   ALIEXPRESS STYLE PROFILE PAGE - E-MARKATO
+   Colors: Navy #032B67 | Orange #FF7A00
+   Modern, Clean, Professional E-commerce Design
+   ============================================ */
+
+/* CSS Variables */
+:root {
+  --primary-navy: #032B67;
+  --primary-orange: #FF7A00;
+  --primary-orange-dark: #E06E00;
+  --primary-orange-light: #FFF4E6;
+  --gold: #FFC107;
+  --text-dark: #1A1A1A;
+  --text-gray: #666666;
+  --text-light: #999999;
+  --border-light: #E8E8E8;
+  --bg-white: #FFFFFF;
+  --bg-gray: #F5F5F5;
+  --success: #28A745;
+  --error: #DC3545;
+  --warning: #FFC107;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-hover: 0 12px 32px rgba(255,122,0,0.15);
+  --transition: all 0.3s ease;
+}
+
+/* Base Page Styles */
 .profile-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
-  padding: 80px 20px;
+  background: var(--bg-gray);
+  padding: 80px 20px 60px;
 }
 
 .profile-container {
@@ -9,40 +39,63 @@
   margin: 0 auto;
 }
 
+/* Header Section */
 .profile-header {
   text-align: center;
   margin-bottom: 40px;
+  animation: fadeInDown 0.5s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .profile-header h1 {
-  font-size: 42px;
-  color: #2c3e50;
-  margin-bottom: 10px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-navy);
+  margin-bottom: 8px;
 }
 
 .profile-header p {
-  color: #666;
-  font-size: 16px;
+  font-size: 14px;
+  color: var(--text-gray);
 }
 
+/* Tab Navigation - AliExpress Style */
 .profile-tabs {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin-bottom: 40px;
+  gap: 12px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
+  background: var(--bg-white);
+  padding: 8px;
+  border-radius: 60px;
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  width: auto;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .tab-btn {
   padding: 12px 28px;
-  background: white;
+  background: transparent;
   border: none;
-  border-radius: 50px;
+  border-radius: 40px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: #666;
-  transition: all 0.3s ease;
+  color: var(--text-gray);
+  transition: var(--transition);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -50,37 +103,77 @@
 
 .tab-btn i {
   font-size: 18px;
+  transition: var(--transition);
 }
 
 .tab-btn:hover {
-  background: #f0f0f0;
+  color: var(--primary-orange);
+  background: var(--primary-orange-light);
   transform: translateY(-2px);
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #c9a66b, #e8c88a);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-dark));
+  color: white;
+  box-shadow: var(--shadow-md);
 }
 
-/* Profile Card */
+/* Profile Card - AliExpress Style */
 .profile-card {
-  background: white;
+  background: var(--bg-white);
   border-radius: 20px;
-  padding: 40px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.profile-content {
   display: grid;
   grid-template-columns: 300px 1fr;
-  gap: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  gap: 0;
 }
 
+@media (max-width: 768px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Avatar Section - Enhanced */
 .profile-avatar-section {
+  background: linear-gradient(135deg, var(--primary-orange-light) 0%, #fff 100%);
+  padding: 40px 20px;
   text-align: center;
+  border-right: 1px solid var(--border-light);
+}
+
+@media (max-width: 768px) {
+  .profile-avatar-section {
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+  }
 }
 
 .profile-avatar {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
   margin: 0 auto;
 }
 
@@ -89,14 +182,21 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #c9a66b;
+  border: 4px solid var(--primary-orange);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+}
+
+.profile-avatar:hover img {
+  transform: scale(1.02);
+  border-color: var(--primary-orange-dark);
 }
 
 .avatar-upload {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  background: #c9a66b;
+  background: var(--primary-orange);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -104,11 +204,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
 .avatar-upload:hover {
   transform: scale(1.1);
+  background: var(--primary-orange-dark);
 }
 
 .avatar-upload input {
@@ -121,101 +223,142 @@
 }
 
 .uploading-text {
-  margin-top: 10px;
-  color: #c9a66b;
+  margin-top: 12px;
+  color: var(--primary-orange);
   font-size: 12px;
+  font-weight: 500;
+}
+
+/* Profile Info */
+.profile-info {
+  padding: 40px;
 }
 
 .profile-info h2 {
-  font-size: 28px;
-  color: #2c3e50;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary-navy);
   margin-bottom: 20px;
 }
 
 .profile-info p {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 12px 0;
-  color: #666;
+  gap: 12px;
+  margin: 14px 0;
+  color: var(--text-gray);
+  font-size: 14px;
 }
 
 .profile-info p i {
   width: 24px;
-  color: #c9a66b;
+  color: var(--primary-orange);
+  font-size: 18px;
 }
 
 .member-since {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+  font-size: 13px;
+  color: var(--text-light);
 }
 
+/* Edit Button */
 .edit-btn {
-  margin-top: 20px;
-  padding: 10px 24px;
-  background: linear-gradient(135deg, #c9a66b, #e8c88a);
-  color: #1a1a1a;
+  margin-top: 24px;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--primary-navy), #044a9e);
+  color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 40px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.3s ease;
+  transition: var(--transition);
 }
 
 .edit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(201, 166, 107, 0.3);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-dark));
 }
 
+/* Edit Form */
 .edit-form .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .edit-form label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   font-weight: 600;
-  color: #555;
+  font-size: 13px;
+  color: var(--text-dark);
 }
 
 .edit-form input,
 .edit-form textarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
   font-size: 14px;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.edit-form input:focus,
+.edit-form textarea:focus {
+  outline: none;
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 3px rgba(255,122,0,0.1);
 }
 
 .edit-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .save-btn, .cancel-btn {
-  padding: 10px 20px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: 40px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 14px;
+  transition: var(--transition);
 }
 
 .save-btn {
-  background: #4caf50;
+  background: var(--success);
   color: white;
+}
+
+.save-btn:hover {
+  background: #1e7e34;
+  transform: translateY(-2px);
 }
 
 .cancel-btn {
-  background: #f44336;
+  background: var(--text-gray);
   color: white;
 }
 
-/* Orders List */
+.cancel-btn:hover {
+  background: var(--error);
+  transform: translateY(-2px);
+}
+
+/* Orders List - AliExpress Style */
+.orders-content {
+  animation: fadeInUp 0.5s ease;
+}
+
 .orders-list {
   display: flex;
   flex-direction: column;
@@ -223,10 +366,18 @@
 }
 
 .order-item-card {
-  background: white;
-  border-radius: 15px;
+  background: var(--bg-white);
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  border: 1px solid var(--border-light);
+}
+
+.order-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-orange);
 }
 
 .order-header-info {
@@ -234,16 +385,22 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   margin-bottom: 15px;
 }
 
 .order-ref {
-  font-weight: bold;
-  color: #c9a66b;
+  font-weight: 700;
+  color: var(--primary-orange);
   font-family: monospace;
+  font-size: 14px;
+}
+
+.order-date {
+  font-size: 13px;
+  color: var(--text-light);
 }
 
 .order-status {
@@ -261,8 +418,14 @@
 .order-preview-item {
   display: flex;
   justify-content: space-between;
-  padding: 5px 0;
-  color: #666;
+  padding: 8px 0;
+  color: var(--text-gray);
+  font-size: 13px;
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.order-preview-item:last-child {
+  border-bottom: none;
 }
 
 .order-footer-info {
@@ -270,42 +433,104 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 15px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.order-total {
+  font-size: 16px;
+  color: var(--primary-navy);
+}
+
+.order-total strong {
+  color: var(--text-dark);
 }
 
 .view-order-btn {
-  padding: 8px 16px;
-  background: #c9a66b;
+  padding: 8px 20px;
+  background: var(--primary-navy);
   color: white;
   text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition);
 }
 
 .view-order-btn:hover {
-  background: #b89455;
+  background: var(--primary-orange);
+  transform: translateX(3px);
 }
 
-/* Wishlist */
+/* Empty States */
+.empty-orders, .empty-wishlist {
+  text-align: center;
+  padding: 60px 40px;
+  background: var(--bg-white);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.empty-orders i, .empty-wishlist i {
+  font-size: 64px;
+  color: var(--border-light);
+  margin-bottom: 20px;
+}
+
+.empty-orders h3, .empty-wishlist h3 {
+  font-size: 20px;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+}
+
+.shop-btn, .browse-btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-dark));
+  color: white;
+  text-decoration: none;
+  border-radius: 40px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.shop-btn:hover, .browse-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Wishlist Grid */
 .wishlist-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
+  animation: fadeInUp 0.5s ease;
 }
 
 .wishlist-item {
-  background: white;
-  border-radius: 15px;
-  padding: 15px;
+  background: var(--bg-white);
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
-  gap: 15px;
+  gap: 16px;
   align-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  border: 1px solid var(--border-light);
+}
+
+.wishlist-item:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-orange);
 }
 
 .wishlist-item img {
   width: 80px;
   height: 80px;
-  border-radius: 10px;
+  border-radius: 12px;
   object-fit: cover;
 }
 
@@ -314,61 +539,91 @@
 }
 
 .wishlist-item-info h4 {
-  margin: 0 0 5px;
-  font-size: 16px;
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
 }
 
 .wishlist-item-info p {
   margin: 0;
-  color: #c9a66b;
-  font-weight: bold;
+  color: var(--primary-orange);
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .wishlist-item-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .wishlist-item-actions button {
-  padding: 8px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition);
+  font-size: 12px;
 }
 
 .add-to-cart-wishlist {
-  background: #4caf50;
+  background: var(--primary-navy);
   color: white;
+}
+
+.add-to-cart-wishlist:hover {
+  background: var(--primary-orange);
+  transform: scale(1.05);
 }
 
 .remove-wishlist {
-  background: #f44336;
+  background: var(--error);
   color: white;
 }
 
-/* Settings */
+.remove-wishlist:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+/* Settings Cards - AliExpress Style */
+.settings-content {
+  animation: fadeInUp 0.5s ease;
+}
+
 .settings-card {
-  background: white;
-  border-radius: 15px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: var(--bg-white);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  border: 1px solid var(--border-light);
+}
+
+.settings-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .settings-card h3 {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
-  color: #2c3e50;
+  margin-bottom: 24px;
+  font-size: 18px;
+  color: var(--primary-navy);
+  font-weight: 700;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--primary-orange);
+  display: inline-block;
 }
 
+/* Toggle Switch - AliExpress Style */
 .toggle-switch {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 10px 0;
+  gap: 16px;
+  padding: 12px 0;
   cursor: pointer;
 }
 
@@ -377,127 +632,174 @@
 }
 
 .toggle-slider {
-  width: 50px;
-  height: 24px;
+  width: 52px;
+  height: 28px;
   background: #ccc;
-  border-radius: 24px;
+  border-radius: 28px;
   position: relative;
-  transition: all 0.3s ease;
+  transition: var(--transition);
 }
 
 .toggle-slider:before {
   content: '';
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   background: white;
   border-radius: 50%;
   top: 2px;
   left: 3px;
-  transition: all 0.3s ease;
+  transition: var(--transition);
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background: #c9a66b;
+  background: var(--primary-orange);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
-  transform: translateX(26px);
+  transform: translateX(24px);
 }
 
+.toggle-label {
+  font-size: 14px;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+/* Language Options */
 .language-options {
   display: flex;
-  gap: 15px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .lang-option {
-  padding: 10px 20px;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 8px;
+  padding: 10px 24px;
+  background: var(--bg-gray);
+  border: 2px solid var(--border-light);
+  border-radius: 40px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-gray);
+}
+
+.lang-option:hover {
+  border-color: var(--primary-orange);
+  color: var(--primary-orange);
 }
 
 .lang-option.active {
-  background: #c9a66b;
+  background: var(--primary-orange);
+  border-color: var(--primary-orange);
   color: white;
+}
+
+/* Password Section */
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  font-size: 14px;
+  transition: var(--transition);
+  margin-bottom: 12px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 3px rgba(255,122,0,0.1);
 }
 
 .update-password-btn, .save-settings-btn {
-  padding: 10px 20px;
-  background: #c9a66b;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-dark));
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 40px;
   cursor: pointer;
-  margin-top: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: var(--transition);
+  margin-top: 8px;
 }
 
+.update-password-btn:hover, .save-settings-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Danger Zone */
 .danger-zone {
-  border: 2px solid #f44336;
+  border: 2px solid var(--error);
+  background: #FFF5F5;
+}
+
+.danger-zone h3 {
+  color: var(--error);
+  border-bottom-color: var(--error);
+}
+
+.danger-zone p {
+  font-size: 13px;
+  color: var(--text-gray);
+  margin-bottom: 16px;
 }
 
 .delete-btn {
-  padding: 10px 20px;
-  background: #f44336;
+  padding: 12px 28px;
+  background: var(--error);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 40px;
   cursor: pointer;
-  margin-top: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: var(--transition);
 }
 
+.delete-btn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+}
+
+/* Password Messages */
 .password-error {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 15px;
+  background: #FEE2E2;
+  color: var(--error);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  border-left: 4px solid var(--error);
 }
 
 .password-success {
-  background: #d4edda;
-  color: #155724;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 15px;
+  background: #D1FAE5;
+  color: var(--success);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  border-left: 4px solid var(--success);
 }
 
-.empty-orders, .empty-wishlist {
-  text-align: center;
-  padding: 60px;
-  background: white;
-  border-radius: 15px;
-}
-
-.empty-orders i, .empty-wishlist i {
-  font-size: 60px;
-  color: #ccc;
-  margin-bottom: 20px;
-}
-
-.shop-btn, .browse-btn {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 10px 30px;
-  background: linear-gradient(135deg, #c9a66b, #e8c88a);
-  color: #1a1a1a;
-  text-decoration: none;
-  border-radius: 25px;
-}
-
+/* Loading State */
 .profile-loading {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  background: linear-gradient(135deg, var(--primary-navy), #044a9e);
 }
 
 .profile-loading i {
-  font-size: 50px;
-  color: #c9a66b;
+  font-size: 48px;
+  color: var(--primary-orange);
   animation: spin 1s linear infinite;
 }
 
@@ -506,21 +808,122 @@
   to { transform: rotate(360deg); }
 }
 
+.profile-loading p {
+  margin-top: 16px;
+  color: white;
+  font-size: 14px;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .profile-card {
-    grid-template-columns: 1fr;
+  .profile-page {
+    padding: 70px 16px 40px;
+  }
+  
+  .profile-header h1 {
+    font-size: 26px;
   }
   
   .profile-tabs {
-    gap: 10px;
+    gap: 8px;
+    padding: 6px;
   }
   
   .tab-btn {
     padding: 8px 16px;
+    font-size: 12px;
+  }
+  
+  .tab-btn i {
     font-size: 14px;
+  }
+  
+  .profile-info {
+    padding: 24px;
+  }
+  
+  .profile-avatar {
+    width: 140px;
+    height: 140px;
   }
   
   .wishlist-grid {
     grid-template-columns: 1fr;
   }
+  
+  .order-header-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .order-footer-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-card {
+    padding: 20px;
+  }
+  
+  .language-options {
+    flex-direction: column;
+  }
+  
+  .lang-option {
+    text-align: center;
+  }
+  
+  .edit-actions {
+    flex-direction: column;
+  }
+  
+  .save-btn, .cancel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Hover Effects */
+.settings-card,
+.order-item-card,
+.wishlist-item {
+  animation: fadeInUp 0.4s ease backwards;
+}
+
+.order-item-card:nth-child(1) { animation-delay: 0.05s; }
+.order-item-card:nth-child(2) { animation-delay: 0.1s; }
+.order-item-card:nth-child(3) { animation-delay: 0.15s; }
+.order-item-card:nth-child(4) { animation-delay: 0.2s; }
+.order-item-card:nth-child(5) { animation-delay: 0.25s; }
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-gray);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-orange);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-orange-dark);
 }

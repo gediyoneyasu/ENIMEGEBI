@@ -4,11 +4,10 @@ import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
-import 'swiper/css/effect-fade';
 import './Home.css';
 
 const API_URL = 'https://enimegebi-backend.onrender.com';
@@ -16,14 +15,54 @@ const API_URL = 'https://enimegebi-backend.onrender.com';
 function Home() {
   const { language } = useLanguage();
   const { addToCart } = useCart();
-  const [sliders, setSliders] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [flashDeals, setFlashDeals] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [testimonials, setTestimonials] = useState([]);
-  const [teamMembers, setTeamMembers] = useState([]);
-  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 });
+
+  const staticBrandData = {
+    companyName: 'E-MARKATO',
+    tagline: 'SHOP SMART SHOP LOCAL',
+    description: 'ETHIOPIAN ONLINE MARKETPLACE',
+    services: 'BUY • SELL • DELIVER',
+    tagline2: 'EVERYTHING YOU NEED, ONE MARKETPLACE.',
+    categoriesList: [
+      { name: 'ELECTRONICS', icon: 'ri-smartphone-line', color: '#FF6B00' },
+      { name: 'FASHION', icon: 'ri-shirt-line', color: '#E74C3C' },
+      { name: 'HOME & KITCHEN', icon: 'ri-home-smile-line', color: '#2ECC71' },
+      { name: 'BOOKS', icon: 'ri-book-open-line', color: '#9B59B6' },
+      { name: 'GROCERIES', icon: 'ri-shopping-basket-line', color: '#3498DB' },
+      { name: 'AGRICULTURAL', icon: 'ri-seedling-line', color: '#27AE60' },
+      { name: 'BUSINESS', icon: 'ri-briefcase-line', color: '#F39C12' },
+      { name: 'DELIVERY', icon: 'ri-truck-line', color: '#1ABC9C' }
+    ],
+    banners: [
+      { id: 1, image: 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg', title: 'Super Sale!', subtitle: 'Up to 70% Off on Electronics', btnText: 'Shop Now' },
+      { id: 2, image: 'https://images.pexels.com/photos/4482900/pexels-photo-4482900.jpeg', title: 'Fashion Week', subtitle: 'Get 50% Off on Latest Collection', btnText: 'Explore' },
+      { id: 3, image: 'https://images.pexels.com/photos/4397842/pexels-photo-4397842.jpeg', title: 'Free Delivery', subtitle: 'On orders over ETB 1000', btnText: 'Order Now' }
+    ],
+    quickLinks: [
+      { icon: 'ri-flashlight-line', label: 'Flash Deals', color: '#FF6B00' },
+      { icon: 'ri-truck-line', label: 'Free Shipping', color: '#2ECC71' },
+      { icon: 'ri-customer-service-line', label: '24/7 Support', color: '#3498DB' },
+      { icon: 'ri-shield-check-line', label: 'Secure Payment', color: '#9B59B6' }
+    ],
+    trustText: 'YOUR TRUSTED MARKETPLACE IN ETHIOPIA'
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
+        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        return prev;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     fetchHomeData();
@@ -31,23 +70,15 @@ function Home() {
 
   const fetchHomeData = async () => {
     try {
-      const [homeRes, productsRes, teamRes, projectsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/home/public-data`),
-        axios.get(`${API_URL}/api/admin/public-products`),
-        axios.get(`${API_URL}/api/team/public`),
-        axios.get(`${API_URL}/api/projects/public`)
-      ]);
-
-      if (homeRes.data.success) {
-        setSliders(homeRes.data.sliders || []);
-        setFeaturedProducts(homeRes.data.featuredProducts?.slice(0, 8) || []);
-        setTestimonials(homeRes.data.testimonials || []);
-        setSettings(homeRes.data.settings || {});
-      }
-
+      const productsRes = await axios.get(`${API_URL}/api/admin/public-products`);
       const allProducts = Array.isArray(productsRes.data)
         ? productsRes.data.filter((p) => p?.status === 'active')
         : [];
+      
+      setFeaturedProducts(allProducts.slice(0, 12));
+      setFlashDeals(allProducts.slice(0, 6));
+      setBestSellers(allProducts.slice(0, 6));
+
       const categoryMap = new Map();
       allProducts.forEach((product) => {
         if (!product?.category) return;
@@ -55,25 +86,13 @@ function Home() {
           categoryMap.set(product.category, {
             name: product.category,
             count: 1,
-            image: product.imageUrl || product.image || ''
           });
         } else {
           const existing = categoryMap.get(product.category);
           existing.count += 1;
-          if (!existing.image) {
-            existing.image = product.imageUrl || product.image || '';
-          }
         }
       });
-      setCategories(Array.from(categoryMap.values()).slice(0, 6));
-
-      if (teamRes.data.success) {
-        setTeamMembers(teamRes.data.team || []);
-      }
-
-      if (projectsRes.data.success) {
-        setProjects((projectsRes.data.projects || []).slice(0, 4));
-      }
+      setCategories(Array.from(categoryMap.values()).slice(0, 8));
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -89,258 +108,260 @@ function Home() {
     return null;
   };
 
-  const getCategoryIcon = (category) => {
-    const icons = {
-      'Coffee': 'ri-cup-line',
-      'Grains': 'ri-seedling-line',
-      'Honey': 'ri-drop-line',
-      'Dairy': 'ri-drinks-line',
-      'Fruits': 'ri-apple-line',
-      'Vegetables': 'ri-leaf-line',
-      'Spices': 'ri-fire-line',
-      'Beverages': 'ri-drinks-2-line'
-    };
-    return icons[category] || 'ri-apps-line';
+  const handleAddToCart = (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
+  };
+
+  const renderStars = (rating = 4) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <i key={i} className={i <= rating ? 'ri-star-fill' : 'ri-star-line'}></i>
+      );
+    }
+    return stars;
   };
 
   const translations = {
     en: {
-      shopNow: 'Shop Now',
-      callNow: 'Call Now',
-      featuresTitle: 'Why Choose Enimegebi?',
-      features: [
-        { icon: 'ri-farm-line', title: 'Direct from Farmers', desc: 'No middlemen, better prices' },
-        { icon: 'ri-leaf-line', title: '100% Organic', desc: 'Fresh and healthy products' },
-        { icon: 'ri-truck-line', title: 'Fast Delivery', desc: 'Free delivery on orders over 500 ETB' },
-        { icon: 'ri-secure-payment-line', title: 'Secure Payment', desc: 'Safe and easy checkout' }
-      ],
-      categoriesTitle: 'Shop by Category',
-      viewAllCategories: 'View All Categories',
+      flashDeals: 'Flash Deals',
+      endsIn: 'Ends in:',
+      viewAll: 'View All',
+      shopByCategory: 'Shop by Category',
+      bestSellers: 'Best Sellers',
       featuredProducts: 'Featured Products',
-      viewAll: 'View All Products',
+      megaSale: 'Mega Sale!',
+      upToOff: 'Up to 70% OFF',
+      limitedTime: 'Limited time offer',
+      shopNow: 'Shop Now',
       addToCart: 'Add to Cart',
-      projects: 'Projects',
-      viewAllProjects: 'View All Projects',
-      testimonials: 'What Our Customers Say',
-      getStarted: 'Get Started'
+      freeShipping: 'Free Shipping',
+      sold: 'sold'
     },
     am: {
-      shopNow: 'አሁን ይግዙ',
-      callNow: 'አሁን ይደውሉ',
-      featuresTitle: 'ለምን እንመገቢን ይመርጣሉ?',
-      features: [
-        { icon: 'ri-farm-line', title: 'ከአርሶ አደር በቀጥታ', desc: 'ምንም ደላላ የለም, የተሻለ ዋጋ' },
-        { icon: 'ri-leaf-line', title: '100% ኦርጋኒክ', desc: 'ትኩስ እና ጤናማ ምርቶች' },
-        { icon: 'ri-truck-line', title: 'ፈጣን አቅርቦት', desc: 'ከ500 ብር በላይ ትእዛዝ ነጻ አቅርቦት' },
-        { icon: 'ri-secure-payment-line', title: 'ደህንነቱ የተጠበቀ ክፍያ', desc: 'አስተማማኝ እና ቀላል ቼክአውት' }
-      ],
-      categoriesTitle: 'በምድብ ይግዙ',
-      viewAllCategories: 'ሁሉንም ምድቦች ይመልከቱ',
+      flashDeals: 'ፍላሽ ሽያጮች',
+      endsIn: 'የሚያበቃው በ:',
+      viewAll: 'ሁሉንም ይመልከቱ',
+      shopByCategory: 'በምድብ ይግዙ',
+      bestSellers: 'በሽያጭ የተሻሉ',
       featuredProducts: 'ታዋቂ ምርቶች',
-      viewAll: 'ሁሉንም ምርቶች ይመልከቱ',
+      megaSale: 'ሜጋ ሽያጭ!',
+      upToOff: 'እስከ 70% ቅናሽ',
+      limitedTime: 'የተወሰነ ጊዜ ቅናሽ',
+      shopNow: 'አሁን ይግዙ',
       addToCart: 'ወደ ጋሪ ጨምር',
-      projects: 'ፕሮጀክቶች',
-      viewAllProjects: 'ሁሉንም ፕሮጀክቶች ይመልከቱ',
-      testimonials: 'ደንበኞቻችን ምን ይላሉ',
-      getStarted: 'ይጀምሩ'
+      freeShipping: 'ነጻ አቅርቦት',
+      sold: 'ተሽጧል'
     }
   };
 
   const t = translations[language];
 
-  if (loading) return <div className="loading-spinner"><i className="ri-loader-4-line ri-spin"></i><p>Loading...</p></div>;
+  if (loading) {
+    return (
+      <div className="ae-home-loading">
+        <div className="ae-loading-spinner"></div>
+        <p>Loading amazing deals...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="home-page">
-      {/* Hero Slider Section */}
-      <div className="hero-slider">
-        <Swiper modules={[Autoplay, Pagination, Navigation, EffectFade]} autoplay={{ delay: 4000 }} loop={true} effect="fade" pagination={{ clickable: true }} navigation={true} className="hero-swiper">
-          {sliders.map((slider, index) => (
-            <SwiperSlide key={slider._id || index} className="hero-slide">
-              <div className="slide-bg" style={{ backgroundImage: `url(${getImageUrl(slider.image || slider.imageUrl)})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-              <div className="hero-content">
-                <small>{language === 'en' ? 'Welcome to Enimegebi' : 'እንኳን ወደ እንመገቢ በደህና መጡ'}</small>
-                <h1>{language === 'en' ? slider.title : (slider.titleAm || slider.title)} <span>{language === 'en' ? 'To Your Table' : 'ወደ ጠረጴዛዎ'}</span></h1>
-                <p>{language === 'en' ? slider.subtitle : (slider.subtitleAm || slider.subtitle)}</p>
-                <div className="hero-buttons">
-                  <Link to="/products" className="btn-primary">{t.shopNow}</Link>
-                  <a href={`tel:${settings.phone || '+251964113416'}`} className="btn-secondary">{t.callNow}</a>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
-
-      {/* Features Section */}
-      <section className="features-section">
-        <div className="container">
-          <h2 className="section-title">{t.featuresTitle}</h2>
-          <div className="features-grid">
-            {t.features.map((feature, index) => (
-              <div key={index} className="feature-card">
-                <div className="feature-icon"><i className={feature.icon}></i></div>
-                <h3>{feature.title}</h3>
-                <p>{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section - Flip Card Design */}
-      <section className="categories-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">{t.categoriesTitle}</h2>
-            <Link to="/categories" className="view-all">{t.viewAllCategories} <i className="ri-arrow-right-line"></i></Link>
-          </div>
-          <div className="categories-grid">
-            {categories.map((category, idx) => (
-              <div className="category-item" key={idx}>
-                {/* Front Card */}
-                <div className="category-card" style={{ backgroundImage: `url(${getImageUrl(category.image) || ''})` }}>
-                  <div className="category-overlay"></div>
-                  <span className="category-badge-front">{category.count} Products</span>
-                  <div className="category-front-content">
-                    <button type="button">{category.name}</button>
+    <div className="ae-home-page">
+      <div className="ae-home-container">
+        {/* Banner Carousel */}
+        <div className="ae-banner-section">
+          <Swiper
+            modules={[Autoplay, Pagination, Navigation]}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            loop={true}
+            pagination={{ clickable: true }}
+            navigation={true}
+            className="ae-banner-swiper"
+          >
+            {staticBrandData.banners.map((banner) => (
+              <SwiperSlide key={banner.id}>
+                <div className="ae-banner-slide">
+                  <img src={banner.image} alt={banner.title} className="ae-banner-img" />
+                  <div className="ae-banner-content">
+                    <h2>{banner.title}</h2>
+                    <p>{banner.subtitle}</p>
+                    <Link to="/products" className="ae-banner-btn">{banner.btnText} →</Link>
                   </div>
                 </div>
-                {/* Back Card */}
-                <div className="card-back" style={{ backgroundImage: `url(${getImageUrl(category.image) || ''})` }}>
-                  <div className="back-price">{category.name}</div>
-                  <div className="back-content">
-                    <h3>{category.name}</h3>
-                    <p>Fresh organic {category.name.toLowerCase()} products</p>
-                    <div className="back-stats">
-                      <span><i className="ri-shopping-bag-line"></i> {category.count} Products</span>
-                      <span><i className="ri-user-line"></i> Local Farmers</span>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* Quick Links */}
+        <div className="ae-quick-links">
+          {staticBrandData.quickLinks.map((link, idx) => (
+            <Link to="/products" key={idx} className="ae-quick-link">
+              <div className="ae-quick-icon" style={{ backgroundColor: link.color + '15' }}>
+                <i className={link.icon} style={{ color: link.color }}></i>
+              </div>
+              <span>{link.label}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Flash Deals Section */}
+        <div className="ae-section">
+          <div className="ae-section-header">
+            <div className="ae-section-title">
+              <i className="ri-flashlight-line ae-flash-icon"></i>
+              <h2>{t.flashDeals}</h2>
+            </div>
+            <div className="ae-timer">
+              <span className="ae-timer-label">{t.endsIn}</span>
+              <div className="ae-timer-box">
+                <span className="ae-timer-num">{String(timeLeft.hours).padStart(2, '0')}</span>
+                <span className="ae-timer-unit">h</span>
+              </div>
+              <span className="ae-timer-sep">:</span>
+              <div className="ae-timer-box">
+                <span className="ae-timer-num">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                <span className="ae-timer-unit">m</span>
+              </div>
+              <span className="ae-timer-sep">:</span>
+              <div className="ae-timer-box">
+                <span className="ae-timer-num">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                <span className="ae-timer-unit">s</span>
+              </div>
+            </div>
+            <Link to="/products" className="ae-view-all">{t.viewAll} →</Link>
+          </div>
+
+          <div className="ae-products-grid ae-flash-grid">
+            {flashDeals.map(product => {
+              const discount = Math.floor(Math.random() * 30) + 10;
+              const originalPrice = Math.floor(product.price * (1 + discount / 100));
+              return (
+                <Link to={`/product/${product._id}`} key={product._id} className="ae-product-card-link">
+                  <div className="ae-product-card">
+                    <div className="ae-product-img">
+                      <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
+                      <span className="ae-discount-badge">-{discount}%</span>
+                    </div>
+                    <div className="ae-product-info">
+                      <h3 className="ae-product-title">{product.name}</h3>
+                      <div className="ae-price">
+                        <span className="ae-current">ETB {product.price}</span>
+                        <span className="ae-old">ETB {originalPrice}</span>
+                      </div>
+                      <div className="ae-progress">
+                        <div className="ae-progress-bar">
+                          <div className="ae-progress-fill" style={{ width: '65%' }}></div>
+                        </div>
+                        <span className="ae-sold">🔥 {Math.floor(Math.random() * 1000)}+ {t.sold}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="explore-link">
-                    <Link to={`/products?category=${category.name}`}>
-                      Explore <i className="ri-arrow-right-line"></i>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products Section */}
-      <section className="featured-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">{t.featuredProducts}</h2>
-            <Link to="/products" className="view-all">{t.viewAll} <i className="ri-arrow-right-line"></i></Link>
-          </div>
-          <div className="products-grid">
-            {featuredProducts.map(product => {
-              const imageUrl = getImageUrl(product.image || product.imageUrl);
-              return (
-                <div key={product._id} className="product-card">
-                  <div className="product-image">
-                    {imageUrl ? (
-                      <img src={imageUrl} alt={product.name} />
-                    ) : (
-                      <div className="no-image"><i className="ri-image-line"></i></div>
-                    )}
-                  </div>
-                  <div className="product-info">
-                    <h3>{product.name}</h3>
-                    <div className="product-price">ETB {product.price}</div>
-                    <button onClick={() => addToCart(product)} className="add-to-cart-btn">
-                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                    </button>
-                  </div>
-                </div>
+                </Link>
               );
             })}
           </div>
         </div>
-      </section>
 
-      {/* Projects Section */}
-      {projects.length > 0 && (
-        <section className="projects-section-home">
-          <div className="container">
-            <div className="section-header-home">
-              <h2 className="section-title">{t.projects}</h2>
-              <Link to="/projects" className="view-all-link">
-                {t.viewAllProjects} <i className="ri-arrow-right-line"></i>
-              </Link>
-            </div>
-            <div className="projects-grid-home">
-              {projects.map((project) => (
-                <div key={project._id} className="project-card-home">
-                  <div className="project-image-home">
-                    <img src={getImageUrl(project.imageUrl || project.image)} alt={project.title} />
-                  </div>
-                  <div className="project-info-home">
-                    <h3>{language === 'en' ? project.title : (project.titleAm || project.title)}</h3>
-                    <p>{language === 'en' ? project.description : (project.descriptionAm || project.description)}</p>
-                    <Link to="/projects" className="view-btn">
-                      {language === 'en' ? 'View Project' : 'ፕሮጀክት ይመልከቱ'}
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Categories Section */}
+        <div className="ae-section">
+          <div className="ae-section-header">
+            <h2 className="ae-section-title">{t.shopByCategory}</h2>
+            <Link to="/categories" className="ae-view-all">{t.viewAll} →</Link>
           </div>
-        </section>
-      )}
-
-      {/* Testimonials Section */}
-      <section className="testimonials-section">
-        <div className="container">
-          <h2 className="section-title">{t.testimonials}</h2>
-          <div className="testimonials-grid">
-            {testimonials.map(testimonial => (
-              <div key={testimonial._id} className="testimonial-card">
-                <div className="testimonial-image">
-                  <img src={getImageUrl(testimonial.image || testimonial.imageUrl) || 'https://via.placeholder.com/120?text=User'} alt={testimonial.name} />
+          <div className="ae-categories-grid">
+            {staticBrandData.categoriesList.map((cat, idx) => (
+              <Link to={`/products?category=${cat.name}`} key={idx} className="ae-category-card">
+                <div className="ae-category-icon" style={{ backgroundColor: cat.color + '15' }}>
+                  <i className={cat.icon} style={{ color: cat.color }}></i>
                 </div>
-                <div className="testimonial-rating">
-                  {[...Array(5)].map((_, i) => <i key={i} className={i < testimonial.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}
-                </div>
-                <p>"{language === 'en' ? testimonial.comment : (testimonial.commentAm || testimonial.comment)}"</p>
-                <h4>{language === 'en' ? testimonial.name : (testimonial.nameAm || testimonial.name)}</h4>
-                <span>{language === 'en' ? testimonial.position : (testimonial.positionAm || testimonial.position)}</span>
-              </div>
+                <span className="ae-category-name">{cat.name}</span>
+                <span className="ae-category-count">{Math.floor(Math.random() * 500)}+ items</span>
+              </Link>
             ))}
           </div>
         </div>
-      </section>
 
-      {/* Team Section */}
-      {teamMembers.length > 0 && (
-        <section className="home-team-section">
-          <div className="container">
-            <h2 className="section-title">{language === 'en' ? 'Our Team' : 'ቡድናችን'}</h2>
-            <div className="home-team-grid">
-              {teamMembers.map((member) => (
-                <div key={member._id} className="home-team-card">
-                  <img src={getImageUrl(member.imageUrl || member.image) || 'https://via.placeholder.com/140?text=Team'} alt={member.name} />
-                  <h3>{language === 'en' ? member.name : (member.nameAm || member.name)}</h3>
-                  <p>{language === 'en' ? member.role : (member.roleAm || member.role)}</p>
-                </div>
-              ))}
-            </div>
+        {/* Best Sellers Section */}
+        <div className="ae-section">
+          <div className="ae-section-header">
+            <h2 className="ae-section-title">🔥 {t.bestSellers}</h2>
+            <Link to="/products" className="ae-view-all">{t.viewAll} →</Link>
           </div>
-        </section>
-      )}
-
-      {/* CTA Section */}
-      <section className="cta-section">
-        <div className="container">
-          <div className="cta-content">
-            <h2>{language === 'en' ? (settings.ctaTitle || 'Fresh Products Delivered to Your Doorstep') : (settings.ctaTitleAm || 'ትኩስ ምርቶች ወደ በርዎ ይደርሳሉ')}</h2>
-            <Link to="/products" className="cta-btn">{t.getStarted} <i className="ri-arrow-right-line"></i></Link>
+          <div className="ae-products-grid">
+            {bestSellers.map(product => (
+              <Link to={`/product/${product._id}`} key={product._id} className="ae-product-card-link">
+                <div className="ae-product-card">
+                  <div className="ae-product-img">
+                    <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
+                  </div>
+                  <div className="ae-product-info">
+                    <h3 className="ae-product-title">{product.name}</h3>
+                    <div className="ae-rating">
+                      <div className="ae-stars">{renderStars()}</div>
+                      <span className="ae-rating-count">({Math.floor(Math.random() * 500)})</span>
+                    </div>
+                    <div className="ae-price">
+                      <span className="ae-current">ETB {product.price}</span>
+                    </div>
+                    <div className="ae-shipping">
+                      <i className="ri-truck-line"></i> {t.freeShipping}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
-      </section>
+
+        {/* Mega Sale Banner */}
+        <Link to="/products" className="ae-mega-banner">
+          <div className="ae-mega-content">
+            <h3>🎉 {t.megaSale}</h3>
+            <p>{t.upToOff}</p>
+            <span>{t.limitedTime}</span>
+            <div className="ae-mega-btn">{t.shopNow} →</div>
+          </div>
+          <div className="ae-mega-emoji">🛍️</div>
+        </Link>
+
+        {/* Featured Products */}
+        <div className="ae-section">
+          <div className="ae-section-header">
+            <h2 className="ae-section-title">✨ {t.featuredProducts}</h2>
+            <Link to="/products" className="ae-view-all">{t.viewAll} →</Link>
+          </div>
+          <div className="ae-products-grid">
+            {featuredProducts.slice(0, 8).map(product => (
+              <Link to={`/product/${product._id}`} key={product._id} className="ae-product-card-link">
+                <div className="ae-product-card">
+                  <div className="ae-product-img">
+                    <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
+                  </div>
+                  <div className="ae-product-info">
+                    <h3 className="ae-product-title">{product.name}</h3>
+                    <div className="ae-price">
+                      <span className="ae-current">ETB {product.price}</span>
+                    </div>
+                    <button onClick={(e) => handleAddToCart(product, e)} className="ae-add-btn">
+                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                    </button>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Trust Badge */}
+        <div className="ae-trust-badge">
+          <i className="ri-shield-check-line"></i>
+          {staticBrandData.trustText}
+        </div>
+      </div>
     </div>
   );
 }

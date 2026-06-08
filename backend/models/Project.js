@@ -1,73 +1,15 @@
 const mongoose = require('mongoose');
 
 const projectSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true
-  },
-  titleAm: {
-    type: String,
-    default: ''
-  },
-  description: {
-    type: String,
-    default: ''
-  },
-  descriptionAm: {
-    type: String,
-    default: ''
-  },
-  image: {
-    type: String,
-    default: ''
-  },
-  imageUrl: {
-    type: String,
-    default: ''
-  },
-  fileUrl: {
-    type: String,
-    default: ''
-  },
-  fileType: {
-    type: String,
-    enum: ['image', 'pdf', 'video', 'youtube'],
-    default: 'image'
-  },
-  youtubeId: {
-    type: String,
-    default: ''
-  },
-  price: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  status: {
-    type: String,
-    enum: ['locked', 'unlocked'],
-    default: 'locked'
-  },
-  isApproved: {
-    type: Boolean,
-    default: false
-  },
-  order: {
-    type: Number,
-    default: 0
-  },
-  purchasedBy: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    amount: Number,
-    purchasedAt: Date,
-    isUnlocked: { type: Boolean, default: false },
-    approvedAt: Date,
-    txRef: String
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  title: { type: String, required: true },
+  titleAm: { type: String },
+  description: { type: String },
+  descriptionAm: { type: String },
+  image: { type: String },
+  imageUrl: { type: String },
+  status: { type: String, default: 'active' },
+  createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Project', projectSchema);
+// Use the correct model name - NOT 'Product'
+module.exports = mongoose.models.Project || mongoose.model('Project', projectSchema);

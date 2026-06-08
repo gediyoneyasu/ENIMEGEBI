@@ -1,154 +1,137 @@
 const Product = require('../models/Product');
 
-// @desc    Get all products
-// @route   GET /api/products
-// @access  Public
+// Test function
+const test = (req, res) => {
+  res.json({ message: 'Product controller works!' });
+};
+
+// Get all products
 const getProducts = async (req, res) => {
   try {
-    const { category, search, sort } = req.query;
-    let query = { status: 'active' };
-    
-    if (category && category !== 'all') {
-      query.category = category;
-    }
-    
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { nameAm: { $regex: search, $options: 'i' } },
-        { seller: { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    let products = await Product.find(query);
-    
-    if (sort === 'price_asc') {
-      products.sort((a, b) => a.price - b.price);
-    } else if (sort === 'price_desc') {
-      products.sort((a, b) => b.price - a.price);
-    } else if (sort === 'rating') {
-      products.sort((a, b) => b.rating - a.rating);
-    }
-    
-    res.json({ success: true, products });
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.json(products);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// @desc    Get product by ID
-// @route   GET /api/products/:id
-// @access  Public
-const getProductById = async (req, res) => {
+// Create product with multiple images
+const createProduct = async (req, res) => {
+  try {
+    console.log('=== CREATE PRODUCT ===');
+    console.log('Files received:', req.files ? req.files.length : 0);
+    console.log('Body:', req.body);
+    
+    let imageUrls = [];
+    
+    // Handle multiple image uploads
+    if (req.files && req.files.length > 0) {
+      imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+      console.log('Saved images:', imageUrls);
+    }
+    
+    // Parse product data
+    let productData;
+    if (req.body.product) {
+      productData = JSON.parse(req.body.product);
+    } else {
+      productData = req.body;
+    }
+    
+    const product = new Product({
+      name: productData.name,
+      nameAm: productData.nameAm || '',
+      category: productData.category,
+      price: productData.price,
+      stock: productData.stock || 0,
+      description: productData.description || '',
+      descriptionAm: productData.descriptionAm || '',
+      unit: productData.unit || 'kg',
+      seller: productData.seller || '',
+      status: productData.status || 'active',
+      images: imageUrls,
+      imageUrl: imageUrls[0] || ''
+    });
+    
+    await product.save();
+    console.log('Product saved successfully');
+    res.status(201).json({ success: true, product });
+  } catch (error) {
+    console.error('Create error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Update product with multiple images
+
+const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+      return res.status(404).json({ error: 'Product not found' });
     }
-    res.json({ success: true, product });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Get products by category
-// @route   GET /api/products/category/:category
-// @access  Public
-const getProductsByCategory = async (req, res) => {
-  try {
-    const products = await Product.find({ category: req.params.category, status: 'active' });
-    res.json({ success: true, products });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Create product (Admin/Farmer)
-// @route   POST /api/products
-// @access  Private/Admin
-const createProduct = async (req, res) => {
-  try {
-    const product = await Product.create({
-      ...req.body,
-      sellerId: req.user._id
-    });
-    res.status(201).json({ success: true, product });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Update product
-// @route   PUT /api/products/:id
-// @access  Private/Admin
-const updateProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndUpdate(
+    
+    let allImages = [...(product.images || [])];
+    
+    // Add new images
+    if (req.files && req.files.length > 0) {
+      const newImageUrls = req.files.map(file => `/uploads/${file.filename}`);
+      allImages = [...allImages, ...newImageUrls];
+    }
+    
+    // Parse product data
+    let productData;
+    if (req.body.product) {
+      productData = JSON.parse(req.body.product);
+    } else {
+      productData = req.body;
+    }
+    
+    // Handle removal of images
+    if (productData.existingImages) {
+      allImages = productData.existingImages;
+    }
+    
+    const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      {
+        name: productData.name,
+        nameAm: productData.nameAm || '',
+        category: productData.category,
+        price: productData.price,
+        stock: productData.stock,
+        description: productData.description || '',
+        descriptionAm: productData.descriptionAm || '',
+        unit: productData.unit || 'kg',
+        seller: productData.seller || '',
+        status: productData.status || 'active',
+        images: allImages,
+        imageUrl: allImages[0] || product.imageUrl
+      },
       { new: true }
     );
-    res.json({ success: true, product });
+    
+    res.json({ success: true, product: updatedProduct });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Update error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
-// @desc    Delete product
-// @route   DELETE /api/products/:id
-// @access  Private/Admin
+// Delete product
 const deleteProduct = async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: 'Product deleted' });
+    res.json({ message: 'Product deleted successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Add review
-// @route   POST /api/products/:id/reviews
-// @access  Private
-const addReview = async (req, res) => {
-  try {
-    const { rating, comment } = req.body;
-    const product = await Product.findById(req.params.id);
-    
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-    
-    const alreadyReviewed = product.reviews.find(
-      r => r.user.toString() === req.user._id.toString()
-    );
-    
-    if (alreadyReviewed) {
-      return res.status(400).json({ success: false, message: 'Product already reviewed' });
-    }
-    
-    const review = {
-      user: req.user._id,
-      userName: req.user.name,
-      rating: Number(rating),
-      comment
-    };
-    
-    product.reviews.push(review);
-    product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
-    
-    await product.save();
-    res.status(201).json({ success: true, message: 'Review added' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
 module.exports = {
+  test,
   getProducts,
-  getProductById,
-  getProductsByCategory,
   createProduct,
   updateProduct,
-  deleteProduct,
-  addReview
+  deleteProduct
 };

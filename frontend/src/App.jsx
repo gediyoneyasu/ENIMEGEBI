@@ -7,8 +7,6 @@ import Footer from './Components/Footer/Footer';
 import Auth from './Components/Auth/Auth';
 import Admin from './Components/Admin/Admin';
 import AdminLogin from './Components/Admin/AdminLogin';
-import Projects from './Components/Projects/Projects';
-import ProjectDetail from './Components/Projects/ProjectDetail';
 
 const Home = lazy(() => import('./Components/Home/Home'));
 const Products = lazy(() => import('./Components/Products/Products'));
@@ -19,12 +17,13 @@ const Orders = lazy(() => import('./Components/Orders/Orders'));
 const Profile = lazy(() => import('./Components/Profile/Profile'));
 const About = lazy(() => import('./Components/About/About'));
 const Contact = lazy(() => import('./Components/Contact/Contact'));
+const ProductDetails = lazy(() => import('./Components/ProductDetails/ProductDetails'));
 
 function PageLoading() {
   return (
     <div className="page-loading">
       <div className="loader"></div>
-      <p>Loading Enimegebi...</p>
+      <p>Loading E-MARKATO...</p>
     </div>
   );
 }
@@ -37,6 +36,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
@@ -47,8 +47,6 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin/*" element={<Admin />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/:id" element={<ProjectDetail />} />
         </Routes>
       </Suspense>
       <Footer />

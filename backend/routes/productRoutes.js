@@ -1,22 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/authMiddleware');
-const {
-  getProducts,
-  getProductById,
-  getProductsByCategory,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  addReview
-} = require('../controllers/productController');
+const Product = require('../models/Product');
 
-router.get('/', getProducts);
-router.get('/category/:category', getProductsByCategory);
-router.get('/:id', getProductById);
-router.post('/:id/reviews', protect, addReview);
-router.post('/', protect, admin, createProduct);
-router.put('/:id', protect, admin, updateProduct);
-router.delete('/:id', protect, admin, deleteProduct);
+// Simple routes
+router.get('/', async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;
