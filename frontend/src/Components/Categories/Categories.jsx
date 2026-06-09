@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useLanguage } from '../../main';
 import './Categories.css';
 
-const API_URL = 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const Categories = () => {
   const { language } = useLanguage();
