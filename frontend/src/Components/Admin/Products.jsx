@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import './AdminPages.css';
+import './Products.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -20,6 +20,7 @@ const Products = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [alert, setAlert] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [adminLanguage, setAdminLanguage] = useState('en');
   
   // Image upload states
   const [imageFiles, setImageFiles] = useState([]);
@@ -29,7 +30,7 @@ const Products = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
   
-  // Form data
+  // Form data with both languages
   const [formData, setFormData] = useState({
     name: '',
     nameAm: '',
@@ -40,8 +41,15 @@ const Products = () => {
     descriptionAm: '',
     unit: 'kg',
     seller: '',
+    sellerAm: '',
     status: 'active'
   });
+
+  // Load language preference from localStorage
+  useEffect(() => {
+    const savedLang = localStorage.getItem('adminLanguage') || 'en';
+    setAdminLanguage(savedLang);
+  }, []);
 
   useEffect(() => {
     fetchProducts();
@@ -70,7 +78,7 @@ const Products = () => {
       setFilteredProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
-      showAlert('error', 'Failed to load products');
+      showAlert('error', t.errorFetch);
     } finally {
       setLoading(false);
     }
@@ -107,7 +115,7 @@ const Products = () => {
 
   const handleUrlImageAdd = () => {
     if (!urlImageInput.trim()) {
-      showAlert('error', 'Please enter an image URL');
+      showAlert('error', t.enterUrlMsg);
       return;
     }
     
@@ -120,7 +128,7 @@ const Products = () => {
     };
     setImageFiles([...imageFiles, fakeFile]);
     setUrlImageInput('');
-    showAlert('success', 'Image added from URL');
+    showAlert('success', t.imageAdded);
   };
 
   const addImages = (files) => {
@@ -128,7 +136,7 @@ const Products = () => {
     
     const totalImages = imageFiles.length + files.length + existingImages.length;
     if (totalImages > 10) {
-      showAlert('error', 'Maximum 10 images allowed');
+      showAlert('error', t.maxImages);
       return;
     }
     
@@ -139,20 +147,20 @@ const Products = () => {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (validTypes.includes(file.type)) {
         if (file.size > 5 * 1024 * 1024) {
-          showAlert('error', `${file.name} is larger than 5MB`);
+          showAlert('error', `${file.name} ${t.fileTooLarge}`);
           continue;
         }
         validFiles.push(file);
         validPreviews.push(URL.createObjectURL(file));
       } else {
-        showAlert('error', `${file.name} is not a valid image`);
+        showAlert('error', `${file.name} ${t.invalidImage}`);
       }
     }
     
     if (validFiles.length > 0) {
       setImageFiles([...imageFiles, ...validFiles]);
       setImagePreviews([...imagePreviews, ...validPreviews]);
-      showAlert('success', `${validFiles.length} image(s) added`);
+      showAlert('success', `${validFiles.length} ${t.imagesAdded}`);
     }
   };
 
@@ -175,17 +183,15 @@ const Products = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check if images are added
     if (imageFiles.length === 0 && existingImages.length === 0 && !editingProduct) {
-      showAlert('error', 'Please add at least one image for the product');
+      showAlert('error', t.requiredImage);
       return;
     }
     
     setIsSubmitting(true);
     
-    // Validate required fields
     if (!formData.name || !formData.category || !formData.price || !formData.stock) {
-      showAlert('error', 'Please fill all required fields');
+      showAlert('error', t.fillRequired);
       setIsSubmitting(false);
       return;
     }
@@ -202,6 +208,7 @@ const Products = () => {
       descriptionAm: formData.descriptionAm || '',
       unit: formData.unit,
       seller: formData.seller || '',
+      sellerAm: formData.sellerAm || '',
       status: formData.status
     };
     
@@ -211,7 +218,6 @@ const Products = () => {
     
     submitData.append('product', JSON.stringify(productData));
     
-    // Add images
     for (const file of imageFiles) {
       if (file.isUrl) {
         submitData.append('imageUrls', file.url);
@@ -223,26 +229,23 @@ const Products = () => {
     try {
       const token = localStorage.getItem('enimegebiToken');
       
-      let response;
       if (editingProduct) {
-        response = await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, submitData, {
+        await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, submitData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           }
         });
-        showAlert('success', 'Product updated successfully!');
+        showAlert('success', t.updateSuccess);
       } else {
-        response = await axios.post(`${API_URL}/api/admin/products`, submitData, {
+        await axios.post(`${API_URL}/api/admin/products`, submitData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           }
         });
-        showAlert('success', 'Product added successfully!');
+        showAlert('success', t.addSuccess);
       }
-      
-      console.log('Save response:', response.data);
       
       setTimeout(() => {
         closeModal();
@@ -251,23 +254,23 @@ const Products = () => {
       
     } catch (error) {
       console.error('Save error:', error);
-      showAlert('error', error.response?.data?.message || 'Failed to save product');
+      showAlert('error', error.response?.data?.message || t.saveError);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    if (window.confirm(t.confirmDelete)) {
       try {
         const token = localStorage.getItem('enimegebiToken');
         await axios.delete(`${API_URL}/api/admin/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchProducts();
-        showAlert('success', 'Product deleted successfully!');
+        showAlert('success', t.deleteSuccess);
       } catch (error) {
-        showAlert('error', 'Failed to delete product');
+        showAlert('error', t.deleteError);
       }
     }
   };
@@ -284,6 +287,7 @@ const Products = () => {
       descriptionAm: product.descriptionAm || '',
       unit: product.unit || 'kg',
       seller: product.seller || '',
+      sellerAm: product.sellerAm || '',
       status: product.status
     });
     
@@ -302,7 +306,7 @@ const Products = () => {
     setEditingProduct(null);
     setFormData({
       name: '', nameAm: '', category: '', price: '', stock: '',
-      description: '', descriptionAm: '', unit: 'kg', seller: '', status: 'active'
+      description: '', descriptionAm: '', unit: 'kg', seller: '', sellerAm: '', status: 'active'
     });
     setImagePreviews([]);
     setImageFiles([]);
@@ -321,39 +325,174 @@ const Products = () => {
     setIsSubmitting(false);
   };
 
+  // Display text based on admin's selected language
+  const getDisplayName = (product) => {
+    if (adminLanguage === 'am' && product.nameAm) {
+      return product.nameAm;
+    }
+    return product.name;
+  };
+
+  const getDisplayDescription = (product) => {
+    if (adminLanguage === 'am' && product.descriptionAm) {
+      return product.descriptionAm;
+    }
+    return product.description;
+  };
+
+  const t = {
+    en: {
+      title: 'Products Management',
+      search: 'Search products...',
+      addProduct: 'Add Product',
+      editProduct: 'Edit Product',
+      addNew: 'Add New Product',
+      noProducts: 'No products found',
+      productName: 'Product Name (English)',
+      productNameAm: 'Product Name (Amharic)',
+      category: 'Category',
+      price: 'Price (ETB)',
+      stock: 'Stock Quantity',
+      status: 'Status',
+      active: 'Active',
+      inactive: 'Inactive',
+      description: 'Description (English)',
+      descriptionAm: 'Description (Amharic)',
+      seller: 'Seller (English)',
+      sellerAm: 'Seller (Amharic)',
+      save: 'Save Product',
+      saving: 'Saving...',
+      cancel: 'Cancel',
+      edit: 'Edit',
+      delete: 'Delete',
+      productImages: 'Product Images',
+      requiredImages: '*Required (1-10 images)',
+      dragDrop: 'Drag & drop images here',
+      selectImages: 'Select Images',
+      enterUrl: 'Or enter image URL',
+      addUrl: 'Add URL',
+      images: 'Images',
+      errorFetch: 'Failed to load products',
+      enterUrlMsg: 'Please enter an image URL',
+      imageAdded: 'Image added from URL',
+      maxImages: 'Maximum 10 images allowed',
+      fileTooLarge: 'is larger than 5MB',
+      invalidImage: 'is not a valid image',
+      imagesAdded: 'image(s) added',
+      requiredImage: 'Please add at least one image for the product',
+      fillRequired: 'Please fill all required fields',
+      updateSuccess: 'Product updated successfully!',
+      addSuccess: 'Product added successfully!',
+      saveError: 'Failed to save product',
+      confirmDelete: 'Are you sure you want to delete this product?',
+      deleteSuccess: 'Product deleted successfully!',
+      deleteError: 'Failed to delete product',
+      stockLabel: 'Stock:',
+      units: 'units',
+      noImage: 'No Image',
+      langToggle: 'English'
+    },
+    am: {
+      title: 'የምርቶች አስተዳደር',
+      search: 'ምርቶችን ይፈልጉ...',
+      addProduct: 'ምርት ያክሉ',
+      editProduct: 'ምርት ያርትዑ',
+      addNew: 'አዲስ ምርት ያክሉ',
+      noProducts: 'ምንም ምርቶች አልተገኙም',
+      productName: 'የምርት ስም (እንግሊዝኛ)',
+      productNameAm: 'የምርት ስም (አማርኛ)',
+      category: 'ምድብ',
+      price: 'ዋጋ (ብር)',
+      stock: 'የክምችት ብዛት',
+      status: 'ሁኔታ',
+      active: 'ንቁ',
+      inactive: 'ንቁ ያልሆነ',
+      description: 'መግለጫ (እንግሊዝኛ)',
+      descriptionAm: 'መግለጫ (አማርኛ)',
+      seller: 'ሻጭ (እንግሊዝኛ)',
+      sellerAm: 'ሻጭ (አማርኛ)',
+      save: 'ምርቱን ያስቀምጡ',
+      saving: 'በማስቀመጥ ላይ...',
+      cancel: 'ይቅር',
+      edit: 'ያርትዑ',
+      delete: 'ሰርዝ',
+      productImages: 'የምርት ምስሎች',
+      requiredImages: '*ያስፈልጋል (1-10 ምስሎች)',
+      dragDrop: 'ምስሎችን እዚህ ጎትተው ይጣሉ',
+      selectImages: 'ምስሎችን ይምረጡ',
+      enterUrl: 'ወይም የምስል አድራሻ ያስገቡ',
+      addUrl: 'አድራሻ ያክሉ',
+      images: 'ምስሎች',
+      errorFetch: 'ምርቶችን ማምጣት አልተቻለም',
+      enterUrlMsg: 'እባክዎ የምስል አድራሻ ያስገቡ',
+      imageAdded: 'ምስል ከአድራሻ ተጨምሯል',
+      maxImages: 'ከፍተኛው 10 ምስሎች ብቻ ይፈቀዳሉ',
+      fileTooLarge: 'ከ5MB ይበልጣል',
+      invalidImage: 'የሚሰራ ምስል አይደለም',
+      imagesAdded: 'ምስል(ዎች) ተጨምረዋል',
+      requiredImage: 'እባክዎ ቢያንስ አንድ ምስል ያክሉ',
+      fillRequired: 'እባክዎ ሁሉንም አስፈላጊ መስኮች ይሙሉ',
+      updateSuccess: 'ምርቱ በተሳካ ሁኔታ ተሻሽሏል!',
+      addSuccess: 'ምርቱ በተሳካ ሁኔታ ተጨምሯል!',
+      saveError: 'ምርቱን ማስቀመጥ አልተቻለም',
+      confirmDelete: 'ይህን ምርት መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?',
+      deleteSuccess: 'ምርቱ በተሳካ ሁኔታ ተሰርዟል!',
+      deleteError: 'ምርቱን መሰረዝ አልተቻለም',
+      stockLabel: 'ክምችት:',
+      units: 'ክፍሎች',
+      noImage: 'ምስል የለም',
+      langToggle: 'አማርኛ'
+    }
+  }[adminLanguage];
+
+  // Language toggle function
+  const toggleLanguage = () => {
+    const newLang = adminLanguage === 'en' ? 'am' : 'en';
+    setAdminLanguage(newLang);
+    localStorage.setItem('adminLanguage', newLang);
+  };
+
   if (loading) return (
-    <div className="loading-spinner">
-      <div className="spinner"></div>
-      <p>Loading products...</p>
+    <div className="products-loading">
+      <div className="products-spinner"></div>
+      <p>Loading...</p>
     </div>
   );
 
   return (
     <div className="products-management">
+      {/* Language Toggle Button */}
+      <div className="products-lang-toggle">
+        <button onClick={toggleLanguage} className="lang-toggle-btn">
+          <i className={adminLanguage === 'en' ? 'ri-english-input' : 'ri-font-size'}></i>
+          {t.langToggle}
+        </button>
+      </div>
+
       {alert && (
-        <div className={`alert alert-${alert.type}`}>
+        <div className={`products-alert products-alert-${alert.type}`}>
           <i className={alert.type === 'success' ? 'ri-checkbox-circle-line' : 'ri-error-warning-line'}></i>
-          {alert.message}
+          <span>{alert.message}</span>
         </div>
       )}
       
-      <div className="management-header">
-        <h2><i className="ri-shopping-bag-3-line"></i> Products Management</h2>
-        <div className="header-actions">
-          <div className="search-box">
+      <div className="products-header">
+        <h2><i className="ri-shopping-bag-3-line"></i> {t.title}</h2>
+        <div className="products-header-actions">
+          <div className="products-search">
             <i className="ri-search-line"></i>
-            <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <input type="text" placeholder={t.search} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <button className="add-btn" onClick={openModal}>
-            <i className="ri-add-line"></i> Add Product
+          <button className="products-add-btn" onClick={openModal}>
+            <i className="ri-add-line"></i> {t.addProduct}
           </button>
         </div>
       </div>
 
       {filteredProducts.length === 0 ? (
-        <div className="no-products">
+        <div className="products-empty">
           <i className="ri-shopping-bag-line"></i>
-          <h3>No products found</h3>
+          <h3>{t.noProducts}</h3>
         </div>
       ) : (
         <div className="products-grid">
@@ -365,24 +504,32 @@ const Products = () => {
                 ) : product.imageUrl ? (
                   <img src={getImageUrl(product.imageUrl)} alt={product.name} />
                 ) : (
-                  <div className="no-image">
+                  <div className="product-no-image">
                     <i className="ri-image-line"></i>
-                    <span>No Image</span>
+                    <span>{t.noImage}</span>
                   </div>
                 )}
-                <span className={`product-status ${product.status}`}>{product.status}</span>
+                <span className={`product-status ${product.status}`}>
+                  {product.status === 'active' ? t.active : t.inactive}
+                </span>
               </div>
               <div className="product-info">
-                <h3>{product.name}</h3>
+                <h3>{getDisplayName(product)}</h3>
+                {adminLanguage === 'en' && product.nameAm && (
+                  <p className="product-name-am">{product.nameAm}</p>
+                )}
+                {adminLanguage === 'am' && !product.nameAm && (
+                  <p className="product-name-am">{product.name}</p>
+                )}
                 <span className="product-category">{product.category}</span>
                 <div className="product-price">ETB {product.price?.toLocaleString()}</div>
-                <div className="product-stock">Stock: {product.stock} units</div>
+                <div className="product-stock">{t.stockLabel} {product.stock} {t.units}</div>
                 <div className="product-actions">
-                  <button className="btn-edit" onClick={() => handleEdit(product)}>
-                    <i className="ri-edit-line"></i> Edit
+                  <button className="product-btn-edit" onClick={() => handleEdit(product)}>
+                    <i className="ri-edit-line"></i> {t.edit}
                   </button>
-                  <button className="btn-delete" onClick={() => handleDelete(product._id)}>
-                    <i className="ri-delete-bin-line"></i> Delete
+                  <button className="product-btn-delete" onClick={() => handleDelete(product._id)}>
+                    <i className="ri-delete-bin-line"></i> {t.delete}
                   </button>
                 </div>
               </div>
@@ -393,77 +540,65 @@ const Products = () => {
 
       {/* Add/Edit Product Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="products-modal-overlay" onClick={closeModal}>
+          <div className="products-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="products-modal-header">
               <h3>
                 <i className={editingProduct ? "ri-edit-line" : "ri-add-line"}></i>
-                {editingProduct ? 'Edit Product' : 'Add New Product'}
+                {editingProduct ? t.editProduct : t.addNew}
               </h3>
-              <button className="modal-close" onClick={closeModal}>
+              <button className="products-modal-close" onClick={closeModal}>
                 <i className="ri-close-line"></i>
               </button>
             </div>
             
-            <form onSubmit={handleSubmit}>
-              {/* IMAGES SECTION - REQUIRED */}
-              <div className="form-section">
-                <label className="section-label">
-                  <i className="ri-image-line"></i> Product Images <span className="required">*Required (1-10 images)</span>
+            <form onSubmit={handleSubmit} className="products-form">
+              <div className="products-form-section">
+                <label className="products-section-label">
+                  <i className="ri-image-line"></i> {t.productImages}
+                  <span className="required-label">{t.requiredImages}</span>
                 </label>
                 
-                <div className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
+                <div className={`products-drag-drop ${isDragging ? 'dragging' : ''}`}
                   onDragOver={handleDragOver} 
                   onDragLeave={handleDragLeave} 
                   onDrop={handleDrop}
                 >
                   <i className="ri-upload-cloud-2-line"></i>
-                  <p>Drag & drop images here</p>
-                  <div className="upload-buttons">
-                    <label className="upload-btn-secondary">
-                      <i className="ri-folder-image-line"></i> Select Images
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        multiple 
-                        onChange={handleFileSelect} 
-                        style={{ display: 'none' }} 
-                        ref={fileInputRef}
-                      />
+                  <p>{t.dragDrop}</p>
+                  <div className="products-upload-buttons">
+                    <label className="products-upload-btn">
+                      <i className="ri-folder-image-line"></i> {t.selectImages}
+                      <input type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} ref={fileInputRef} />
                     </label>
                   </div>
                 </div>
                 
-                <div className="url-input-area">
-                  <input 
-                    type="text" 
-                    placeholder="Or enter image URL" 
-                    value={urlImageInput} 
-                    onChange={(e) => setUrlImageInput(e.target.value)} 
-                  />
-                  <button type="button" className="add-url-btn" onClick={handleUrlImageAdd}>
-                    <i className="ri-link"></i> Add URL
+                <div className="products-url-input">
+                  <input type="text" placeholder={t.enterUrl} value={urlImageInput} onChange={(e) => setUrlImageInput(e.target.value)} />
+                  <button type="button" className="products-add-url-btn" onClick={handleUrlImageAdd}>
+                    <i className="ri-link"></i> {t.addUrl}
                   </button>
                 </div>
                 
                 {(imagePreviews.length > 0 || existingImages.length > 0) && (
-                  <div className="image-previews">
-                    <div className="preview-header">
-                      <span>Images ({imagePreviews.length + existingImages.length} / 10)</span>
+                  <div className="products-previews">
+                    <div className="products-previews-header">
+                      <span>{t.images} ({imagePreviews.length + existingImages.length} / 10)</span>
                     </div>
-                    <div className="previews-grid">
+                    <div className="products-previews-grid">
                       {existingImages.map((img, idx) => (
-                        <div key={idx} className="preview-item">
+                        <div key={idx} className="products-preview-item">
                           <img src={getImageUrl(img)} alt={`Existing ${idx + 1}`} />
-                          <button type="button" className="remove-img-btn" onClick={() => removeExistingImage(idx)}>
+                          <button type="button" className="products-remove-img" onClick={() => removeExistingImage(idx)}>
                             <i className="ri-delete-bin-line"></i>
                           </button>
                         </div>
                       ))}
                       {imagePreviews.map((preview, idx) => (
-                        <div key={idx} className="preview-item">
+                        <div key={idx} className="products-preview-item">
                           <img src={preview} alt={`Preview ${idx + 1}`} />
-                          <button type="button" className="remove-img-btn" onClick={() => removeNewImage(idx)}>
+                          <button type="button" className="products-remove-img" onClick={() => removeNewImage(idx)}>
                             <i className="ri-delete-bin-line"></i>
                           </button>
                         </div>
@@ -473,55 +608,69 @@ const Products = () => {
                 )}
               </div>
 
-              {/* Basic Information */}
-              <div className="form-section">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Product Name <span className="required">*</span></label>
-                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Category <span className="required">*</span></label>
-                    <input type="text" name="category" value={formData.category} onChange={handleInputChange} required />
-                  </div>
+              <div className="products-form-row">
+                <div className="products-form-group">
+                  <label>{t.productName} <span className="required">*</span></label>
+                  <input type="text" name="name" value={formData.name} onChange={handleInputChange} required />
                 </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Price (ETB) <span className="required">*</span></label>
-                    <input type="number" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Stock Quantity <span className="required">*</span></label>
-                    <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select name="status" value={formData.status} onChange={handleInputChange}>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
+                <div className="products-form-group">
+                  <label>{t.productNameAm}</label>
+                  <input type="text" name="nameAm" value={formData.nameAm} onChange={handleInputChange} />
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="form-section">
-                <label className="section-label">
-                  <i className="ri-file-text-line"></i> Product Description
-                </label>
-                <div className="form-group">
-                  <textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" placeholder="Enter product description..."></textarea>
+              <div className="products-form-row">
+                <div className="products-form-group">
+                  <label>{t.category} <span className="required">*</span></label>
+                  <input type="text" name="category" value={formData.category} onChange={handleInputChange} required />
+                </div>
+                <div className="products-form-group">
+                  <label>{t.price} <span className="required">*</span></label>
+                  <input type="number" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required />
                 </div>
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={closeModal}>
-                  Cancel
+              <div className="products-form-row">
+                <div className="products-form-group">
+                  <label>{t.stock} <span className="required">*</span></label>
+                  <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required />
+                </div>
+                <div className="products-form-group">
+                  <label>{t.status}</label>
+                  <select name="status" value={formData.status} onChange={handleInputChange}>
+                    <option value="active">{t.active}</option>
+                    <option value="inactive">{t.inactive}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="products-form-group">
+                <label>{t.description}</label>
+                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" placeholder={t.description}></textarea>
+              </div>
+
+              <div className="products-form-group">
+                <label>{t.descriptionAm}</label>
+                <textarea name="descriptionAm" value={formData.descriptionAm} onChange={handleInputChange} rows="3" placeholder={t.descriptionAm}></textarea>
+              </div>
+
+              <div className="products-form-row">
+                <div className="products-form-group">
+                  <label>{t.seller}</label>
+                  <input type="text" name="seller" value={formData.seller} onChange={handleInputChange} />
+                </div>
+                <div className="products-form-group">
+                  <label>{t.sellerAm}</label>
+                  <input type="text" name="sellerAm" value={formData.sellerAm} onChange={handleInputChange} />
+                </div>
+              </div>
+
+              <div className="products-form-actions">
+                <button type="button" className="products-btn-cancel" onClick={closeModal}>
+                  {t.cancel}
                 </button>
-                <button type="submit" className="btn-save" disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving...' : 'Save Product'}
+                <button type="submit" className="products-btn-save" disabled={isSubmitting}>
+                  {isSubmitting ? t.saving : t.save}
                 </button>
               </div>
             </form>
