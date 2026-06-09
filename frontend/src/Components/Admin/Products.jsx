@@ -4,21 +4,10 @@ import './Products.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
-// FIXED: Better image URL handler that works for both local uploads and external URLs
 const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
-  
-  // If it's already a full URL (http/https), return as is
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath;
-  }
-  
-  // If it's a local upload path
-  if (imagePath.startsWith('/uploads')) {
-    return `${API_URL}${imagePath}`;
-  }
-  
-  // If it's just a filename
+  if (imagePath.startsWith('http')) return imagePath;
+  if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
   return `${API_URL}/uploads/${imagePath}`;
 };
 
@@ -95,7 +84,6 @@ const Products = () => {
       const response = await axios.get(`${API_URL}/api/admin/products`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Products fetched:', response.data);
       setProducts(response.data);
       setFilteredProducts(response.data);
     } catch (error) {
@@ -138,7 +126,7 @@ const Products = () => {
   // FIXED: URL Image Add - Validates and adds URL images
   const handleUrlImageAdd = () => {
     if (!urlImageInput.trim()) {
-      showAlert('error', 'Please enter an image URL');
+      showAlert('error', t.enterUrlMsg);
       return;
     }
     
@@ -160,7 +148,7 @@ const Products = () => {
     };
     setImageFiles([...imageFiles, fakeFile]);
     setUrlImageInput('');
-    showAlert('success', 'Image added from URL');
+    showAlert('success', t.imageAdded);
   };
 
   const addImages = (files) => {
@@ -168,7 +156,7 @@ const Products = () => {
     
     const totalImages = imageFiles.length + files.length + existingImages.length;
     if (totalImages > 10) {
-      showAlert('error', 'Maximum 10 images allowed');
+      showAlert('error', t.maxImages);
       return;
     }
     
@@ -179,20 +167,20 @@ const Products = () => {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (validTypes.includes(file.type)) {
         if (file.size > 5 * 1024 * 1024) {
-          showAlert('error', `${file.name} is larger than 5MB`);
+          showAlert('error', `${file.name} ${t.fileTooLarge}`);
           continue;
         }
         validFiles.push(file);
         validPreviews.push(URL.createObjectURL(file));
       } else {
-        showAlert('error', `${file.name} is not a valid image`);
+        showAlert('error', `${file.name} ${t.invalidImage}`);
       }
     }
     
     if (validFiles.length > 0) {
       setImageFiles([...imageFiles, ...validFiles]);
       setImagePreviews([...imagePreviews, ...validPreviews]);
-      showAlert('success', `${validFiles.length} image(s) added`);
+      showAlert('success', `${validFiles.length} ${t.imagesAdded}`);
     }
   };
 
@@ -201,6 +189,7 @@ const Products = () => {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     setImageFiles(newFiles);
     setImagePreviews(newPreviews);
+    // Revoke blob URL to avoid memory leaks
     if (imagePreviews[index] && imagePreviews[index].startsWith('blob:')) {
       URL.revokeObjectURL(imagePreviews[index]);
     }
@@ -219,14 +208,14 @@ const Products = () => {
     e.preventDefault();
     
     if (imageFiles.length === 0 && existingImages.length === 0 && !editingProduct) {
-      showAlert('error', 'Please add at least one image for the product');
+      showAlert('error', t.requiredImage);
       return;
     }
     
     setIsSubmitting(true);
     
     if (!formData.name || !formData.category || !formData.price || !formData.stock) {
-      showAlert('error', 'Please fill all required fields');
+      showAlert('error', t.fillRequired);
       setIsSubmitting(false);
       return;
     }
@@ -271,7 +260,7 @@ const Products = () => {
             'Content-Type': 'multipart/form-data'
           }
         });
-        showAlert('success', 'Product updated successfully!');
+        showAlert('success', t.updateSuccess);
       } else {
         await axios.post(`${API_URL}/api/admin/products`, submitData, {
           headers: { 
@@ -279,7 +268,7 @@ const Products = () => {
             'Content-Type': 'multipart/form-data'
           }
         });
-        showAlert('success', 'Product added successfully!');
+        showAlert('success', t.addSuccess);
       }
       
       setTimeout(() => {
@@ -289,29 +278,28 @@ const Products = () => {
       
     } catch (error) {
       console.error('Save error:', error);
-      showAlert('error', error.response?.data?.message || 'Failed to save product');
+      showAlert('error', error.response?.data?.message || t.saveError);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    if (window.confirm(t.confirmDelete)) {
       try {
         const token = localStorage.getItem('enimegebiToken');
         await axios.delete(`${API_URL}/api/admin/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchProducts();
-        showAlert('success', 'Product deleted successfully!');
+        showAlert('success', t.deleteSuccess);
       } catch (error) {
-        showAlert('error', 'Failed to delete product');
+        showAlert('error', t.deleteError);
       }
     }
   };
 
   const handleEdit = (product) => {
-    console.log('Editing product:', product);
     setEditingProduct(product);
     setFormData({
       name: product.name,
@@ -327,15 +315,10 @@ const Products = () => {
       status: product.status
     });
     
-    // Get existing images - handle both imageUrl and images array
-    let existingImgUrls = [];
-    if (product.images && product.images.length > 0) {
-      existingImgUrls = product.images;
-    } else if (product.imageUrl) {
-      existingImgUrls = [product.imageUrl];
-    }
+    const existingImgUrls = product.images && product.images.length > 0 
+      ? product.images 
+      : (product.imageUrl ? [product.imageUrl] : []);
     
-    console.log('Existing images:', existingImgUrls);
     setExistingImages(existingImgUrls);
     setImagePreviews([]);
     setImageFiles([]);
@@ -359,6 +342,7 @@ const Products = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingProduct(null);
+    // Cleanup blob URLs
     imagePreviews.forEach(preview => {
       if (preview && preview.startsWith('blob:')) {
         URL.revokeObjectURL(preview);
@@ -384,17 +368,6 @@ const Products = () => {
       return product.nameAm;
     }
     return product.name;
-  };
-
-  // FIXED: Get first image URL for display
-  const getFirstImage = (product) => {
-    if (product.images && product.images.length > 0) {
-      return getImageUrl(product.images[0]);
-    }
-    if (product.imageUrl) {
-      return getImageUrl(product.imageUrl);
-    }
-    return null;
   };
 
   const t = {
@@ -431,6 +404,20 @@ const Products = () => {
       addUrl: 'Add URL',
       images: 'Images',
       errorFetch: 'Failed to load products',
+      enterUrlMsg: 'Please enter an image URL',
+      imageAdded: 'Image added from URL',
+      maxImages: 'Maximum 10 images allowed',
+      fileTooLarge: 'is larger than 5MB',
+      invalidImage: 'is not a valid image',
+      imagesAdded: 'image(s) added',
+      requiredImage: 'Please add at least one image for the product',
+      fillRequired: 'Please fill all required fields',
+      updateSuccess: 'Product updated successfully!',
+      addSuccess: 'Product added successfully!',
+      saveError: 'Failed to save product',
+      confirmDelete: 'Are you sure you want to delete this product?',
+      deleteSuccess: 'Product deleted successfully!',
+      deleteError: 'Failed to delete product',
       stockLabel: 'Stock:',
       units: 'units',
       noImage: 'No Image',
@@ -469,6 +456,20 @@ const Products = () => {
       addUrl: 'አድራሻ ያክሉ',
       images: 'ምስሎች',
       errorFetch: 'ምርቶችን ማምጣት አልተቻለም',
+      enterUrlMsg: 'እባክዎ የምስል አድራሻ ያስገቡ',
+      imageAdded: 'ምስል ከአድራሻ ተጨምሯል',
+      maxImages: 'ከፍተኛው 10 ምስሎች ብቻ ይፈቀዳሉ',
+      fileTooLarge: 'ከ5MB ይበልጣል',
+      invalidImage: 'የሚሰራ ምስል አይደለም',
+      imagesAdded: 'ምስል(ዎች) ተጨምረዋል',
+      requiredImage: 'እባክዎ ቢያንስ አንድ ምስል ያክሉ',
+      fillRequired: 'እባክዎ ሁሉንም አስፈላጊ መስኮች ይሙሉ',
+      updateSuccess: 'ምርቱ በተሳካ ሁኔታ ተሻሽሏል!',
+      addSuccess: 'ምርቱ በተሳካ ሁኔታ ተጨምሯል!',
+      saveError: 'ምርቱን ማስቀመጥ አልተቻለም',
+      confirmDelete: 'ይህን ምርት መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?',
+      deleteSuccess: 'ምርቱ በተሳካ ሁኔታ ተሰርዟል!',
+      deleteError: 'ምርቱን መሰረዝ አልተቻለም',
       stockLabel: 'ክምችት:',
       units: 'ክፍሎች',
       noImage: 'ምስል የለም',
@@ -530,16 +531,10 @@ const Products = () => {
           {filteredProducts.map((product) => (
             <div key={product._id} className="product-card">
               <div className="product-image">
-                {getFirstImage(product) ? (
-                  <img 
-                    src={getFirstImage(product)} 
-                    alt={product.name} 
-                    loading="lazy"
-                    onError={(e) => {
-                      console.error('Image failed to load:', getFirstImage(product));
-                      e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
-                    }}
-                  />
+                {product.images && product.images.length > 0 ? (
+                  <img src={getImageUrl(product.images[0])} alt={product.name} loading="lazy" />
+                ) : product.imageUrl ? (
+                  <img src={getImageUrl(product.imageUrl)} alt={product.name} loading="lazy" />
                 ) : (
                   <div className="product-no-image">
                     <i className="ri-image-line"></i>
@@ -633,13 +628,7 @@ const Products = () => {
                     <div className="products-previews-grid">
                       {existingImages.map((img, idx) => (
                         <div key={idx} className="products-preview-item">
-                          <img 
-                            src={getImageUrl(img)} 
-                            alt={`Existing ${idx + 1}`}
-                            onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/100x100?text=Invalid+URL';
-                            }}
-                          />
+                          <img src={getImageUrl(img)} alt={`Existing ${idx + 1}`} />
                           <button type="button" className="products-remove-img" onClick={() => removeExistingImage(idx)}>
                             <i className="ri-delete-bin-line"></i>
                           </button>
@@ -647,13 +636,7 @@ const Products = () => {
                       ))}
                       {imagePreviews.map((preview, idx) => (
                         <div key={idx} className="products-preview-item">
-                          <img 
-                            src={preview} 
-                            alt={`Preview ${idx + 1}`}
-                            onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/100x100?text=Invalid+URL';
-                            }}
-                          />
+                          <img src={preview} alt={`Preview ${idx + 1}`} />
                           <button type="button" className="products-remove-img" onClick={() => removeNewImage(idx)}>
                             <i className="ri-delete-bin-line"></i>
                           </button>
