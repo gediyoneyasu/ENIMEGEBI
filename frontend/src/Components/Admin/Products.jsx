@@ -30,6 +30,16 @@ const Products = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
   
+  // Unit options
+  const unitOptions = [
+    { value: 'kg', labelEn: 'Kilogram (kg)', labelAm: 'ኪሎግራም (ኪግ)' },
+    { value: 'liter', labelEn: 'Liter (L)', labelAm: 'ሊትር (ሊ)' },
+    { value: 'piece', labelEn: 'Piece (pc)', labelAm: 'ቁራጭ' },
+    { value: 'box', labelEn: 'Box', labelAm: 'ሳጥን' },
+    { value: 'pack', labelEn: 'Pack', labelAm: 'ጥቅል' },
+    { value: 'bottle', labelEn: 'Bottle', labelAm: 'ጠርሙስ' }
+  ];
+  
   // Form data with both languages
   const [formData, setFormData] = useState({
     name: '',
@@ -45,7 +55,7 @@ const Products = () => {
     status: 'active'
   });
 
-  // Load language preference from localStorage
+  // Load language preference
   useEffect(() => {
     const savedLang = localStorage.getItem('adminLanguage') || 'en';
     setAdminLanguage(savedLang);
@@ -113,14 +123,24 @@ const Products = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // FIXED: URL Image Add - Validates and adds URL images
   const handleUrlImageAdd = () => {
     if (!urlImageInput.trim()) {
       showAlert('error', t.enterUrlMsg);
       return;
     }
     
+    // Validate URL format for images
+    const urlPattern = /^(https?:\/\/.*\.(jpg|jpeg|png|gif|webp|svg|bmp|avif))$/i;
+    if (!urlPattern.test(urlImageInput)) {
+      showAlert('error', 'Please enter a valid image URL (jpg, png, gif, webp)');
+      return;
+    }
+    
+    // Add to previews
     setImagePreviews([...imagePreviews, urlImageInput]);
     
+    // Add to imageFiles as URL type
     const fakeFile = {
       name: `url-image-${Date.now()}.jpg`,
       isUrl: true,
@@ -169,6 +189,10 @@ const Products = () => {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     setImageFiles(newFiles);
     setImagePreviews(newPreviews);
+    // Revoke blob URL to avoid memory leaks
+    if (imagePreviews[index] && imagePreviews[index].startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviews[index]);
+    }
   };
 
   const removeExistingImage = (index) => {
@@ -318,11 +342,24 @@ const Products = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingProduct(null);
+    // Cleanup blob URLs
+    imagePreviews.forEach(preview => {
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    });
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
     setUrlImageInput('');
     setIsSubmitting(false);
+  };
+
+  // Get unit display text
+  const getUnitLabel = (unitValue) => {
+    const unit = unitOptions.find(u => u.value === unitValue);
+    if (!unit) return unitValue;
+    return adminLanguage === 'am' ? unit.labelAm : unit.labelEn;
   };
 
   // Display text based on admin's selected language
@@ -331,13 +368,6 @@ const Products = () => {
       return product.nameAm;
     }
     return product.name;
-  };
-
-  const getDisplayDescription = (product) => {
-    if (adminLanguage === 'am' && product.descriptionAm) {
-      return product.descriptionAm;
-    }
-    return product.description;
   };
 
   const t = {
@@ -353,6 +383,7 @@ const Products = () => {
       category: 'Category',
       price: 'Price (ETB)',
       stock: 'Stock Quantity',
+      unit: 'Unit',
       status: 'Status',
       active: 'Active',
       inactive: 'Inactive',
@@ -404,6 +435,7 @@ const Products = () => {
       category: 'ምድብ',
       price: 'ዋጋ (ብር)',
       stock: 'የክምችት ብዛት',
+      unit: 'መለኪያ',
       status: 'ሁኔታ',
       active: 'ንቁ',
       inactive: 'ንቁ ያልሆነ',
@@ -500,9 +532,9 @@ const Products = () => {
             <div key={product._id} className="product-card">
               <div className="product-image">
                 {product.images && product.images.length > 0 ? (
-                  <img src={getImageUrl(product.images[0])} alt={product.name} />
+                  <img src={getImageUrl(product.images[0])} alt={product.name} loading="lazy" />
                 ) : product.imageUrl ? (
-                  <img src={getImageUrl(product.imageUrl)} alt={product.name} />
+                  <img src={getImageUrl(product.imageUrl)} alt={product.name} loading="lazy" />
                 ) : (
                   <div className="product-no-image">
                     <i className="ri-image-line"></i>
@@ -523,7 +555,9 @@ const Products = () => {
                 )}
                 <span className="product-category">{product.category}</span>
                 <div className="product-price">ETB {product.price?.toLocaleString()}</div>
-                <div className="product-stock">{t.stockLabel} {product.stock} {t.units}</div>
+                <div className="product-stock">
+                  {t.stockLabel} {product.stock} {getUnitLabel(product.unit || 'kg')}
+                </div>
                 <div className="product-actions">
                   <button className="product-btn-edit" onClick={() => handleEdit(product)}>
                     <i className="ri-edit-line"></i> {t.edit}
@@ -575,7 +609,12 @@ const Products = () => {
                 </div>
                 
                 <div className="products-url-input">
-                  <input type="text" placeholder={t.enterUrl} value={urlImageInput} onChange={(e) => setUrlImageInput(e.target.value)} />
+                  <input 
+                    type="text" 
+                    placeholder={t.enterUrl} 
+                    value={urlImageInput} 
+                    onChange={(e) => setUrlImageInput(e.target.value)} 
+                  />
                   <button type="button" className="products-add-url-btn" onClick={handleUrlImageAdd}>
                     <i className="ri-link"></i> {t.addUrl}
                   </button>
@@ -636,12 +675,23 @@ const Products = () => {
                   <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required />
                 </div>
                 <div className="products-form-group">
-                  <label>{t.status}</label>
-                  <select name="status" value={formData.status} onChange={handleInputChange}>
-                    <option value="active">{t.active}</option>
-                    <option value="inactive">{t.inactive}</option>
+                  <label>{t.unit}</label>
+                  <select name="unit" value={formData.unit} onChange={handleInputChange}>
+                    {unitOptions.map(unit => (
+                      <option key={unit.value} value={unit.value}>
+                        {adminLanguage === 'am' ? unit.labelAm : unit.labelEn}
+                      </option>
+                    ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="products-form-group">
+                <label>{t.status}</label>
+                <select name="status" value={formData.status} onChange={handleInputChange}>
+                  <option value="active">{t.active}</option>
+                  <option value="inactive">{t.inactive}</option>
+                </select>
               </div>
 
               <div className="products-form-group">

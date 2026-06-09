@@ -783,3 +783,55 @@
   background: #FF7A00;
   transform: translateY(-2px);
 }
+/* Stock display with unit */
+.product-stock {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* Language toggle button */
+.products-lang-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.lang-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #032B67, #021a3f);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.lang-toggle-btn:hover {
+  background: #FF7A00;
+  transform: translateY(-2px);
+}
+
+/* Unit select styling */
+.products-form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.products-form-group select:focus {
+  border-color: #FF7A00;
+  outline: none;
+}
