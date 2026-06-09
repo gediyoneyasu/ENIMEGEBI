@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './AdminPages.css';
-import getImageUrl from '../../utils/imageHelper';
 
-const API_URL = 'https://enimegebi-backend.onrender.com';
+const API_URL = 'http://localhost:5001';
+
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http')) return imagePath;
+  if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
+  return `${API_URL}/uploads/${imagePath}`;
+};
 
 const Products = () => {
-  // ========== STATE VARIABLES ==========
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +28,6 @@ const Products = () => {
   const [urlImageInput, setUrlImageInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
-  const singleInputRef = useRef(null);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -39,16 +43,14 @@ const Products = () => {
     status: 'active'
   });
 
-  // ========== FETCH PRODUCTS ==========
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // Filter products when search term changes
   useEffect(() => {
     if (searchTerm) {
       const filtered = products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (product.nameAm && product.nameAm.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
       );
@@ -79,7 +81,7 @@ const Products = () => {
     setTimeout(() => setAlert(null), 3000);
   };
 
-  // ========== IMAGE HANDLERS ==========
+  // Image handlers
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -101,7 +103,6 @@ const Products = () => {
     const files = Array.from(e.target.files);
     addImages(files);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (singleInputRef.current) singleInputRef.current.value = '';
   };
 
   const handleUrlImageAdd = () => {
@@ -110,24 +111,14 @@ const Products = () => {
       return;
     }
     
-    const urlPattern = /^(https?:\/\/.*\.(jpg|jpeg|png|gif|webp|svg|bmp))/i;
-    if (!urlPattern.test(urlImageInput)) {
-      showAlert('error', 'Please enter a valid image URL');
-      return;
-    }
-    
-    const newPreview = urlImageInput;
-    setImagePreviews([...imagePreviews, newPreview]);
+    setImagePreviews([...imagePreviews, urlImageInput]);
     
     const fakeFile = {
       name: `url-image-${Date.now()}.jpg`,
-      type: 'image/jpeg',
-      size: 0,
       isUrl: true,
       url: urlImageInput
     };
     setImageFiles([...imageFiles, fakeFile]);
-    
     setUrlImageInput('');
     showAlert('success', 'Image added from URL');
   };
@@ -170,9 +161,6 @@ const Products = () => {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     setImageFiles(newFiles);
     setImagePreviews(newPreviews);
-    if (imagePreviews[index] && imagePreviews[index].startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreviews[index]);
-    }
   };
 
   const removeExistingImage = (index) => {
@@ -180,20 +168,22 @@ const Products = () => {
     setExistingImages(newExisting);
   };
 
-  // ========== FORM HANDLERS ==========
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ========== SUBMIT WITH FEEDBACK ==========
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Show loading state
-    setIsSubmitting(true);
-    showAlert('info', 'Saving product...');
+    // Check if images are added
+    if (imageFiles.length === 0 && existingImages.length === 0 && !editingProduct) {
+      showAlert('error', 'Please add at least one image for the product');
+      return;
+    }
     
-    // Validation
+    setIsSubmitting(true);
+    
+    // Validate required fields
     if (!formData.name || !formData.category || !formData.price || !formData.stock) {
       showAlert('error', 'Please fill all required fields');
       setIsSubmitting(false);
@@ -221,6 +211,7 @@ const Products = () => {
     
     submitData.append('product', JSON.stringify(productData));
     
+    // Add images
     for (const file of imageFiles) {
       if (file.isUrl) {
         submitData.append('imageUrls', file.url);
@@ -229,33 +220,30 @@ const Products = () => {
       }
     }
 
-    console.log('Submitting product:', productData);
-    console.log('Number of images:', imageFiles.length);
-
     try {
       const token = localStorage.getItem('enimegebiToken');
       
+      let response;
       if (editingProduct) {
-        const response = await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, submitData, {
+        response = await axios.put(`${API_URL}/api/admin/products/${editingProduct._id}`, submitData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           }
         });
-        console.log('Update response:', response.data);
         showAlert('success', 'Product updated successfully!');
       } else {
-        const response = await axios.post(`${API_URL}/api/admin/products`, submitData, {
+        response = await axios.post(`${API_URL}/api/admin/products`, submitData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           }
         });
-        console.log('Create response:', response.data);
         showAlert('success', 'Product added successfully!');
       }
       
-      // Close modal after success
+      console.log('Save response:', response.data);
+      
       setTimeout(() => {
         closeModal();
         fetchProducts();
@@ -263,23 +251,14 @@ const Products = () => {
       
     } catch (error) {
       console.error('Save error:', error);
-      console.error('Error response:', error.response?.data);
-      
-      let errorMessage = 'Failed to save product';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      showAlert('error', errorMessage);
+      showAlert('error', error.response?.data?.message || 'Failed to save product');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         const token = localStorage.getItem('enimegebiToken');
         await axios.delete(`${API_URL}/api/admin/products/${id}`, {
@@ -288,7 +267,6 @@ const Products = () => {
         fetchProducts();
         showAlert('success', 'Product deleted successfully!');
       } catch (error) {
-        console.error('Error:', error);
         showAlert('error', 'Failed to delete product');
       }
     }
@@ -336,11 +314,6 @@ const Products = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingProduct(null);
-    imagePreviews.forEach(preview => {
-      if (preview && preview.startsWith('blob:')) {
-        URL.revokeObjectURL(preview);
-      }
-    });
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
@@ -348,7 +321,6 @@ const Products = () => {
     setIsSubmitting(false);
   };
 
-  // ========== RENDER ==========
   if (loading) return (
     <div className="loading-spinner">
       <div className="spinner"></div>
@@ -358,31 +330,19 @@ const Products = () => {
 
   return (
     <div className="products-management">
-      {/* Alert Message */}
       {alert && (
         <div className={`alert alert-${alert.type}`}>
-          <i className={alert.type === 'success' ? 'ri-checkbox-circle-line' : alert.type === 'error' ? 'ri-error-warning-line' : 'ri-information-line'}></i>
+          <i className={alert.type === 'success' ? 'ri-checkbox-circle-line' : 'ri-error-warning-line'}></i>
           {alert.message}
         </div>
       )}
       
-      {/* Header Section */}
       <div className="management-header">
         <h2><i className="ri-shopping-bag-3-line"></i> Products Management</h2>
         <div className="header-actions">
           <div className="search-box">
             <i className="ri-search-line"></i>
-            <input 
-              type="text" 
-              placeholder="Search products..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button className="clear-search" onClick={() => setSearchTerm('')}>
-                <i className="ri-close-line"></i>
-              </button>
-            )}
+            <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
           <button className="add-btn" onClick={openModal}>
             <i className="ri-add-line"></i> Add Product
@@ -390,12 +350,10 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Products Grid */}
       {filteredProducts.length === 0 ? (
         <div className="no-products">
           <i className="ri-shopping-bag-line"></i>
           <h3>No products found</h3>
-          <p>{searchTerm ? `No results for "${searchTerm}"` : 'Click "Add Product" to create your first product'}</p>
         </div>
       ) : (
         <div className="products-grid">
@@ -403,14 +361,7 @@ const Products = () => {
             <div key={product._id} className="product-card">
               <div className="product-image">
                 {product.images && product.images.length > 0 ? (
-                  <>
-                    <img src={getImageUrl(product.images[0])} alt={product.name} />
-                    {product.images.length > 1 && (
-                      <div className="multi-image-badge">
-                        <i className="ri-image-line"></i> {product.images.length}
-                      </div>
-                    )}
-                  </>
+                  <img src={getImageUrl(product.images[0])} alt={product.name} />
                 ) : product.imageUrl ? (
                   <img src={getImageUrl(product.imageUrl)} alt={product.name} />
                 ) : (
@@ -422,13 +373,10 @@ const Products = () => {
                 <span className={`product-status ${product.status}`}>{product.status}</span>
               </div>
               <div className="product-info">
-                <h3 title={product.name}>{product.name}</h3>
-                {product.nameAm && <p className="product-name-am">{product.nameAm}</p>}
+                <h3>{product.name}</h3>
                 <span className="product-category">{product.category}</span>
                 <div className="product-price">ETB {product.price?.toLocaleString()}</div>
-                <div className="product-stock">
-                  <i className="ri-stock-line"></i> Stock: {product.stock} units
-                </div>
+                <div className="product-stock">Stock: {product.stock} units</div>
                 <div className="product-actions">
                   <button className="btn-edit" onClick={() => handleEdit(product)}>
                     <i className="ri-edit-line"></i> Edit
@@ -458,111 +406,64 @@ const Products = () => {
             </div>
             
             <form onSubmit={handleSubmit}>
-              {/* Multiple Images Upload Section */}
+              {/* IMAGES SECTION - REQUIRED */}
               <div className="form-section">
                 <label className="section-label">
-                  <i className="ri-image-line"></i> Product Images
-                  <span className="label-hint">Max 10 images | Drag & Drop | URL | Single Select</span>
+                  <i className="ri-image-line"></i> Product Images <span className="required">*Required (1-10 images)</span>
                 </label>
                 
-                {/* Drag & Drop Area */}
-                <div 
-                  className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
+                <div className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
+                  onDragOver={handleDragOver} 
+                  onDragLeave={handleDragLeave} 
                   onDrop={handleDrop}
                 >
                   <i className="ri-upload-cloud-2-line"></i>
                   <p>Drag & drop images here</p>
-                  <span>or</span>
                   <div className="upload-buttons">
                     <label className="upload-btn-secondary">
-                      <i className="ri-folder-image-line"></i> Select Multiple
+                      <i className="ri-folder-image-line"></i> Select Images
                       <input 
                         type="file" 
                         accept="image/*" 
                         multiple 
-                        onChange={handleFileSelect}
-                        style={{ display: 'none' }}
+                        onChange={handleFileSelect} 
+                        style={{ display: 'none' }} 
                         ref={fileInputRef}
                       />
                     </label>
-                    <label className="upload-btn-secondary">
-                      <i className="ri-image-line"></i> Select Single
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleFileSelect}
-                        style={{ display: 'none' }}
-                        ref={singleInputRef}
-                      />
-                    </label>
                   </div>
                 </div>
                 
-                {/* URL Image Input */}
                 <div className="url-input-area">
                   <input 
                     type="text" 
-                    placeholder="Enter image URL (https://...jpg, .png, .gif)"
-                    value={urlImageInput}
-                    onChange={(e) => setUrlImageInput(e.target.value)}
+                    placeholder="Or enter image URL" 
+                    value={urlImageInput} 
+                    onChange={(e) => setUrlImageInput(e.target.value)} 
                   />
                   <button type="button" className="add-url-btn" onClick={handleUrlImageAdd}>
-                    <i className="ri-link"></i> Add from URL
+                    <i className="ri-link"></i> Add URL
                   </button>
                 </div>
                 
-                {/* New Image Previews */}
-                {imagePreviews.length > 0 && (
+                {(imagePreviews.length > 0 || existingImages.length > 0) && (
                   <div className="image-previews">
                     <div className="preview-header">
-                      <i className="ri-image-add-line"></i>
-                      <span>New Images ({imagePreviews.length})</span>
-                      <button 
-                        type="button" 
-                        className="clear-all-btn"
-                        onClick={() => {
-                          setImageFiles([]);
-                          setImagePreviews([]);
-                        }}
-                      >
-                        Clear All
-                      </button>
-                    </div>
-                    <div className="previews-grid">
-                      {imagePreviews.map((preview, idx) => (
-                        <div key={idx} className="preview-item">
-                          <img src={preview} alt={`Preview ${idx + 1}`} />
-                          <button 
-                            type="button" 
-                            className="remove-img-btn"
-                            onClick={() => removeNewImage(idx)}
-                          >
-                            <i className="ri-delete-bin-line"></i>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Existing Images for Edit */}
-                {editingProduct && existingImages.length > 0 && (
-                  <div className="existing-images">
-                    <div className="preview-header">
-                      <i className="ri-gallery-line"></i>
-                      <span>Current Images ({existingImages.length})</span>
+                      <span>Images ({imagePreviews.length + existingImages.length} / 10)</span>
                     </div>
                     <div className="previews-grid">
                       {existingImages.map((img, idx) => (
                         <div key={idx} className="preview-item">
                           <img src={getImageUrl(img)} alt={`Existing ${idx + 1}`} />
-                          <button 
-                            type="button" 
-                            className="remove-img-btn"
-                            onClick={() => removeExistingImage(idx)}
-                          >
+                          <button type="button" className="remove-img-btn" onClick={() => removeExistingImage(idx)}>
+                            <i className="ri-delete-bin-line"></i>
+                          </button>
+                        </div>
+                      ))}
+                      {imagePreviews.map((preview, idx) => (
+                        <div key={idx} className="preview-item">
+                          <img src={preview} alt={`Preview ${idx + 1}`} />
+                          <button type="button" className="remove-img-btn" onClick={() => removeNewImage(idx)}>
                             <i className="ri-delete-bin-line"></i>
                           </button>
                         </div>
@@ -574,67 +475,27 @@ const Products = () => {
 
               {/* Basic Information */}
               <div className="form-section">
-                <label className="section-label"><i className="ri-information-line"></i> Basic Information</label>
-                
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Name (English) <span className="required">*</span></label>
+                    <label>Product Name <span className="required">*</span></label>
                     <input type="text" name="name" value={formData.name} onChange={handleInputChange} required />
                   </div>
-                  <div className="form-group">
-                    <label>Name (Amharic)</label>
-                    <input type="text" name="nameAm" value={formData.nameAm} onChange={handleInputChange} />
-                  </div>
-                </div>
-                
-                <div className="form-row">
                   <div className="form-group">
                     <label>Category <span className="required">*</span></label>
                     <input type="text" name="category" value={formData.category} onChange={handleInputChange} required />
                   </div>
+                </div>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Price (ETB) <span className="required">*</span></label>
                     <input type="number" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required />
                   </div>
-                </div>
-                
-                <div className="form-row">
                   <div className="form-group">
-                    <label>Stock <span className="required">*</span></label>
+                    <label>Stock Quantity <span className="required">*</span></label>
                     <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required />
                   </div>
-                  <div className="form-group">
-                    <label>Unit</label>
-                    <select name="unit" value={formData.unit} onChange={handleInputChange}>
-                      <option value="kg">Kilogram (kg)</option>
-                      <option value="liter">Liter (L)</option>
-                      <option value="piece">Piece</option>
-                    </select>
-                  </div>
                 </div>
-              </div>
-
-              {/* Descriptions */}
-              <div className="form-section">
-                <label className="section-label"><i className="ri-file-text-line"></i> Descriptions</label>
-                <div className="form-group">
-                  <label>Description (English)</label>
-                  <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3"></textarea>
-                </div>
-                <div className="form-group">
-                  <label>Description (Amharic)</label>
-                  <textarea name="descriptionAm" value={formData.descriptionAm} onChange={handleInputChange} rows="3"></textarea>
-                </div>
-              </div>
-
-              {/* Seller & Status */}
-              <div className="form-section">
-                <label className="section-label"><i className="ri-store-line"></i> Seller Information</label>
                 <div className="form-row">
-                  <div className="form-group">
-                    <label>Seller/Farmer</label>
-                    <input type="text" name="seller" value={formData.seller} onChange={handleInputChange} />
-                  </div>
                   <div className="form-group">
                     <label>Status</label>
                     <select name="status" value={formData.status} onChange={handleInputChange}>
@@ -645,21 +506,22 @@ const Products = () => {
                 </div>
               </div>
 
-              {/* Modal Actions */}
+              {/* Description */}
+              <div className="form-section">
+                <label className="section-label">
+                  <i className="ri-file-text-line"></i> Product Description
+                </label>
+                <div className="form-group">
+                  <textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" placeholder="Enter product description..."></textarea>
+                </div>
+              </div>
+
               <div className="modal-actions">
                 <button type="button" className="btn-cancel" onClick={closeModal}>
-                  <i className="ri-close-line"></i> Cancel
+                  Cancel
                 </button>
                 <button type="submit" className="btn-save" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <i className="ri-loader-4-line ri-spin"></i> Saving...
-                    </>
-                  ) : (
-                    <>
-                      <i className="ri-save-line"></i> Save Product
-                    </>
-                  )}
+                  {isSubmitting ? 'Saving...' : 'Save Product'}
                 </button>
               </div>
             </form>

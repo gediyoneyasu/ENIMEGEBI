@@ -1,0 +1,475 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { useLanguage } from '../../main';
+import { useCart } from '../../main';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+import './Home.css';
+
+const API_URL = 'https://enimegebi-backend.onrender.com';
+
+function Home() {
+  const { language } = useLanguage();
+  const { addToCart } = useCart();
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [flashDeals, setFlashDeals] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 });
+
+  const staticBrandData = {
+    companyName: 'E-MARKATO',
+    tagline: 'SHOP SMART SHOP LOCAL',
+    description: 'ETHIOPIAN ONLINE MARKETPLACE',
+    services: 'BUY • SELL • DELIVER',
+    tagline2: 'EVERYTHING YOU NEED, ONE MARKETPLACE.',
+    categoriesList: [
+      { name: 'ELECTRONICS', icon: 'ri-smartphone-line', color: '#FF6B00' },
+      { name: 'FASHION', icon: 'ri-shirt-line', color: '#E74C3C' },
+      { name: 'HOME & KITCHEN', icon: 'ri-home-smile-line', color: '#2ECC71' },
+      { name: 'BOOKS', icon: 'ri-book-open-line', color: '#9B59B6' },
+      { name: 'GROCERIES', icon: 'ri-shopping-basket-line', color: '#3498DB' },
+      { name: 'AGRICULTURAL', icon: 'ri-seedling-line', color: '#27AE60' },
+      { name: 'BUSINESS', icon: 'ri-briefcase-line', color: '#F39C12' },
+      { name: 'DELIVERY', icon: 'ri-truck-line', color: '#1ABC9C' }
+    ],
+    banners: [
+      { id: 1, image: 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg', title: 'Super Sale!', subtitle: 'Up to 70% Off on Electronics', btnText: 'Shop Now' },
+      { id: 2, image: 'https://images.pexels.com/photos/4482900/pexels-photo-4482900.jpeg', title: 'Fashion Week', subtitle: 'Get 50% Off on Latest Collection', btnText: 'Explore' },
+      { id: 3, image: 'https://images.pexels.com/photos/4397842/pexels-photo-4397842.jpeg', title: 'Free Delivery', subtitle: 'On orders over ETB 1000', btnText: 'Order Now' }
+    ],
+    quickLinks: [
+      { icon: 'ri-flashlight-line', label: 'Flash Deals', color: '#FF6B00' },
+      { icon: 'ri-truck-line', label: 'Free Shipping', color: '#2ECC71' },
+      { icon: 'ri-customer-service-line', label: '24/7 Support', color: '#3498DB' },
+      { icon: 'ri-shield-check-line', label: 'Secure Payment', color: '#9B59B6' }
+    ],
+    trustText: 'YOUR TRUSTED MARKETPLACE IN ETHIOPIA'
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
+        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        return prev;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
+
+  // FIXED: Better product fetching from backend
+  const fetchHomeData = async () => {
+    try {
+      setLoading(true);
+      console.log('📦 Fetching products from backend...');
+      console.log('🔗 API URL:', `${API_URL}/api/admin/public-products`);
+      
+      const productsRes = await axios.get(`${API_URL}/api/admin/public-products`);
+      console.log('📡 API Response:', productsRes.data);
+      
+      // Handle different response formats
+      let productsArray = [];
+      if (Array.isArray(productsRes.data)) {
+        productsArray = productsRes.data;
+      } else if (productsRes.data.products && Array.isArray(productsRes.data.products)) {
+        productsArray = productsRes.data.products;
+      } else if (productsRes.data.data && Array.isArray(productsRes.data.data)) {
+        productsArray = productsRes.data.data;
+      }
+      
+      console.log('📊 Total products from API:', productsArray.length);
+      
+      // Filter products - show all products regardless of status for testing
+      // Don't filter out products that don't have status field
+      const allProducts = productsArray.filter(p => {
+        if (p && p.status === 'inactive') return false;
+        return p !== null;
+      });
+      
+      console.log('✅ Active products:', allProducts.length);
+      
+      if (allProducts.length === 0) {
+        console.warn('⚠️ No products found! Please add products from admin panel.');
+        // Show message on page
+        setFeaturedProducts([]);
+        setFlashDeals([]);
+        setBestSellers([]);
+      } else {
+        // Log first product to see structure
+        console.log('📦 Sample product:', allProducts[0]);
+        console.log('🖼️ Image field:', allProducts[0].image, allProducts[0].imageUrl);
+        
+        setFeaturedProducts(allProducts.slice(0, 12));
+        setFlashDeals(allProducts.slice(0, 6));
+        setBestSellers(allProducts.slice(0, 6));
+      }
+      
+      // Extract categories from products
+      const categoryMap = new Map();
+      allProducts.forEach((product) => {
+        if (product && product?.category) {
+          const catName = product.category.toUpperCase();
+          if (!categoryMap.has(catName)) {
+            categoryMap.set(catName, {
+              name: catName,
+              count: 1,
+            });
+          } else {
+            const existing = categoryMap.get(catName);
+            existing.count += 1;
+          }
+        }
+      });
+      
+      const extractedCategories = Array.from(categoryMap.values()).slice(0, 8);
+      console.log('📁 Categories found:', extractedCategories);
+      setCategories(extractedCategories);
+      
+    } catch (error) {
+      console.error('❌ Error fetching products:', error);
+      console.error('Error details:', error.message);
+      
+      // Show empty states
+      setFeaturedProducts([]);
+      setFlashDeals([]);
+      setBestSellers([]);
+      
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // FIXED: Better image URL handling
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) {
+      console.log('No image path provided');
+      return 'https://via.placeholder.com/300x300?text=No+Image';
+    }
+    
+    console.log('Processing image path:', imagePath);
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    if (imagePath.startsWith('/uploads')) {
+      return `${API_URL}${imagePath}`;
+    }
+    if (imagePath.startsWith('uploads/')) {
+      return `${API_URL}/${imagePath}`;
+    }
+    return `${API_URL}/uploads/${imagePath}`;
+  };
+
+  const handleAddToCart = (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
+    // Show success message
+    alert(`✅ ${product.name} added to cart!`);
+  };
+
+  const renderStars = (rating = 4) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <i key={i} className={i <= rating ? 'ri-star-fill' : 'ri-star-line'}></i>
+      );
+    }
+    return stars;
+  };
+
+  const translations = {
+    en: {
+      flashDeals: 'Flash Deals',
+      endsIn: 'Ends in:',
+      viewAll: 'View All',
+      shopByCategory: 'Shop by Category',
+      bestSellers: 'Best Sellers',
+      featuredProducts: 'Featured Products',
+      megaSale: 'Mega Sale!',
+      upToOff: 'Up to 70% OFF',
+      limitedTime: 'Limited time offer',
+      shopNow: 'Shop Now',
+      addToCart: 'Add to Cart',
+      freeShipping: 'Free Shipping',
+      sold: 'sold',
+      noProducts: 'No products found. Please add products from admin panel.'
+    },
+    am: {
+      flashDeals: 'ፍላሽ ሽያጮች',
+      endsIn: 'የሚያበቃው በ:',
+      viewAll: 'ሁሉንም ይመልከቱ',
+      shopByCategory: 'በምድብ ይግዙ',
+      bestSellers: 'በሽያጭ የተሻሉ',
+      featuredProducts: 'ታዋቂ ምርቶች',
+      megaSale: 'ሜጋ ሽያጭ!',
+      upToOff: 'እስከ 70% ቅናሽ',
+      limitedTime: 'የተወሰነ ጊዜ ቅናሽ',
+      shopNow: 'አሁን ይግዙ',
+      addToCart: 'ወደ ጋሪ ጨምር',
+      freeShipping: 'ነጻ አቅርቦት',
+      sold: 'ተሽጧል',
+      noProducts: 'ምርቶች አልተገኙም። እባክዎ ከአስተዳዳሪ ፓነል ምርቶችን ይጨምሩ።'
+    }
+  };
+
+  const t = translations[language];
+
+  // Check if there are any products to show
+  const hasProducts = flashDeals.length > 0 || bestSellers.length > 0 || featuredProducts.length > 0;
+
+  if (loading) {
+    return (
+      <div className="ae-home-loading">
+        <div className="ae-loading-spinner"></div>
+        <p>Loading amazing deals...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ae-home-page">
+      <div className="ae-home-container">
+        {/* Banner Carousel */}
+        <div className="ae-banner-section">
+          <Swiper
+            modules={[Autoplay, Pagination, Navigation]}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            loop={true}
+            pagination={{ clickable: true }}
+            navigation={true}
+            className="ae-banner-swiper"
+          >
+            {staticBrandData.banners.map((banner) => (
+              <SwiperSlide key={banner.id}>
+                <div className="ae-banner-slide">
+                  <img src={banner.image} alt={banner.title} className="ae-banner-img" />
+                  <div className="ae-banner-content">
+                    <h2>{banner.title}</h2>
+                    <p>{banner.subtitle}</p>
+                    <Link to="/products" className="ae-banner-btn">{banner.btnText} →</Link>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* Quick Links */}
+        <div className="ae-quick-links">
+          {staticBrandData.quickLinks.map((link, idx) => (
+            <Link to="/products" key={idx} className="ae-quick-link">
+              <div className="ae-quick-icon" style={{ backgroundColor: link.color + '15' }}>
+                <i className={link.icon} style={{ color: link.color }}></i>
+              </div>
+              <span>{link.label}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* No Products Message */}
+        {!hasProducts && (
+          <div className="ae-no-products">
+            <i className="ri-shopping-bag-line"></i>
+            <h3>{t.noProducts}</h3>
+            <Link to="/admin" className="ae-admin-link">Go to Admin Panel →</Link>
+          </div>
+        )}
+
+        {/* Flash Deals Section - Only show if products exist */}
+        {flashDeals.length > 0 && (
+          <div className="ae-section">
+            <div className="ae-section-header">
+              <div className="ae-section-title">
+                <i className="ri-flashlight-line ae-flash-icon"></i>
+                <h2>{t.flashDeals}</h2>
+              </div>
+              <div className="ae-timer">
+                <span className="ae-timer-label">{t.endsIn}</span>
+                <div className="ae-timer-box">
+                  <span className="ae-timer-num">{String(timeLeft.hours).padStart(2, '0')}</span>
+                  <span className="ae-timer-unit">h</span>
+                </div>
+                <span className="ae-timer-sep">:</span>
+                <div className="ae-timer-box">
+                  <span className="ae-timer-num">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                  <span className="ae-timer-unit">m</span>
+                </div>
+                <span className="ae-timer-sep">:</span>
+                <div className="ae-timer-box">
+                  <span className="ae-timer-num">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                  <span className="ae-timer-unit">s</span>
+                </div>
+              </div>
+              <Link to="/products" className="ae-view-all">{t.viewAll} →</Link>
+            </div>
+
+            <div className="ae-products-grid ae-flash-grid">
+              {flashDeals.map(product => {
+                const discount = product.discount || Math.floor(Math.random() * 30) + 10;
+                const originalPrice = product.originalPrice || Math.floor(product.price * (1 + discount / 100));
+                return (
+                  <Link to={`/product/${product._id}`} key={product._id} className="ae-product-card-link">
+                    <div className="ae-product-card">
+                      <div className="ae-product-img">
+                        <img 
+                          src={getImageUrl(product.image || product.imageUrl)} 
+                          alt={product.name}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
+                          }}
+                        />
+                        <span className="ae-discount-badge">-{discount}%</span>
+                      </div>
+                      <div className="ae-product-info">
+                        <h3 className="ae-product-title">{product.name}</h3>
+                        <div className="ae-price">
+                          <span className="ae-current">ETB {product.price}</span>
+                          <span className="ae-old">ETB {originalPrice}</span>
+                        </div>
+                        <div className="ae-progress">
+                          <div className="ae-progress-bar">
+                            <div className="ae-progress-fill" style={{ width: '65%' }}></div>
+                          </div>
+                          <span className="ae-sold">🔥 {product.sold || Math.floor(Math.random() * 1000)}+ {t.sold}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Categories Section */}
+        <div className="ae-section">
+          <div className="ae-section-header">
+            <h2 className="ae-section-title">{t.shopByCategory}</h2>
+            <Link to="/categories" className="ae-view-all">{t.viewAll} →</Link>
+          </div>
+          <div className="ae-categories-grid">
+            {staticBrandData.categoriesList.map((cat, idx) => (
+              <Link to={`/products?category=${cat.name}`} key={idx} className="ae-category-card">
+                <div className="ae-category-icon" style={{ backgroundColor: cat.color + '15' }}>
+                  <i className={cat.icon} style={{ color: cat.color }}></i>
+                </div>
+                <span className="ae-category-name">{cat.name}</span>
+                <span className="ae-category-count">{Math.floor(Math.random() * 500)}+ items</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Best Sellers Section */}
+        {bestSellers.length > 0 && (
+          <div className="ae-section">
+            <div className="ae-section-header">
+              <h2 className="ae-section-title">🔥 {t.bestSellers}</h2>
+              <Link to="/products" className="ae-view-all">{t.viewAll} →</Link>
+            </div>
+            <div className="ae-products-grid">
+              {bestSellers.map(product => (
+                <Link to={`/product/${product._id}`} key={product._id} className="ae-product-card-link">
+                  <div className="ae-product-card">
+                    <div className="ae-product-img">
+                      <img 
+                        src={getImageUrl(product.image || product.imageUrl)} 
+                        alt={product.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
+                        }}
+                      />
+                    </div>
+                    <div className="ae-product-info">
+                      <h3 className="ae-product-title">{product.name}</h3>
+                      <div className="ae-rating">
+                        <div className="ae-stars">{renderStars(product.rating || 4)}</div>
+                        <span className="ae-rating-count">({product.reviews || Math.floor(Math.random() * 500)})</span>
+                      </div>
+                      <div className="ae-price">
+                        <span className="ae-current">ETB {product.price}</span>
+                      </div>
+                      <div className="ae-shipping">
+                        <i className="ri-truck-line"></i> {t.freeShipping}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mega Sale Banner */}
+        <Link to="/products" className="ae-mega-banner">
+          <div className="ae-mega-content">
+            <h3>🎉 {t.megaSale}</h3>
+            <p>{t.upToOff}</p>
+            <span>{t.limitedTime}</span>
+            <div className="ae-mega-btn">{t.shopNow} →</div>
+          </div>
+          <div className="ae-mega-emoji">🛍️</div>
+        </Link>
+
+        {/* Featured Products */}
+        {featuredProducts.length > 0 && (
+          <div className="ae-section">
+            <div className="ae-section-header">
+              <h2 className="ae-section-title">✨ {t.featuredProducts}</h2>
+              <Link to="/products" className="ae-view-all">{t.viewAll} →</Link>
+            </div>
+            <div className="ae-products-grid">
+              {featuredProducts.slice(0, 8).map(product => (
+                <Link to={`/product/${product._id}`} key={product._id} className="ae-product-card-link">
+                  <div className="ae-product-card">
+                    <div className="ae-product-img">
+                      <img 
+                        src={getImageUrl(product.image || product.imageUrl)} 
+                        alt={product.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
+                        }}
+                      />
+                    </div>
+                    <div className="ae-product-info">
+                      <h3 className="ae-product-title">{product.name}</h3>
+                      <div className="ae-price">
+                        <span className="ae-current">ETB {product.price}</span>
+                      </div>
+                      <button onClick={(e) => handleAddToCart(product, e)} className="ae-add-btn">
+                        <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Trust Badge */}
+        <div className="ae-trust-badge">
+          <i className="ri-shield-check-line"></i>
+          {staticBrandData.trustText}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Home;

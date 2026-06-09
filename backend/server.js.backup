@@ -16,7 +16,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // IMPORTANT: Serve static files from uploads folder
@@ -31,11 +31,10 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/home', require('./routes/homeRoutes'));
 app.use('/api/team', require('./routes/teamRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
-app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/contact', require('./routes/contactRoutes'));  // ← ADDED CONTACT ROUTE
+app.use('/api/products', require('./routes/productRoutes'));  // ← ADD THIS LINE
 
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend is running!'});
+  res.json({ message: 'Backend is running!' });
 });
 
 const PORT = process.env.PORT || 5001;

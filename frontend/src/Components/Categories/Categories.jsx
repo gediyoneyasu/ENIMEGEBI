@@ -2,66 +2,97 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../../main';
-import { useCart } from '../../main';
 import './Categories.css';
 
-const API_URL = 'https://enimegebi-backend.onrender.com';
+const API_URL = 'http://localhost:5001';
 
-function Categories() {
+const Categories = () => {
   const { language } = useLanguage();
-  const { addToCart } = useCart();
   const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categoryProducts, setCategoryProducts] = useState([]);
 
   useEffect(() => {
-    fetchData();
+    fetchCategories();
   }, []);
 
-  const fetchData = async () => {
+  const fetchCategories = async () => {
     try {
-      const productsRes = await axios.get(`${API_URL}/api/admin/public-products`);
-      const activeProducts = Array.isArray(productsRes.data)
-        ? productsRes.data.filter((p) => p?.status === 'active')
-        : [];
-      setProducts(activeProducts);
+      setLoading(true);
+      setError(null);
       
+      // Fetch all products
+      const response = await axios.get(`${API_URL}/api/admin/public-products`);
+      
+      let productsData = [];
+      if (Array.isArray(response.data)) {
+        productsData = response.data;
+      } else if (response.data && response.data.products) {
+        productsData = response.data.products;
+      } else if (response.data && response.data.data) {
+        productsData = response.data.data;
+      }
+      
+      setAllProducts(productsData);
+      
+      // Extract unique categories from products
       const categoryMap = new Map();
-      activeProducts.forEach((p) => {
-        if (!p?.category) return;
-        if (!categoryMap.has(p.category)) {
-          categoryMap.set(p.category, {
-            name: p.category,
-            count: 1,
-            image: p.imageUrl || p.image || ''
-          });
-        } else {
-          const existing = categoryMap.get(p.category);
-          existing.count += 1;
-          if (!existing.image) {
-            existing.image = p.imageUrl || p.image || '';
+      
+      productsData.forEach(product => {
+        if (product && product.category) {
+          const catName = product.category.toUpperCase();
+          if (!categoryMap.has(catName)) {
+            categoryMap.set(catName, {
+              name: catName,
+              count: 1,
+              icon: getCategoryIcon(catName),
+              color: getCategoryColor(catName)
+            });
+          } else {
+            const existing = categoryMap.get(catName);
+            existing.count += 1;
           }
         }
       });
-      const uniqueCategories = Array.from(categoryMap.values());
-      setCategories(uniqueCategories);
+      
+      // If no categories from products, use static categories
+      if (categoryMap.size === 0) {
+        const staticCategories = [
+          { name: 'ELECTRONICS', count: 0, icon: 'ri-smartphone-line', color: '#FF6B00' },
+          { name: 'FASHION', count: 0, icon: 'ri-shirt-line', color: '#E74C3C' },
+          { name: 'HOME & KITCHEN', count: 0, icon: 'ri-home-smile-line', color: '#2ECC71' },
+          { name: 'BOOKS', count: 0, icon: 'ri-book-open-line', color: '#9B59B6' },
+          { name: 'GROCERIES', count: 0, icon: 'ri-shopping-basket-line', color: '#3498DB' },
+          { name: 'AGRICULTURAL', count: 0, icon: 'ri-seedling-line', color: '#27AE60' },
+          { name: 'BUSINESS', count: 0, icon: 'ri-briefcase-line', color: '#F39C12' },
+          { name: 'DELIVERY', count: 0, icon: 'ri-truck-line', color: '#1ABC9C' }
+        ];
+        setCategories(staticCategories);
+        setError('No products found. Add products to see categories.');
+      } else {
+        setCategories(Array.from(categoryMap.values()));
+      }
+      
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching categories:', error);
+      setError('Failed to load categories');
+      // Set static categories as fallback
+      setCategories([
+        { name: 'ELECTRONICS', count: 0, icon: 'ri-smartphone-line', color: '#FF6B00' },
+        { name: 'FASHION', count: 0, icon: 'ri-shirt-line', color: '#E74C3C' },
+        { name: 'HOME & KITCHEN', count: 0, icon: 'ri-home-smile-line', color: '#2ECC71' },
+        { name: 'BOOKS', count: 0, icon: 'ri-book-open-line', color: '#9B59B6' },
+        { name: 'GROCERIES', count: 0, icon: 'ri-shopping-basket-line', color: '#3498DB' }
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
-    if (!imagePath.startsWith('/')) return `${API_URL}/uploads/${imagePath}`;
-    return `${API_URL}${imagePath}`;
-  };
-
-  const getCategoryIcon = (categoryName) => {
+  const getCategoryIcon = (category) => {
     const icons = {
       'ELECTRONICS': 'ri-smartphone-line',
       'FASHION': 'ri-shirt-line',
@@ -70,177 +101,166 @@ function Categories() {
       'GROCERIES': 'ri-shopping-basket-line',
       'AGRICULTURAL': 'ri-seedling-line',
       'BUSINESS': 'ri-briefcase-line',
-      'DELIVERY': 'ri-truck-line',
+      'DELIVERY': 'ri-truck-line'
     };
-    return icons[categoryName] || 'ri-folder-line';
+    return icons[category] || 'ri-apps-line';
   };
 
-  const getProductsByCategory = (categoryName) => {
-    return products.filter(p => p.category === categoryName && p.status === 'active');
+  const getCategoryColor = (category) => {
+    const colors = {
+      'ELECTRONICS': '#FF6B00',
+      'FASHION': '#E74C3C',
+      'HOME & KITCHEN': '#2ECC71',
+      'BOOKS': '#9B59B6',
+      'GROCERIES': '#3498DB',
+      'AGRICULTURAL': '#27AE60',
+      'BUSINESS': '#F39C12',
+      'DELIVERY': '#1ABC9C'
+    };
+    return colors[category] || '#FF6B00';
   };
 
-  const handleAddToCart = (product) => {
-    addToCart(product);
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/300x300?text=Product';
+    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
+    return `${API_URL}/uploads/${imagePath}`;
   };
 
-  const translations = {
+  const handleCategoryClick = (categoryName) => {
+    const products = allProducts.filter(p => p.category?.toUpperCase() === categoryName);
+    setSelectedCategory(categoryName);
+    setCategoryProducts(products);
+  };
+
+  const goBack = () => {
+    setSelectedCategory(null);
+    setCategoryProducts([]);
+  };
+
+  const t = {
     en: {
       title: 'Shop by Category',
       subtitle: 'Browse our products by category',
-      backToCategories: 'Back to Categories',
+      categories: 'All Categories',
       products: 'Products',
+      backToCategories: '← Back to Categories',
+      noProducts: 'No products found in this category',
       price: 'ETB',
       addToCart: 'Add to Cart',
-      inStock: 'In Stock',
-      outOfStock: 'Out of Stock',
-      explore: 'Explore',
-      items: 'items'
+      viewAll: 'View All'
     },
     am: {
       title: 'በምድብ ይግዙ',
       subtitle: 'ምርቶችን በምድብ ይመልከቱ',
-      backToCategories: 'ወደ ምድቦች ተመለስ',
+      categories: 'ሁሉም ምድቦች',
       products: 'ምርቶች',
+      backToCategories: '← ወደ ምድቦች ተመለስ',
+      noProducts: 'በዚህ ምድብ ውስጥ ምንም ምርቶች አልተገኙም',
       price: 'ብር',
       addToCart: 'ወደ ጋሪ ጨምር',
-      inStock: 'ክምችት አለ',
-      outOfStock: 'ክምችት የለም',
-      explore: 'ያስሱ',
-      items: 'ዕቃዎች'
+      viewAll: 'ሁሉንም ይመልከቱ'
     }
-  };
+  }[language];
 
-  const t = translations[language];
-
-  // Show products for selected category
-  if (selectedCategory) {
-    const categoryProducts = getProductsByCategory(selectedCategory.name);
-    
-    return (
-      <div className="ae-category-products">
-        <div className="ae-category-products-header">
-          <button className="ae-back-btn" onClick={() => setSelectedCategory(null)}>
-            <i className="ri-arrow-left-line"></i> {t.backToCategories}
-          </button>
-          <div className="ae-category-title-section">
-            <h1>{selectedCategory.name}</h1>
-            <p>{categoryProducts.length} {t.products}</p>
-          </div>
-        </div>
-
-        <div className="ae-products-grid-category">
-          {categoryProducts.map(product => {
-            const imageUrl = getImageUrl(product.image || product.imageUrl);
-            const discount = Math.floor(Math.random() * 20) + 5;
-            const originalPrice = Math.floor(product.price * (1 + discount / 100));
-            
-            return (
-              <div key={product._id} className="ae-product-card-category">
-                <div className="ae-product-img-category">
-                  {imageUrl ? (
-                    <img src={imageUrl} alt={product.name} />
-                  ) : (
-                    <div className="ae-no-image"><i className="ri-image-line"></i></div>
-                  )}
-                  {discount > 10 && (
-                    <span className="ae-discount-tag">-{discount}%</span>
-                  )}
-                </div>
-                <div className="ae-product-info-category">
-                  <h3>{language === 'en' ? product.name : (product.nameAm || product.name)}</h3>
-                  <div className="ae-price-row">
-                    <span className="ae-current-price">{t.price} {product.price}</span>
-                    <span className="ae-old-price">{t.price} {originalPrice}</span>
-                  </div>
-                  <div className="ae-stock-status">
-                    {product.stock > 0 ? (
-                      <span className="ae-in-stock"><i className="ri-checkbox-circle-line"></i> {t.inStock}</span>
-                    ) : (
-                      <span className="ae-out-stock"><i className="ri-close-circle-line"></i> {t.outOfStock}</span>
-                    )}
-                  </div>
-                  <button 
-                    className="ae-add-cart-btn" 
-                    onClick={() => handleAddToCart(product)} 
-                    disabled={product.stock === 0}
-                  >
-                    <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {categoryProducts.length === 0 && (
-          <div className="ae-no-products">
-            <i className="ri-shopping-bag-line"></i>
-            <p>No products found in this category</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Loading state
   if (loading) {
     return (
-      <div className="ae-loading-categories">
-        <div className="ae-loading-spinner"></div>
+      <div className="categories-loading">
+        <div className="loading-spinner"></div>
         <p>Loading categories...</p>
       </div>
     );
   }
 
-  // Show all categories (main view)
+  // If a category is selected, show products in that category
+  if (selectedCategory) {
+    return (
+      <div className="categories-page">
+        <div className="categories-container">
+          <button className="back-btn" onClick={goBack}>
+            <i className="ri-arrow-left-line"></i> {t.backToCategories}
+          </button>
+          
+          <div className="category-header">
+            <h1>{selectedCategory}</h1>
+            <p>{categoryProducts.length} {t.products}</p>
+          </div>
+          
+          {categoryProducts.length === 0 ? (
+            <div className="no-products">
+              <i className="ri-shopping-bag-line"></i>
+              <h3>{t.noProducts}</h3>
+            </div>
+          ) : (
+            <div className="category-products-grid">
+              {categoryProducts.map(product => {
+                const discount = Math.floor(Math.random() * 30) + 10;
+                const originalPrice = Math.floor(product.price * (1 + discount / 100));
+                const soldCount = Math.floor(Math.random() * 1000) + 10;
+                
+                return (
+                  <div key={product._id} className="product-card">
+                    <Link to={`/product/${product._id}`} className="product-link">
+                      <div className="product-image">
+                        <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
+                        {discount > 15 && <span className="discount-badge">-{discount}%</span>}
+                      </div>
+                      <div className="product-info">
+                        <h3 className="product-title">{product.name}</h3>
+                        <div className="product-price">
+                          <span className="current-price">{t.price} {product.price.toLocaleString()}</span>
+                          <span className="original-price">{t.price} {originalPrice.toLocaleString()}</span>
+                        </div>
+                        <div className="product-rating">
+                          <div className="stars">★★★★☆</div>
+                          <span className="rating-count">({soldCount}+ sold)</span>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Show all categories
   return (
-    <div className="ae-categories-page">
-      <div className="ae-categories-container">
-        <div className="ae-categories-header">
+    <div className="categories-page">
+      <div className="categories-container">
+        <div className="categories-header">
           <h1>{t.title}</h1>
           <p>{t.subtitle}</p>
         </div>
 
-        <div className="ae-categories-grid">
-          {categories.map((category) => (
-            <div className="ae-category-flip-card" key={category.name} onClick={() => setSelectedCategory(category)}>
-              <div className="ae-flip-card-inner">
-                {/* Front Side */}
-                <div className="ae-flip-front" style={{ backgroundImage: `url(${getImageUrl(category.image)})` }}>
-                  <div className="ae-front-overlay"></div>
-                  <div className="ae-front-content">
-                    <div className="ae-category-icon-front">
-                      <i className={getCategoryIcon(category.name)}></i>
-                    </div>
-                    <div className="ae-category-name-front">{category.name}</div>
-                    <div className="ae-category-count-front">{category.count} {t.items}</div>
-                    <button className="ae-explore-front">{t.explore} →</button>
-                  </div>
-                </div>
-                
-                {/* Back Side */}
-                <div className="ae-flip-back">
-                  <div className="ae-back-content">
-                    <div className="ae-back-icon">
-                      <i className={getCategoryIcon(category.name)}></i>
-                    </div>
-                    <h3>{category.name}</h3>
-                    <div className="ae-back-stats">
-                      <span><i className="ri-shopping-bag-line"></i> {category.count} {t.products}</span>
-                    </div>
-                    <p>Click to explore all {category.name.toLowerCase()} products</p>
-                    <div className="ae-back-explore">
-                      {t.explore} <i className="ri-arrow-right-line"></i>
-                    </div>
-                  </div>
-                </div>
+        {error && (
+          <div className="error-message">
+            <i className="ri-error-warning-line"></i>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="categories-grid">
+          {categories.map((category, index) => (
+            <div 
+              key={index} 
+              className="category-card"
+              onClick={() => handleCategoryClick(category.name)}
+            >
+              <div className="category-icon" style={{ backgroundColor: category.color + '20' }}>
+                <i className={category.icon} style={{ color: category.color }}></i>
               </div>
+              <h3 className="category-name">{category.name}</h3>
+              <p className="category-count">{category.count}+ items</p>
             </div>
           ))}
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Categories;

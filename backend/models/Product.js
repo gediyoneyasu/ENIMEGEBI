@@ -8,10 +8,8 @@ const productSchema = new mongoose.Schema({
   stock: { type: Number, required: true, default: 0 },
   description: { type: String, default: '' },
   descriptionAm: { type: String, default: '' },
-  // Single image fields (backward compatibility)
   image: { type: String, default: '' },
   imageUrl: { type: String, default: '' },
-  // Multiple images support
   images: { type: [String], default: [] },
   unit: { type: String, enum: ['kg', 'liter', 'piece'], default: 'kg' },
   seller: { type: String, default: '' },

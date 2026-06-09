@@ -4,7 +4,7 @@ import { useLanguage } from '../../main';
 import { Link } from 'react-router-dom';
 import './Contact.css';
 
-const API_URL = 'https://enimegebi-backend.onrender.com';
+const API_URL = 'http://localhost:5001';
 
 const Contact = () => {
   const { language } = useLanguage();
@@ -47,13 +47,27 @@ const Contact = () => {
     setSuccess('');
 
     try {
-      await axios.post(`${API_URL}/api/admin/contacts`, formData);
-      setSuccess('Message sent successfully! We will contact you soon.');
-      setFormData({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setSuccess(''), 5000);
+      // FIXED: Changed from /api/admin/contacts to /api/contact
+      const response = await axios.post(`${API_URL}/api/contact`, formData);
+      
+      console.log('Response:', response.data);
+      
+      if (response.data.success || response.status === 200) {
+        setSuccess('Message sent successfully! We will contact you soon.');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setSuccess(''), 5000);
+      } else {
+        setError('Failed to send message. Please try again.');
+      }
     } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to send message. Please try again.');
+      console.error('Error details:', err);
+      console.error('Error response:', err.response?.data);
+      
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to send message. Please try again.');
+      }
       setTimeout(() => setError(''), 5000);
     } finally {
       setLoading(false);

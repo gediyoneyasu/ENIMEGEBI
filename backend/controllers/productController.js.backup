@@ -1,9 +1,11 @@
 const Product = require('../models/Product');
 
+// Test function
 const test = (req, res) => {
   res.json({ message: 'Product controller works!' });
 };
 
+// Get all products (Admin)
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -13,6 +15,7 @@ const getProducts = async (req, res) => {
   }
 };
 
+// Get public products (For customers)
 const getPublicProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: 'active' }).sort({ createdAt: -1 });
@@ -22,18 +25,22 @@ const getPublicProducts = async (req, res) => {
   }
 };
 
+// Create product with multiple images
 const createProduct = async (req, res) => {
   try {
     console.log('=== CREATE PRODUCT ===');
-    console.log('Files:', req.files ? req.files.length : 0);
+    console.log('Files received:', req.files ? req.files.length : 0);
     console.log('Body:', req.body);
     
     let imageUrls = [];
     
+    // Handle multiple image uploads
     if (req.files && req.files.length > 0) {
       imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+      console.log('Saved images:', imageUrls);
     }
     
+    // Parse product data
     let productData;
     if (req.body.product) {
       productData = JSON.parse(req.body.product);
@@ -45,28 +52,27 @@ const createProduct = async (req, res) => {
       name: productData.name,
       nameAm: productData.nameAm || '',
       category: productData.category,
-      price: Number(productData.price),
-      stock: Number(productData.stock) || 0,
+      price: productData.price,
+      stock: productData.stock || 0,
       description: productData.description || '',
       descriptionAm: productData.descriptionAm || '',
       unit: productData.unit || 'kg',
       seller: productData.seller || '',
       status: productData.status || 'active',
       images: imageUrls,
-      imageUrl: imageUrls[0] || '',
-      image: imageUrls[0] || ''
+      imageUrl: imageUrls[0] || ''
     });
     
-    const savedProduct = await product.save();
-    console.log('Product saved:', savedProduct._id);
-    res.status(201).json({ success: true, product: savedProduct });
-    
+    await product.save();
+    console.log('Product saved successfully');
+    res.status(201).json({ success: true, product });
   } catch (error) {
     console.error('Create error:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
+// Update product with multiple images
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -76,11 +82,13 @@ const updateProduct = async (req, res) => {
     
     let allImages = [...(product.images || [])];
     
+    // Add new images
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => `/uploads/${file.filename}`);
-      allImages = [...allImages, ...newImages];
+      const newImageUrls = req.files.map(file => `/uploads/${file.filename}`);
+      allImages = [...allImages, ...newImageUrls];
     }
     
+    // Parse product data
     let productData;
     if (req.body.product) {
       productData = JSON.parse(req.body.product);
@@ -88,6 +96,7 @@ const updateProduct = async (req, res) => {
       productData = req.body;
     }
     
+    // Handle removal of images
     if (productData.existingImages) {
       allImages = productData.existingImages;
     }
@@ -98,8 +107,8 @@ const updateProduct = async (req, res) => {
         name: productData.name,
         nameAm: productData.nameAm || '',
         category: productData.category,
-        price: Number(productData.price),
-        stock: Number(productData.stock),
+        price: productData.price,
+        stock: productData.stock,
         description: productData.description || '',
         descriptionAm: productData.descriptionAm || '',
         unit: productData.unit || 'kg',
@@ -118,6 +127,7 @@ const updateProduct = async (req, res) => {
   }
 };
 
+// Delete product
 const deleteProduct = async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);

@@ -28,8 +28,9 @@ router.get('/test-controller', productController.test);
 
 // ========== PRODUCT ROUTES WITH UPLOAD MIDDLEWARE ==========
 router.get('/products', productController.getProducts);
-router.post('/products', upload, productController.createProduct);  // ← ADDED upload
-router.put('/products/:id', upload, productController.updateProduct); // ← ADDED upload
+router.get('/public-products', productController.getPublicProducts);
+router.post('/products', upload, productController.createProduct);
+router.put('/products/:id', upload, productController.updateProduct);
 router.delete('/products/:id', productController.deleteProduct);
 
 module.exports = router;

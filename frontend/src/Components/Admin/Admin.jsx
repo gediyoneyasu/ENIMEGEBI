@@ -13,12 +13,12 @@ import SliderManagement from './HomeControl/SliderManagement';
 import TestimonialManagement from './HomeControl/TestimonialManagement';
 import HomeSettings from './HomeControl/HomeSettings';
 import TeamManagement from './TeamManagement/TeamManagement';
-import ProjectManagement from './ProjectManagement/ProjectManagement';
 import ContactInfo from './ContactInfo';
 
 const Admin = () => {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -41,6 +41,20 @@ const Admin = () => {
     } catch (error) {
       navigate('/admin-login');
     }
+
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+      if (window.innerWidth <= 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, [navigate]);
 
   const handleLogout = () => {
@@ -54,9 +68,6 @@ const Admin = () => {
   if (!user) return <div className="admin-loading">Loading Admin Panel...</div>;
 
   const menuItems = [
-    { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
-    { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
-    { path: '/admin/projects', name: 'Projects', icon: 'ri-folder-line' },
     { path: '/admin', name: 'Dashboard', icon: 'ri-dashboard-line' },
     { path: '/admin/users', name: 'Users', icon: 'ri-user-settings-line' },
     { path: '/admin/products', name: 'Products', icon: 'ri-shopping-bag-3-line' },
@@ -91,26 +102,72 @@ const Admin = () => {
 
   return (
     <div className="admin-panel">
+      {/* Mobile Menu Overlay */}
+      {isMobile && sidebarOpen && (
+        <div className="mobile-overlay" onClick={toggleSidebar}></div>
+      )}
+      
+      {/* Sidebar */}
       <div className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
-          <div className="logo"><i className="ri-shield-star-line"></i>{sidebarOpen && <span>Enimegebi Admin</span>}</div>
-          <button className="toggle-btn" onClick={toggleSidebar}><i className={`ri-arrow-left-s-line ${!sidebarOpen ? 'rotate' : ''}`}></i></button>
+          <div className="logo">
+            <i className="ri-shield-star-line"></i>
+            {sidebarOpen && <span>E-MARKATO Admin</span>}
+          </div>
+          <button className="toggle-btn" onClick={toggleSidebar}>
+            <i className={`ri-arrow-left-s-line ${!sidebarOpen ? 'rotate' : ''}`}></i>
+          </button>
         </div>
         <div className="admin-info">
           <div className="admin-avatar"><i className="ri-admin-line"></i></div>
-          {sidebarOpen && (<div className="admin-details"><h4>{user.name}</h4><p>{user.email}</p><span className="admin-badge">Administrator</span></div>)}
+          {sidebarOpen && (
+            <div className="admin-details">
+              <h4>{user.name}</h4>
+              <p>{user.email}</p>
+              <span className="admin-badge">Administrator</span>
+            </div>
+          )}
         </div>
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
-            <Link key={item.path} to={item.path} className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}>
-              <i className={item.icon}></i>{sidebarOpen && <span>{item.name}</span>}
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+              onClick={() => isMobile && setSidebarOpen(false)}
+            >
+              <i className={item.icon}></i>
+              {sidebarOpen && <span>{item.name}</span>}
             </Link>
           ))}
-          <button onClick={handleLogout} className="nav-item logout-btn"><i className="ri-logout-box-line"></i>{sidebarOpen && <span>Logout</span>}</button>
+          <button onClick={handleLogout} className="nav-item logout-btn">
+            <i className="ri-logout-box-line"></i>
+            {sidebarOpen && <span>Logout</span>}
+          </button>
         </nav>
       </div>
+      
+      {/* Main Content */}
       <div className={`admin-main ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-        <header className="admin-header"><h1>{getPageTitle(location.pathname)}</h1></header>
+        <header className="admin-header">
+          {/* Mobile Menu Button (☰) */}
+          {isMobile && !sidebarOpen && (
+            <button className="mobile-menu-btn" onClick={toggleSidebar}>
+              <i className="ri-menu-line"></i>
+            </button>
+          )}
+          <h1>{getPageTitle(location.pathname)}</h1>
+          <div className="header-actions">
+            <div className="notifications">
+              <i className="ri-notification-3-line"></i>
+              <span className="badge">3</span>
+            </div>
+            <div className="admin-user">
+              <i className="ri-user-line"></i>
+              <span>{user.name?.split(' ')[0]}</span>
+            </div>
+          </div>
+        </header>
         <div className="admin-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -124,7 +181,6 @@ const Admin = () => {
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/home-settings" element={<HomeSettings />} />
             <Route path="/contact" element={<ContactInfo />} />
-            <Route path="/projects" element={<ProjectManagement />} />
             <Route path="/settings" element={<SystemSettings />} />
           </Routes>
         </div>

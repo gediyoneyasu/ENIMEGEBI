@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage, useCart } from '../../main';
-import './ProductDetails.css';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation, Thumbs } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/thumbs';
+import './ProductDetail.css';
 
 const API_URL = 'http://localhost:5001';
 
-function ProductDetails() {
+function ProductDetail() {
   const { id } = useParams();
   const { language } = useLanguage();
   const { addToCart } = useCart();
@@ -15,19 +20,16 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [activeTab, setActiveTab] = useState('description');
-  const [isZooming, setIsZooming] = useState(false);
+  const [showZoom, setShowZoom] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const [wishlist, setWishlist] = useState(false);
-  const [showLightbox, setShowLightbox] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  
-  const imageRef = useRef(null);
 
   useEffect(() => {
     fetchProduct();
@@ -49,11 +51,13 @@ function ProductDetails() {
       const foundProduct = productsData.find(p => p._id === id);
       setProduct(foundProduct);
       
+      // Get related products (same category)
       if (foundProduct) {
         const related = productsData.filter(p => p.category === foundProduct.category && p._id !== id).slice(0, 6);
         setRelatedProducts(related);
       }
       
+      // Sample reviews
       setReviews([
         { id: 1, name: 'John D.', rating: 5, date: '2024-05-15', comment: 'Excellent product! Very satisfied with quality.', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
         { id: 2, name: 'Sarah M.', rating: 4, date: '2024-05-10', comment: 'Good product, fast delivery.', avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
@@ -72,56 +76,6 @@ function ProductDetails() {
     if (imagePath.startsWith('http')) return imagePath;
     if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
     return `${API_URL}/uploads/${imagePath}`;
-  };
-
-  // Get all product images
-  const productImages = product ? [
-    getImageUrl(product.image || product.imageUrl),
-    'https://images.pexels.com/photos/404280/pexels-photo-404280.jpeg',
-    'https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg',
-    'https://images.pexels.com/photos/18105/pexels-photo.jpg',
-    'https://images.pexels.com/photos/1649771/pexels-photo-1649771.jpeg'
-  ].slice(0, 5) : [];
-
-  const totalImages = productImages.length;
-
-  // Navigation functions
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % totalImages);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
-  };
-
-  const goToImage = (index) => {
-    setCurrentImageIndex(index);
-  };
-
-  const openLightbox = (index) => {
-    setLightboxIndex(index);
-    setShowLightbox(true);
-  };
-
-  const closeLightbox = () => {
-    setShowLightbox(false);
-  };
-
-  const nextLightbox = () => {
-    setLightboxIndex((prev) => (prev + 1) % totalImages);
-  };
-
-  const prevLightbox = () => {
-    setLightboxIndex((prev) => (prev - 1 + totalImages) % totalImages);
-  };
-
-  // Zoom on hover
-  const handleMouseMove = (e) => {
-    if (!isZooming) return;
-    const rect = e.target.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoomPosition({ x, y });
   };
 
   const handleQuantityChange = (type) => {
@@ -143,6 +97,23 @@ function ProductDetails() {
     navigate('/cart');
   };
 
+  const handleWishlist = () => {
+    setWishlist(!wishlist);
+    alert(wishlist ? 'Removed from wishlist' : 'Added to wishlist');
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Product link copied to clipboard!');
+  };
+
+  const handleMouseMove = (e) => {
+    const rect = e.target.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({ x, y });
+  };
+
   const discount = product ? Math.floor(Math.random() * 30) + 10 : 0;
   const originalPrice = product ? Math.floor(product.price * (1 + discount / 100)) : 0;
   const avgRating = 4.5;
@@ -151,45 +122,69 @@ function ProductDetails() {
   const t = {
     en: {
       price: 'ETB',
+      originalPrice: 'Original Price',
+      discount: 'Discount',
       inStock: 'In Stock',
       outOfStock: 'Out of Stock',
       quantity: 'Quantity',
       addToCart: 'Add to Cart',
       buyNow: 'Buy Now',
+      addToWishlist: 'Add to Wishlist',
+      share: 'Share',
       description: 'Product Description',
       specifications: 'Specifications',
       reviews: 'Customer Reviews',
       relatedProducts: 'Related Products',
       freeShipping: 'Free Shipping',
+      deliveryEstimate: 'Delivery Estimate',
       deliveryText: 'Free delivery within 3-5 business days',
       returns: '30 Days Returns',
       returnsText: 'Easy returns within 30 days',
-      warranty: '1 Year warranty',
+      warranty: 'Warranty',
+      warrantyText: '1 Year warranty included',
+      securePayment: 'Secure Payment',
+      rating: 'Rating',
+      writeReview: 'Write a Review',
+      seeAllReviews: 'See All Reviews',
       color: 'Color',
       size: 'Size',
       seller: 'Seller',
-      of: 'of'
+      sellerRating: 'Seller Rating',
+      responseRate: 'Response Rate',
+      responseTime: 'Response Time'
     },
     am: {
       price: 'ብር',
+      originalPrice: 'ዋና ዋጋ',
+      discount: 'ቅናሽ',
       inStock: 'ክምችት አለ',
       outOfStock: 'ክምችት የለም',
       quantity: 'ብዛት',
       addToCart: 'ወደ ጋሪ ጨምር',
       buyNow: 'አሁን ግዛ',
+      addToWishlist: 'ወደ ምኞት ዝርዝር ጨምር',
+      share: 'አጋራ',
       description: 'የምርት መግለጫ',
       specifications: 'ዝርዝር መረጃ',
       reviews: 'የደንበኞች አስተያየት',
       relatedProducts: 'ተዛማጅ ምርቶች',
       freeShipping: 'ነጻ አቅርቦት',
+      deliveryEstimate: 'የአቅርቦት ግምት',
       deliveryText: 'ከ3-5 የስራ ቀናት ውስጥ ነጻ አቅርቦት',
       returns: 'በ30 ቀናት ውስጥ መመለስ',
       returnsText: 'በ30 ቀናት ውስጥ ቀላል የመመለስ አገልግሎት',
-      warranty: 'የ1 አመት ዋስትና',
+      warranty: 'ዋስትና',
+      warrantyText: 'የ1 አመት ዋስትና',
+      securePayment: 'ደህንነቱ የተጠበቀ ክፍያ',
+      rating: 'ደረጃ',
+      writeReview: 'አስተያየት ጻፍ',
+      seeAllReviews: 'ሁሉንም አስተያየቶች ተመልከት',
       color: 'ቀለም',
       size: 'መጠን',
       seller: 'ሻጭ',
-      of: 'ከ'
+      sellerRating: 'የሻጭ ደረጃ',
+      responseRate: 'የምላሽ መጠን',
+      responseTime: 'የምላሽ ጊዜ'
     }
   }[language];
 
@@ -212,6 +207,11 @@ function ProductDetails() {
     );
   }
 
+  const productImages = [
+    getImageUrl(product.image || product.imageUrl),
+    ...(product.images || [])
+  ].slice(0, 5);
+
   return (
     <div className="pd-page">
       <div className="pd-container">
@@ -226,70 +226,47 @@ function ProductDetails() {
           <span className="active">{product.name}</span>
         </div>
 
+        {/* Main Product Section */}
         <div className="pd-main">
-          {/* Image Gallery - AliExpress Style */}
+          {/* Image Gallery - Left */}
           <div className="pd-gallery">
-            <div className="pd-main-image-container">
-              <div 
-                className={`pd-main-image ${isZooming ? 'zooming' : ''}`}
-                onMouseEnter={() => setIsZooming(true)}
-                onMouseLeave={() => setIsZooming(false)}
+            <div className="pd-main-image">
+              <img 
+                src={productImages[selectedImage]} 
+                alt={product.name}
                 onMouseMove={handleMouseMove}
-              >
-                <img 
-                  src={productImages[currentImageIndex]} 
-                  alt={product.name}
-                  onClick={() => openLightbox(currentImageIndex)}
+                onMouseEnter={() => setShowZoom(true)}
+                onMouseLeave={() => setShowZoom(false)}
+              />
+              {showZoom && (
+                <div 
+                  className="pd-zoom-lens"
+                  style={{
+                    backgroundImage: `url(${productImages[selectedImage]})`,
+                    backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                    backgroundSize: '200%'
+                  }}
                 />
-                {isZooming && (
-                  <div 
-                    className="pd-zoom-lens"
-                    style={{
-                      backgroundImage: `url(${productImages[currentImageIndex]})`,
-                      backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                      backgroundSize: '200%'
-                    }}
-                  />
-                )}
-              </div>
-              
-              {/* Image Counter */}
-              <div className="pd-image-counter">
-                <span>{currentImageIndex + 1} / {totalImages}</span>
-              </div>
-              
-              {/* Navigation Arrows */}
-              {totalImages > 1 && (
-                <>
-                  <button className="pd-nav-arrow prev" onClick={prevImage}>
-                    <i className="ri-arrow-left-s-line"></i>
-                  </button>
-                  <button className="pd-nav-arrow next" onClick={nextImage}>
-                    <i className="ri-arrow-right-s-line"></i>
-                  </button>
-                </>
               )}
             </div>
-            
-            {/* Thumbnails with numbers */}
             <div className="pd-thumbnails">
               {productImages.map((img, idx) => (
                 <div 
                   key={idx} 
-                  className={`pd-thumb ${currentImageIndex === idx ? 'active' : ''}`}
-                  onClick={() => goToImage(idx)}
+                  className={`pd-thumb ${selectedImage === idx ? 'active' : ''}`}
+                  onClick={() => setSelectedImage(idx)}
                 >
                   <img src={img} alt={`Thumb ${idx + 1}`} />
-                  <span className="pd-thumb-number">{idx + 1}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Product Info */}
+          {/* Product Info - Right */}
           <div className="pd-info">
             <h1 className="pd-title">{product.name}</h1>
             
+            {/* Rating */}
             <div className="pd-rating-section">
               <div className="pd-stars">
                 {[...Array(5)].map((_, i) => (
@@ -300,12 +277,14 @@ function ProductDetails() {
               <span className="pd-sold-count">🔥 {Math.floor(Math.random() * 5000)}+ sold</span>
             </div>
 
+            {/* Price */}
             <div className="pd-price-section">
               <span className="pd-current-price">{t.price} {product.price.toLocaleString()}</span>
               <span className="pd-original-price">{t.price} {originalPrice.toLocaleString()}</span>
               <span className="pd-discount-badge">-{discount}%</span>
             </div>
 
+            {/* Shipping Info */}
             <div className="pd-shipping-info">
               <div className="pd-shipping-item">
                 <i className="ri-truck-line"></i>
@@ -325,10 +304,12 @@ function ProductDetails() {
                 <i className="ri-shield-check-line"></i>
                 <div>
                   <strong>{t.warranty}</strong>
+                  <span>{t.warrantyText}</span>
                 </div>
               </div>
             </div>
 
+            {/* Color Options */}
             <div className="pd-options">
               <div className="pd-option-group">
                 <label>{t.color}:</label>
@@ -345,6 +326,7 @@ function ProductDetails() {
                 </div>
               </div>
 
+              {/* Size Options */}
               <div className="pd-option-group">
                 <label>{t.size}:</label>
                 <div className="pd-size-options">
@@ -360,6 +342,7 @@ function ProductDetails() {
                 </div>
               </div>
 
+              {/* Quantity */}
               <div className="pd-option-group">
                 <label>{t.quantity}:</label>
                 <div className="pd-quantity">
@@ -371,6 +354,7 @@ function ProductDetails() {
               </div>
             </div>
 
+            {/* Action Buttons */}
             <div className="pd-actions">
               <button className="pd-add-to-cart" onClick={handleAddToCart}>
                 <i className="ri-shopping-cart-line"></i> {t.addToCart}
@@ -378,19 +362,33 @@ function ProductDetails() {
               <button className="pd-buy-now" onClick={handleBuyNow}>
                 {t.buyNow}
               </button>
-              <button className={`pd-wishlist ${wishlist ? 'active' : ''}`} onClick={() => setWishlist(!wishlist)}>
+              <button className={`pd-wishlist ${wishlist ? 'active' : ''}`} onClick={handleWishlist}>
                 <i className={wishlist ? 'ri-heart-fill' : 'ri-heart-line'}></i>
               </button>
-              <button className="pd-share" onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }}>
+              <button className="pd-share" onClick={handleShare}>
                 <i className="ri-share-line"></i>
               </button>
             </div>
 
+            {/* Seller Info */}
             <div className="pd-seller-info">
               <div className="pd-seller-header">
                 <i className="ri-store-line"></i>
                 <strong>{t.seller}: E-MARKATO Official Store</strong>
               </div>
+              <div className="pd-seller-stats">
+                <span>⭐ {t.sellerRating}: 4.9</span>
+                <span>💬 {t.responseRate}: 98%</span>
+                <span>⏱️ {t.responseTime}: Within 1 hour</span>
+              </div>
+            </div>
+
+            {/* Payment Badges */}
+            <div className="pd-payment-badges">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/1280px-PayPal.svg.png" alt="PayPal" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/1280px-American_Express_logo_%282018%29.svg.png" alt="Amex" />
             </div>
           </div>
         </div>
@@ -412,13 +410,14 @@ function ProductDetails() {
           <div className="pd-tab-content">
             {activeTab === 'description' && (
               <div className="pd-description">
-                <p>{product.description || `Experience the best quality with ${product.name}. This premium product is designed to meet your needs with exceptional performance and durability.`}</p>
+                <p>{product.description || `Experience the best quality with ${product.name}. This premium product is designed to meet your needs with exceptional performance and durability. Made with high-quality materials, it ensures long-lasting use and satisfaction. Perfect for daily use, this product combines style, functionality, and reliability.`}</p>
                 <h4>Key Features:</h4>
                 <ul>
                   <li>✓ Premium quality materials</li>
                   <li>✓ 1 year warranty included</li>
                   <li>✓ Free shipping across Ethiopia</li>
                   <li>✓ 30-day money-back guarantee</li>
+                  <li>✓ 24/7 customer support</li>
                 </ul>
               </div>
             )}
@@ -432,6 +431,7 @@ function ProductDetails() {
                     <tr><td>Price</td><td>{t.price} {product.price}</td></tr>
                     <tr><td>Stock Status</td><td>{product.stock > 0 ? 'In Stock' : 'Out of Stock'}</td></tr>
                     <tr><td>Warranty</td><td>1 Year</td></tr>
+                    <tr><td>Return Policy</td><td>30 Days</td></tr>
                     <tr><td>Delivery Time</td><td>3-5 Business Days</td></tr>
                   </tbody>
                 </table>
@@ -440,14 +440,20 @@ function ProductDetails() {
 
             {activeTab === 'reviews' && (
               <div className="pd-reviews">
+                <div className="pd-reviews-summary">
+                  <div className="pd-avg-rating">
+                    <span className="pd-avg-number">{avgRating}</span>
+                    <div className="pd-avg-stars">{[...Array(5)].map((_, i) => <i key={i} className={i < Math.floor(avgRating) ? 'ri-star-fill' : 'ri-star-line'}></i>)}</div>
+                    <span>Based on {totalReviews} reviews</span>
+                  </div>
+                  <button className="pd-write-review">{t.writeReview}</button>
+                </div>
                 {reviews.map(review => (
                   <div key={review.id} className="pd-review-card">
                     <img src={review.avatar} alt={review.name} />
                     <div className="pd-review-content">
                       <h4>{review.name}</h4>
-                      <div className="pd-review-stars">
-                        {[...Array(5)].map((_, i) => <i key={i} className={i < review.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}
-                      </div>
+                      <div className="pd-review-stars">{[...Array(5)].map((_, i) => <i key={i} className={i < review.rating ? 'ri-star-fill' : 'ri-star-line'}></i>)}</div>
                       <p>{review.comment}</p>
                       <span className="pd-review-date">{review.date}</span>
                     </div>
@@ -474,29 +480,8 @@ function ProductDetails() {
           </div>
         )}
       </div>
-
-      {/* Lightbox Modal */}
-      {showLightbox && (
-        <div className="pd-lightbox" onClick={closeLightbox}>
-          <button className="pd-lightbox-close" onClick={closeLightbox}>
-            <i className="ri-close-line"></i>
-          </button>
-          <button className="pd-lightbox-prev" onClick={(e) => { e.stopPropagation(); prevLightbox(); }}>
-            <i className="ri-arrow-left-s-line"></i>
-          </button>
-          <div className="pd-lightbox-image" onClick={(e) => e.stopPropagation()}>
-            <img src={productImages[lightboxIndex]} alt={product.name} />
-            <div className="pd-lightbox-counter">
-              {lightboxIndex + 1} {t.of} {totalImages}
-            </div>
-          </div>
-          <button className="pd-lightbox-next" onClick={(e) => { e.stopPropagation(); nextLightbox(); }}>
-            <i className="ri-arrow-right-s-line"></i>
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-export default ProductDetails;
+export default ProductDetail;
