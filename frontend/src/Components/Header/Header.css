@@ -676,4 +676,77 @@
   .ali-action-menu i {
     font-size: 14px;
   }
+}/* Logo with Icon Image */
+.ali-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.ali-logo-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.ali-logo-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.ali-logo-e {
+  color: #FF7A00;
+}
+
+/* Sidebar Logo Image */
+.ali-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.ali-sidebar-logo-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+  .ali-logo-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .ali-logo-text {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ali-logo-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .ali-logo-text {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 375px) {
+  .ali-logo-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .ali-logo-text {
+    font-size: 12px;
+  }
 }

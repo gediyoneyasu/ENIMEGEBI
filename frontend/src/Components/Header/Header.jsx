@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
 import './Header.css';
+import logoIcon from '../../assets/icon.png';
 
 function Header() {
   const { language, changeLanguage } = useLanguage();
@@ -18,7 +19,6 @@ function Header() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Debug: Log cartCount changes
   useEffect(() => {
     console.log('Header cartCount updated:', cartCount);
   }, [cartCount]);
@@ -132,9 +132,9 @@ function Header() {
         <div className="ali-main-header">
           <div className="ali-container">
             <div className="ali-header-content">
-              {/* Logo */}
+              {/* Logo with Icon PNG */}
               <Link to="/" className="ali-logo">
-                <i className="ri-shopping-cart-line"></i>
+                <img src={logoIcon} alt="E-MARKATO" className="ali-logo-icon" />
                 <span className="ali-logo-text">
                   <span className="ali-logo-e">E-</span>MARKATO
                 </span>
@@ -245,7 +245,10 @@ function Header() {
         {/* Mobile Sidebar */}
         <div className={`ali-sidebar ${showMenu ? 'open' : ''}`}>
           <div className="ali-sidebar-header">
-            <span className="ali-sidebar-logo">E-MARKATO</span>
+            <div className="ali-sidebar-logo">
+              <img src={logoIcon} alt="E-MARKATO" className="ali-sidebar-logo-img" />
+              <span>E-MARKATO</span>
+            </div>
             <i className="ri-close-line" onClick={toggleMenu}></i>
           </div>
           <ul className="ali-sidebar-nav">
