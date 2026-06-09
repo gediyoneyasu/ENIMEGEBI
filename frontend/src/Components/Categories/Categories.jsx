@@ -24,7 +24,6 @@ const Categories = () => {
       setLoading(true);
       setError(null);
       
-      // Fetch all products
       const response = await axios.get(`${API_URL}/api/admin/public-products`);
       
       let productsData = [];
@@ -38,7 +37,6 @@ const Categories = () => {
       
       setAllProducts(productsData);
       
-      // Extract unique categories from products
       const categoryMap = new Map();
       
       productsData.forEach(product => {
@@ -58,7 +56,6 @@ const Categories = () => {
         }
       });
       
-      // If no categories from products, use static categories
       if (categoryMap.size === 0) {
         const staticCategories = [
           { name: 'ELECTRONICS', count: 0, icon: 'ri-smartphone-line', color: '#FF6B00' },
@@ -79,7 +76,6 @@ const Categories = () => {
     } catch (error) {
       console.error('Error fetching categories:', error);
       setError('Failed to load categories');
-      // Set static categories as fallback
       setCategories([
         { name: 'ELECTRONICS', count: 0, icon: 'ri-smartphone-line', color: '#FF6B00' },
         { name: 'FASHION', count: 0, icon: 'ri-shirt-line', color: '#E74C3C' },
@@ -122,9 +118,16 @@ const Categories = () => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/300x300?text=Product';
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
     if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
     return `${API_URL}/uploads/${imagePath}`;
+  };
+
+  const getProductImage = (product) => {
+    if (product.images && product.images.length > 0) return product.images[0];
+    if (product.image) return product.image;
+    if (product.imageUrl) return product.imageUrl;
+    return null;
   };
 
   const handleCategoryClick = (categoryName) => {
@@ -172,7 +175,6 @@ const Categories = () => {
     );
   }
 
-  // If a category is selected, show products in that category
   if (selectedCategory) {
     return (
       <div className="categories-page">
@@ -202,7 +204,12 @@ const Categories = () => {
                   <div key={product._id} className="product-card">
                     <Link to={`/product/${product._id}`} className="product-link">
                       <div className="product-image">
-                        <img src={getImageUrl(product.image || product.imageUrl)} alt={product.name} />
+                        <img 
+                          src={getImageUrl(getProductImage(product))} 
+                          alt={product.name}
+                          onError={(e) => { e.target.src = 'https://via.placeholder.com/300x300?text=Product'; }}
+                          loading="lazy"
+                        />
                         {discount > 15 && <span className="discount-badge">-{discount}%</span>}
                       </div>
                       <div className="product-info">
@@ -227,7 +234,6 @@ const Categories = () => {
     );
   }
 
-  // Show all categories
   return (
     <div className="categories-page">
       <div className="categories-container">

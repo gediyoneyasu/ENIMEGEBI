@@ -53,20 +53,33 @@ function Products() {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/300x300?text=Product';
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
     if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
     return `${API_URL}/uploads/${imagePath}`;
   };
 
+  // FIXED: Get real product images, no fake images
   const getProductImages = (product) => {
-    const images = [getImageUrl(product.image || product.imageUrl)];
-    if (product.images && product.images.length) {
+    const images = [];
+    
+    if (product.image) images.push(getImageUrl(product.image));
+    if (product.imageUrl) images.push(getImageUrl(product.imageUrl));
+    if (product.images && product.images.length > 0) {
       product.images.forEach(img => images.push(getImageUrl(img)));
     }
-    while (images.length < 3) {
-      images.push('https://via.placeholder.com/600x600?text=Product+Image');
+    
+    if (images.length === 0) {
+      images.push('https://via.placeholder.com/600x600?text=No+Image');
     }
+    
     return images.slice(0, 8);
+  };
+
+  const getProductImage = (product) => {
+    if (product.images && product.images.length > 0) return product.images[0];
+    if (product.image) return product.image;
+    if (product.imageUrl) return product.imageUrl;
+    return null;
   };
 
   const handleMouseEnter = (productId) => {
@@ -282,7 +295,6 @@ function Products() {
                     const originalPrice = Math.floor(product.price * (1 + discount / 100));
                     const soldCount = Math.floor(Math.random() * 1000) + 10;
                     const isHovered = hoveredProductId === product._id;
-                    const productImages = getProductImages(product);
                     
                     return (
                       <div 
@@ -293,7 +305,12 @@ function Products() {
                       >
                         <Link to={`/product/${product._id}`} className="ae-product-link">
                           <div className="ae-product-image">
-                            <img src={productImages[0]} alt={product.name} />
+                            <img 
+                              src={getImageUrl(getProductImage(product))} 
+                              alt={product.name}
+                              onError={(e) => { e.target.src = 'https://via.placeholder.com/300x300?text=Product'; }}
+                              loading="lazy"
+                            />
                             {discount > 15 && <span className="ae-discount-badge">-{discount}%</span>}
                           </div>
                           <div className="ae-product-info">
@@ -312,12 +329,10 @@ function Products() {
                           </div>
                         </Link>
                         
-                        {/* Add to Cart Button - ALWAYS VISIBLE */}
                         <button className="ae-add-to-cart" onClick={(e) => handleAddToCart(product, e)}>
                           <i className="ri-shopping-cart-line"></i> {t.addToCart}
                         </button>
                         
-                        {/* HOVER OVERLAY - Only See Preview and Similar Items buttons */}
                         {isHovered && (
                           <div className="ae-hover-overlay">
                             <button 
@@ -364,7 +379,6 @@ function Products() {
         </div>
       </div>
 
-      {/* See Preview Modal */}
       {showPreviewModal && previewProduct && (
         <div className="ae-quickview-modal" onClick={closeSeePreview}>
           <div className="ae-quickview-content" onClick={(e) => e.stopPropagation()}>
@@ -418,7 +432,6 @@ function Products() {
         </div>
       )}
 
-      {/* Similar Items Modal */}
       {showSimilarModal && (
         <div className="ae-similar-modal" onClick={closeSimilarModal}>
           <div className="ae-similar-content" onClick={(e) => e.stopPropagation()}>
@@ -438,7 +451,7 @@ function Products() {
                     setShowPreviewModal(true);
                   }}
                 >
-                  <img src={getImageUrl(similar.image || similar.imageUrl)} alt={similar.name} />
+                  <img src={getImageUrl(getProductImage(similar))} alt={similar.name} />
                   <h4>{similar.name}</h4>
                   <p>{t.price} {similar.price}</p>
                 </div>

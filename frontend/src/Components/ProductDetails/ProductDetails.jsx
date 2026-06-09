@@ -69,23 +69,33 @@ function ProductDetails() {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/600x600?text=Product+Image';
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
     if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
     return `${API_URL}/uploads/${imagePath}`;
   };
 
-  // Get all product images
-  const productImages = product ? [
-    getImageUrl(product.image || product.imageUrl),
-    'https://images.pexels.com/photos/404280/pexels-photo-404280.jpeg',
-    'https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg',
-    'https://images.pexels.com/photos/18105/pexels-photo.jpg',
-    'https://images.pexels.com/photos/1649771/pexels-photo-1649771.jpeg'
-  ].slice(0, 5) : [];
+  // FIXED: Get real product images only - NO fake images
+  const getProductImages = (product) => {
+    if (!product) return ['https://via.placeholder.com/600x600?text=No+Image'];
+    
+    const images = [];
+    if (product.image) images.push(getImageUrl(product.image));
+    if (product.imageUrl) images.push(getImageUrl(product.imageUrl));
+    if (product.images && product.images.length > 0) {
+      product.images.forEach(img => images.push(getImageUrl(img)));
+    }
+    
+    if (images.length === 0) {
+      images.push('https://via.placeholder.com/600x600?text=No+Image');
+    }
+    
+    return images;
+  };
+
+  const productImages = product ? getProductImages(product) : [];
 
   const totalImages = productImages.length;
 
-  // Navigation functions
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % totalImages);
   };
@@ -115,7 +125,6 @@ function ProductDetails() {
     setLightboxIndex((prev) => (prev - 1 + totalImages) % totalImages);
   };
 
-  // Zoom on hover
   const handleMouseMove = (e) => {
     if (!isZooming) return;
     const rect = e.target.getBoundingClientRect();
@@ -215,7 +224,6 @@ function ProductDetails() {
   return (
     <div className="pd-page">
       <div className="pd-container">
-        {/* Breadcrumb */}
         <div className="pd-breadcrumb">
           <Link to="/">Home</Link>
           <i className="ri-arrow-right-s-line"></i>
@@ -227,7 +235,6 @@ function ProductDetails() {
         </div>
 
         <div className="pd-main">
-          {/* Image Gallery - AliExpress Style */}
           <div className="pd-gallery">
             <div className="pd-main-image-container">
               <div 
@@ -253,12 +260,10 @@ function ProductDetails() {
                 )}
               </div>
               
-              {/* Image Counter */}
               <div className="pd-image-counter">
                 <span>{currentImageIndex + 1} / {totalImages}</span>
               </div>
               
-              {/* Navigation Arrows */}
               {totalImages > 1 && (
                 <>
                   <button className="pd-nav-arrow prev" onClick={prevImage}>
@@ -271,7 +276,6 @@ function ProductDetails() {
               )}
             </div>
             
-            {/* Thumbnails with numbers */}
             <div className="pd-thumbnails">
               {productImages.map((img, idx) => (
                 <div 
@@ -286,7 +290,6 @@ function ProductDetails() {
             </div>
           </div>
 
-          {/* Product Info */}
           <div className="pd-info">
             <h1 className="pd-title">{product.name}</h1>
             
@@ -395,7 +398,6 @@ function ProductDetails() {
           </div>
         </div>
 
-        {/* Tabs Section */}
         <div className="pd-tabs">
           <div className="pd-tab-headers">
             <button className={activeTab === 'description' ? 'active' : ''} onClick={() => setActiveTab('description')}>
@@ -458,14 +460,13 @@ function ProductDetails() {
           </div>
         </div>
 
-        {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="pd-related">
             <h2>{t.relatedProducts}</h2>
             <div className="pd-related-grid">
               {relatedProducts.map(related => (
                 <Link to={`/product/${related._id}`} key={related._id} className="pd-related-card">
-                  <img src={getImageUrl(related.image || related.imageUrl)} alt={related.name} />
+                  <img src={getImageUrl(related.images?.[0] || related.image || related.imageUrl)} alt={related.name} />
                   <h3>{related.name}</h3>
                   <div className="pd-related-price">{t.price} {related.price.toLocaleString()}</div>
                 </Link>
@@ -475,7 +476,6 @@ function ProductDetails() {
         )}
       </div>
 
-      {/* Lightbox Modal */}
       {showLightbox && (
         <div className="pd-lightbox" onClick={closeLightbox}>
           <button className="pd-lightbox-close" onClick={closeLightbox}>
