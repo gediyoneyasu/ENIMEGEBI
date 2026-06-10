@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { useLanguage } from '../../main';
 import './Categories.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import { getImageUrl, getProductImage } from '../../utils/imageHelper';
+import { fetchAllProducts } from '../../utils/productApi';
+const PLACEHOLDER = 'https://via.placeholder.com/300x300?text=Product';
 
 const Categories = () => {
   const { language } = useLanguage();
@@ -24,17 +24,7 @@ const Categories = () => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`${API_URL}/api/admin/public-products`);
-      
-      let productsData = [];
-      if (Array.isArray(response.data)) {
-        productsData = response.data;
-      } else if (response.data && response.data.products) {
-        productsData = response.data.products;
-      } else if (response.data && response.data.data) {
-        productsData = response.data.data;
-      }
-      
+      const productsData = await fetchAllProducts();
       setAllProducts(productsData);
       
       const categoryMap = new Map();
@@ -116,20 +106,6 @@ const Categories = () => {
     return colors[category] || '#FF6B00';
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/300x300?text=Product';
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
-    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
-    return `${API_URL}/uploads/${imagePath}`;
-  };
-
-  const getProductImage = (product) => {
-    if (product.images && product.images.length > 0) return product.images[0];
-    if (product.image) return product.image;
-    if (product.imageUrl) return product.imageUrl;
-    return null;
-  };
-
   const handleCategoryClick = (categoryName) => {
     const products = allProducts.filter(p => p.category?.toUpperCase() === categoryName);
     setSelectedCategory(categoryName);
@@ -205,7 +181,7 @@ const Categories = () => {
                     <Link to={`/product/${product._id}`} className="product-link">
                       <div className="product-image">
                         <img 
-                          src={getImageUrl(getProductImage(product))} 
+                          src={getImageUrl(getProductImage(product), PLACEHOLDER)} 
                           alt={product.name}
                           onError={(e) => { e.target.src = 'https://via.placeholder.com/300x300?text=Product'; }}
                           loading="lazy"

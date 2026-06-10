@@ -1093,3 +1093,235 @@ body {
     font-size: 12px;
   }
 }
+
+/* ============================================
+   ALIEXPRESS V2 OVERRIDES
+   ============================================ */
+.ae-products-v2 {
+  background: #f5f5f5;
+  padding-top: 70px;
+}
+
+.ae-products-v2 .ae-deals-banner {
+  background: linear-gradient(90deg, #191919 0%, #333 100%);
+  color: #fff;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.ae-products-v2 .ae-deals-banner .ae-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ae-products-v2 .ae-deals-banner i {
+  color: #ff4747;
+  font-size: 18px;
+}
+
+.ae-products-v2 .ae-deals-banner strong {
+  color: #ff4747;
+}
+
+.ae-products-v2 .ae-deals-banner a {
+  margin-left: auto;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ae-products-v2 .ae-category-nav {
+  top: 60px;
+  border-bottom: 2px solid #ff4747;
+}
+
+.ae-products-v2 .ae-cat-btn.active {
+  background: #ff4747;
+  box-shadow: none;
+}
+
+.ae-products-v2 .ae-cat-btn:hover {
+  color: #ff4747;
+  background: #fff5f0;
+}
+
+.ae-products-v2 .ae-sort-bar {
+  border-radius: 4px;
+  border: 1px solid #ebebeb;
+}
+
+.ae-products-v2 .ae-sidebar {
+  border-radius: 4px;
+  border: 1px solid #ebebeb;
+}
+
+.ae-products-v2 .ae-apply-btn {
+  background: #ff4747;
+  border-radius: 4px;
+}
+
+.ae-products-v2 .ae-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1200px) {
+  .ae-products-v2 .ae-grid-v2 { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 992px) {
+  .ae-products-v2 .ae-grid-v2 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .ae-products-v2 .ae-grid-v2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ae-products-v2 .ae-product-wrap {
+  position: relative;
+}
+
+.ae-products-v2 .ae-product-wrap:hover .ae-quick-view-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ae-products-v2 .ae-quick-view-btn {
+  position: absolute;
+  bottom: 52px;
+  left: 8px;
+  right: 8px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ff4747;
+  color: #ff4747;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s;
+  z-index: 3;
+}
+
+.ae-products-v2 .ae-skeleton-products {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+@media (max-width: 768px) {
+  .ae-products-v2 .ae-skeleton-products { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ae-products-v2 .ae-pagination button.active {
+  background: #ff4747;
+  border-color: #ff4747;
+}
+
+.ae-products-v2 .ae-no-results {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 4px;
+  padding: 48px;
+  text-align: center;
+}
+
+.ae-products-v2 .ae-quickview-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ff4747;
+  margin: 12px 0;
+}
+
+.ae-products-v2 .ae-quickview-link {
+  color: #ff4747;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+.ae-products-v2 {
+  font-family: var(--ae-font, 'Segoe UI', system-ui, sans-serif);
+}
+
+.ae-products-v2 .ae-container {
+  max-width: 1280px;
+}
+
+.ae-products-v2 .ae-deals-banner {
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.ae-products-v2 .ae-category-nav {
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  box-shadow: none;
+}
+
+.ae-products-v2 .ae-cat-btn {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+}
+
+.ae-products-v2 .ae-cat-btn.active {
+  background: transparent;
+  color: #ff4747;
+  border-bottom-color: #ff4747;
+  box-shadow: none;
+}
+
+.ae-products-v2 .ae-cat-btn:hover {
+  background: transparent;
+  color: #ff4747;
+}
+
+.ae-products-v2 .ae-sort-bar {
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.ae-products-v2 .ae-search-input {
+  width: 240px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.ae-products-v2 .ae-grid-v2 {
+  gap: 8px;
+}
+
+.ae-products-v2 .ae-product-wrap .ae-card__cart-btn {
+  opacity: 1;
+  transform: none;
+}
+
+.ae-products-v2 .ae-quick-view-btn {
+  bottom: 46px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.ae-products-v2 .ae-main-layout {
+  padding: 12px 0 32px;
+  gap: 12px;
+}
+
+.ae-products-v2 .ae-sidebar {
+  border-radius: 4px;
+  top: 120px;
+  padding: 14px;
+}
+
+.ae-products-v2 .ae-pagination button {
+  border-radius: 4px;
+  min-width: 32px;
+  height: 32px;
+}
+
+.ae-products-v2 .ae-pagination button.active {
+  background: #ff4747;
+}

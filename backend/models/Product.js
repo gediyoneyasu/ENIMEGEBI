@@ -11,8 +11,9 @@ const productSchema = new mongoose.Schema({
   image: { type: String, default: '' },
   imageUrl: { type: String, default: '' },
   images: { type: [String], default: [] },
-  unit: { type: String, enum: ['kg', 'liter', 'piece'], default: 'kg' },
+  unit: { type: String, enum: ['kg', 'liter', 'piece', 'box', 'pack', 'bottle'], default: 'kg' },
   seller: { type: String, default: '' },
+  sellerAm: { type: String, default: '' },
   rating: { type: Number, default: 0 },
   reviews: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

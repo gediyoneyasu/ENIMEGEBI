@@ -8,6 +8,11 @@ const connectDB = require('./config/db');
 dotenv.config({ path: path.join(__dirname, '.env') });
 connectDB();
 
+const { migrateProductImages } = require('./utils/migrateProductImages');
+setTimeout(() => {
+  migrateProductImages().catch((err) => console.error('Image migration error:', err.message));
+}, 3000);
+
 const app = express();
 
 app.use(cors({

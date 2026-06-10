@@ -1,15 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './Products.css';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return null;
-  if (imagePath.startsWith('http')) return imagePath;
-  if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
-  return `${API_URL}/uploads/${imagePath}`;
-};
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -130,21 +124,19 @@ const Products = () => {
       return;
     }
     
-    // Validate URL format for images
-    const urlPattern = /^(https?:\/\/.*\.(jpg|jpeg|png|gif|webp|svg|bmp|avif))$/i;
-    if (!urlPattern.test(urlImageInput)) {
-      showAlert('error', 'Please enter a valid image URL (jpg, png, gif, webp)');
+    const trimmedUrl = urlImageInput.trim();
+    if (!/^https?:\/\/.+/i.test(trimmedUrl)) {
+      showAlert('error', 'Please enter a valid image URL starting with http:// or https://');
       return;
     }
     
     // Add to previews
-    setImagePreviews([...imagePreviews, urlImageInput]);
+    setImagePreviews([...imagePreviews, trimmedUrl]);
     
-    // Add to imageFiles as URL type
     const fakeFile = {
       name: `url-image-${Date.now()}.jpg`,
       isUrl: true,
-      url: urlImageInput
+      url: trimmedUrl
     };
     setImageFiles([...imageFiles, fakeFile]);
     setUrlImageInput('');

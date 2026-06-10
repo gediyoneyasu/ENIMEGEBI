@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useLanguage, useCart } from '../../main';
 import './ProductDetails.css';
+import { getImageUrl, getProductImages } from '../../utils/imageHelper';
+import { fetchProductById } from '../../utils/productApi';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const PLACEHOLDER = 'https://via.placeholder.com/600x600?text=No+Image';
 
 function ProductDetails() {
   const { id } = useParams();
@@ -37,23 +38,12 @@ function ProductDetails() {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/admin/public-products`);
-      
-      let productsData = [];
-      if (Array.isArray(response.data)) {
-        productsData = response.data;
-      } else if (response.data && response.data.products) {
-        productsData = response.data.products;
-      }
-      
-      const foundProduct = productsData.find(p => p._id === id);
-      setProduct(foundProduct);
-      
-      if (foundProduct) {
-        const related = productsData.filter(p => p.category === foundProduct.category && p._id !== id).slice(0, 6);
-        setRelatedProducts(related);
-      }
-      
+      setProduct(null);
+      setRelatedProducts([]);
+      const data = await fetchProductById(id);
+      setProduct(data.product || null);
+      setRelatedProducts(data.related || []);
+
       setReviews([
         { id: 1, name: 'John D.', rating: 5, date: '2024-05-15', comment: 'Excellent product! Very satisfied with quality.', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
         { id: 2, name: 'Sarah M.', rating: 4, date: '2024-05-10', comment: 'Good product, fast delivery.', avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
@@ -67,32 +57,7 @@ function ProductDetails() {
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/600x600?text=Product+Image';
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
-    if (imagePath.startsWith('/uploads')) return `${API_URL}${imagePath}`;
-    return `${API_URL}/uploads/${imagePath}`;
-  };
-
-  // FIXED: Get real product images only - NO fake images
-  const getProductImages = (product) => {
-    if (!product) return ['https://via.placeholder.com/600x600?text=No+Image'];
-    
-    const images = [];
-    if (product.image) images.push(getImageUrl(product.image));
-    if (product.imageUrl) images.push(getImageUrl(product.imageUrl));
-    if (product.images && product.images.length > 0) {
-      product.images.forEach(img => images.push(getImageUrl(img)));
-    }
-    
-    if (images.length === 0) {
-      images.push('https://via.placeholder.com/600x600?text=No+Image');
-    }
-    
-    return images;
-  };
-
-  const productImages = product ? getProductImages(product) : [];
+  const productImages = product ? getProductImages(product, PLACEHOLDER) : [];
 
   const totalImages = productImages.length;
 
@@ -466,7 +431,7 @@ function ProductDetails() {
             <div className="pd-related-grid">
               {relatedProducts.map(related => (
                 <Link to={`/product/${related._id}`} key={related._id} className="pd-related-card">
-                  <img src={getImageUrl(related.images?.[0] || related.image || related.imageUrl)} alt={related.name} />
+                  <img src={getImageUrl(related.images?.[0] || related.image || related.imageUrl, PLACEHOLDER)} alt={related.name} />
                   <h3>{related.name}</h3>
                   <div className="pd-related-price">{t.price} {related.price.toLocaleString()}</div>
                 </Link>
