@@ -15,4 +15,4 @@ services:
       - key: CHAPA_SECRET_KEY
         sync: false
       - key: FRONTEND_URL
-        value: https://enimegebi-zorz.vercel.app
+        value: https://emarkatoshop.vercel.app

@@ -15,8 +15,21 @@ setTimeout(() => {
 
 const app = express();
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://enimegebi-zorz.vercel.app',
+  'https://emarkatoshop.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://enimegebi-zorz.vercel.app'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
   credentials: true
 }));
 

@@ -4,7 +4,7 @@ const Project = require('../models/Project');
 
 const CHAPA_API_URL = 'https://api.chapa.co/v1';
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://enimegebi-zorz.vercel.app';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://emarkatoshop.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://enimegebi-backend.onrender.com';
 
 const getSafeNameParts = (name = '') => {
