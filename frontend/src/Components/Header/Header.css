@@ -169,6 +169,40 @@
 }
 
 /* Cart Button with Badge */
+.ali-action-notif {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background 0.3s;
+  position: relative;
+}
+
+.ali-action-notif:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ali-action-notif i {
+  font-size: 20px;
+}
+
+.ali-notif-badge {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 50%;
+  min-width: 16px;
+  text-align: center;
+}
+
 .ali-action-cart {
   display: flex;
   align-items: center;

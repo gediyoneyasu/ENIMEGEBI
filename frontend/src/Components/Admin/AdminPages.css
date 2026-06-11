@@ -884,3 +884,19 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-dark);
 }
+
+.admin-page { padding: 0; }
+.admin-page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.admin-page-header h2 { color: var(--secondary-color); display: flex; align-items: center; gap: 8px; }
+.admin-page-loading, .admin-empty { padding: 40px; text-align: center; color: var(--gray-500); }
+.admin-btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.admin-btn.secondary { background: var(--gray-100); color: var(--gray-700); }
+.admin-alert.error { background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+.admin-table-wrap { overflow-x: auto; background: #fff; border-radius: 10px; box-shadow: var(--shadow-sm); }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--gray-200); }
+.admin-table th { background: var(--gray-50); font-size: 13px; color: var(--gray-600); }
+.status-pill { padding: 3px 8px; border-radius: 12px; font-size: 12px; background: var(--gray-100); }
+.status-pill.paid { background: #d1fae5; color: #065f46; }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-select { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--gray-300); }

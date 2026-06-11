@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const Order = require('../models/Order');
+const { notifyAdmin, notifyUser } = require('../utils/notificationHelper');
 
 // Create order
 router.post('/', protect, async (req, res) => {
@@ -19,6 +20,22 @@ router.post('/', protect, async (req, res) => {
       paymentStatus: 'pending',
       orderStatus: 'pending',
       orderReference: orderReference || 'ORD-' + Date.now().toString().slice(-8)
+    });
+
+    await notifyAdmin({
+      title: 'New Order',
+      message: `${req.user.name} placed order ${order.orderReference} — ETB ${totalAmount}`,
+      type: 'order',
+      link: '/admin/orders',
+      meta: { orderId: order._id }
+    });
+
+    await notifyUser(req.user.id, {
+      title: 'Order Placed',
+      message: `Your order ${order.orderReference} was received.`,
+      type: 'order',
+      link: '/orders',
+      meta: { orderId: order._id }
     });
     
     res.status(201).json({ success: true, order });

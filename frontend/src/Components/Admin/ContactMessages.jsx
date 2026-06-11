@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../../apiConfig';
 import './ContactMessages.css';
-
-const API_URL = 'http://localhost:5001';
 
 const ContactMessages = () => {
   const [messages, setMessages] = useState([]);

@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Contact = require('../models/Contact');
+const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { notifyAdmin, notifyUser } = require('../utils/notificationHelper');
 
 // Public route - Save contact message
 router.post('/', async (req, res) => {
@@ -24,6 +26,14 @@ router.post('/', async (req, res) => {
     });
     
     await contact.save();
+
+    await notifyAdmin({
+      title: 'New Contact Message',
+      message: `${name}: ${subject}`,
+      type: 'message',
+      link: '/admin/messages',
+      meta: { contactId: contact._id, email }
+    });
     
     console.log('Contact message saved:', contact);
     
@@ -57,8 +67,6 @@ const verifyAdmin = async (req, res, next) => {
     
     // Check if user is admin (role can be 'admin' or from database)
     if (decoded.role !== 'admin') {
-      // Also check if user exists in database with admin role
-      const User = require('../models/User');
       const user = await User.findById(decoded.id);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ success: false, message: 'Admin access required' });
@@ -114,6 +122,19 @@ router.put('/messages/:id', verifyAdmin, async (req, res) => {
     
     if (!message) {
       return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+
+    if (reply) {
+      const user = await User.findOne({ email: message.email });
+      if (user) {
+        await notifyUser(user._id, {
+          title: 'Reply to your message',
+          message: reply.substring(0, 120),
+          type: 'reply',
+          link: '/notifications',
+          meta: { contactId: message._id }
+        });
+      }
     }
     
     res.json({ success: true, message });

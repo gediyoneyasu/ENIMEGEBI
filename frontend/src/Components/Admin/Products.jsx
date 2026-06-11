@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { API_URL } from '../../apiConfig';
 import './Products.css';
 import { getImageUrl } from '../../utils/imageHelper';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const Products = () => {
   const [products, setProducts] = useState([]);

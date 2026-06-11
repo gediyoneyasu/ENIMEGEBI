@@ -15,11 +15,13 @@ setTimeout(() => {
 
 const app = express();
 
+const normalizeOrigin = (url) => (url ? url.replace(/\/$/, '') : url);
+
 const allowedOrigins = [
   'http://localhost:5173',
   'https://enimegebi-zorz.vercel.app',
   'https://emarkatoshop.vercel.app',
-  process.env.FRONTEND_URL
+  normalizeOrigin(process.env.FRONTEND_URL)
 ].filter(Boolean);
 
 app.use(cors({
@@ -50,7 +52,8 @@ app.use('/api/home', require('./routes/homeRoutes'));
 app.use('/api/team', require('./routes/teamRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/contact', require('./routes/contactRoutes'));  // ← ADDED CONTACT ROUTE
+app.use('/api/contact', require('./routes/contactRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!'});

@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '../../apiConfig';
 import './Admin.css';
 
 import Dashboard from './Dashboard';
@@ -19,8 +21,16 @@ const Admin = () => {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const notifRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const getHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem('enimegebiToken')}`
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('enimegebiToken');
@@ -56,6 +66,49 @@ const Admin = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, [navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const [listRes, countRes] = await Promise.all([
+        axios.get(`${API_URL}/api/notifications`, { headers: getHeaders() }),
+        axios.get(`${API_URL}/api/notifications/unread-count`, { headers: getHeaders() })
+      ]);
+      setNotifications(listRes.data.notifications || []);
+      setUnreadCount(countRes.data.count || 0);
+    } catch (err) {
+      console.error('Admin notifications error:', err);
+    }
+  };
+
+  const handleNotifClick = async (notif) => {
+    if (!notif.read) {
+      try {
+        await axios.put(`${API_URL}/api/notifications/${notif._id}/read`, {}, { headers: getHeaders() });
+        fetchNotifications();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setShowNotifDropdown(false);
+    if (notif.link) navigate(notif.link);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('enimegebiToken');
@@ -158,9 +211,43 @@ const Admin = () => {
           )}
           <h1>{getPageTitle(location.pathname)}</h1>
           <div className="header-actions">
-            <div className="notifications">
+            <div
+              className="notifications"
+              ref={notifRef}
+              onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+            >
               <i className="ri-notification-3-line"></i>
-              <span className="badge">3</span>
+              {unreadCount > 0 && <span className="badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+              {showNotifDropdown && (
+                <div className="notif-dropdown" onClick={(e) => e.stopPropagation()}>
+                  <div className="notif-dropdown-header">
+                    <strong>Notifications</strong>
+                    {unreadCount > 0 && (
+                      <button onClick={async () => {
+                        await axios.put(`${API_URL}/api/notifications/read-all`, {}, { headers: getHeaders() });
+                        fetchNotifications();
+                      }}>Mark all read</button>
+                    )}
+                  </div>
+                  <div className="notif-dropdown-list">
+                    {notifications.length === 0 ? (
+                      <p className="notif-dropdown-empty">No notifications</p>
+                    ) : (
+                      notifications.slice(0, 8).map((n) => (
+                        <div
+                          key={n._id}
+                          className={`notif-dropdown-item ${n.read ? '' : 'unread'}`}
+                          onClick={() => handleNotifClick(n)}
+                        >
+                          <strong>{n.title}</strong>
+                          <span>{n.message}</span>
+                          <small>{new Date(n.createdAt).toLocaleString()}</small>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="admin-user">
               <i className="ri-user-line"></i>

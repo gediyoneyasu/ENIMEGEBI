@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../../apiConfig';
 import './AdminLogin.css';
-
-const API_URL = 'http://localhost:5001';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('admin@enimegebi.com');

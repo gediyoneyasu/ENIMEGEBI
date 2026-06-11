@@ -1,4 +1,1 @@
-// Temporary hardcoded URL for testing
-const API_URL = 'https://enimegebi-backend.onrender.com';
-
-export default API_URL;
+export { API_URL as default, API_URL } from '../apiConfig';

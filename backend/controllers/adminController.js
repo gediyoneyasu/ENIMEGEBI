@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const Contact = require('../models/Contact');
 const getImageUrl = require('../utils/imageHelper');
 const { uploadToGlobalStorage } = require('../utils/mediaStorage');
+const { notifyUser } = require('../utils/notificationHelper');
 
 const getUsers = async (req, res) => {
   try {
@@ -154,9 +155,20 @@ const updateOrderStatus = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    order.orderStatus = req.body.status;
+    order.orderStatus = req.body.status || req.body.orderStatus;
     await order.save();
-    res.json({ message: 'Order status updated', order });
+
+    if (order.user) {
+      await notifyUser(order.user, {
+        title: 'Order Status Updated',
+        message: `Order ${order.orderReference} is now ${order.orderStatus}.`,
+        type: 'order_update',
+        link: '/orders',
+        meta: { orderId: order._id }
+      });
+    }
+
+    res.json({ success: true, message: 'Order status updated', order });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -197,9 +209,24 @@ const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalProducts = await Product.countDocuments();
     const totalOrders = await Order.countDocuments();
-    res.json({ stats: { totalUsers, totalProducts, totalOrders } });
+    const orders = await Order.find({}).select('totalAmount');
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    const totalMessages = await Contact.countDocuments();
+    const unreadMessages = await Contact.countDocuments({ status: 'unread' });
+
+    res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalRevenue,
+        totalMessages,
+        unreadMessages
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

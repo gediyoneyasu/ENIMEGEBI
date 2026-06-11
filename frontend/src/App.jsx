@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 
 import Header from './Components/Header/Header';
@@ -18,6 +18,7 @@ const Profile = lazy(() => import('./Components/Profile/Profile'));
 const About = lazy(() => import('./Components/About/About'));
 const Contact = lazy(() => import('./Components/Contact/Contact'));
 const ProductDetails = lazy(() => import('./Components/ProductDetails/ProductDetails'));
+const Notifications = lazy(() => import('./Components/Notifications/Notifications'));
 
 function PageLoading() {
   return (
@@ -28,10 +29,13 @@ function PageLoading() {
   );
 }
 
-function App() {
+function AppLayout() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
-    <BrowserRouter>
-      <Header />
+    <>
+      {!isAdminRoute && <Header />}
       <Suspense fallback={<PageLoading />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -41,6 +45,7 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
@@ -49,7 +54,15 @@ function App() {
           <Route path="/admin/*" element={<Admin />} />
         </Routes>
       </Suspense>
-      <Footer />
+      {!isAdminRoute && <Footer />}
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
     </BrowserRouter>
   );
 }

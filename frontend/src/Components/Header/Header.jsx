@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import axios from 'axios';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
+import { API_URL } from '../../apiConfig';
 import './Header.css';
 import logoIcon from '../../assets/icon.png';
 
@@ -16,6 +18,7 @@ function Header() {
   const [userRole, setUserRole] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [scrolled, setScrolled] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,13 +35,27 @@ function Header() {
         setIsLoggedIn(true);
         setUserName(userData.name || '');
         setUserRole(userData.role || 'user');
+        fetchNotifCount(token);
       } catch {
         setIsLoggedIn(false);
+        setNotifCount(0);
       }
     } else {
       setIsLoggedIn(false);
+      setNotifCount(0);
     }
   }, [location.pathname]);
+
+  const fetchNotifCount = async (token) => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifCount(data.count || 0);
+    } catch {
+      setNotifCount(0);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,6 +96,7 @@ function Header() {
       register: 'Register',
       cart: 'Cart',
       admin: 'Admin',
+      notifications: 'Notifications',
       search: 'Search products...',
       sell: 'Sell on E-MARKATO'
     },
@@ -96,6 +114,7 @@ function Header() {
       register: 'ተመዝገብ',
       cart: 'ጋሪ',
       admin: 'አስተዳዳሪ',
+      notifications: 'ማሳወቂያዎች',
       search: 'ምርቶችን ይፈልጉ...',
       sell: 'በኢ-ማርካቶ ሽጡ'
     }
@@ -160,6 +179,13 @@ function Header() {
 
               {/* Right Actions */}
               <div className="ali-actions">
+                {isLoggedIn && (
+                  <Link to="/notifications" className="ali-action-notif" title={t.notifications}>
+                    <i className="ri-notification-3-line"></i>
+                    {notifCount > 0 && <span className="ali-notif-badge">{notifCount > 9 ? '9+' : notifCount}</span>}
+                  </Link>
+                )}
+
                 {/* Cart with Badge */}
                 <Link to="/cart" className="ali-action-cart">
                   <i className="ri-shopping-cart-line"></i>
@@ -185,6 +211,7 @@ function Header() {
                     {showUserDropdown && (
                       <div className="ali-mobile-user-dropdown">
                         <Link to="/profile" onClick={closeMenu}>Profile</Link>
+                        <Link to="/notifications" onClick={closeMenu}>Notifications</Link>
                         <Link to="/orders" onClick={closeMenu}>Orders</Link>
                         {userRole === 'admin' && <Link to="/admin" onClick={closeMenu}>Admin</Link>}
                         <button onClick={handleLogout}>Logout</button>
@@ -206,6 +233,7 @@ function Header() {
                     {showUserDropdown && (
                       <div className="ali-user-dropdown">
                         <Link to="/profile">My Profile</Link>
+                        <Link to="/notifications">Notifications {notifCount > 0 && `(${notifCount})`}</Link>
                         <Link to="/orders">My Orders</Link>
                         <Link to="/wishlist">Wishlist</Link>
                         {userRole === 'admin' && <Link to="/admin">Admin Panel</Link>}
@@ -262,6 +290,7 @@ function Header() {
             {isLoggedIn && (
               <>
                 <li><Link to="/profile" onClick={closeMenu}>My Profile</Link></li>
+                <li><Link to="/notifications" onClick={closeMenu}>Notifications</Link></li>
                 <li><Link to="/orders" onClick={closeMenu}>My Orders</Link></li>
                 <li><button onClick={handleLogout}>Logout</button></li>
               </>

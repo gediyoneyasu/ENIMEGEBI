@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../../apiConfig';
 import './Dashboard.css';
-
-const API_URL = 'http://localhost:5001';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -36,65 +35,18 @@ const Dashboard = () => {
       }
       
       const headers = { Authorization: `Bearer ${token}` };
-      
-      // Fetch users count
-      let usersCount = 0;
-      try {
-        const usersRes = await axios.get(`${API_URL}/api/users/admin/all`, { headers });
-        if (usersRes.data.success && usersRes.data.users) {
-          usersCount = usersRes.data.users.length;
-        }
-      } catch (err) {
-        console.log('Users API error:', err.message);
-      }
+      const { data } = await axios.get(`${API_URL}/api/admin/dashboard-stats`, { headers });
 
-      // Fetch products count
-      let productsCount = 0;
-      try {
-        const productsRes = await axios.get(`${API_URL}/api/admin/public-products`);
-        if (Array.isArray(productsRes.data)) {
-          productsCount = productsRes.data.length;
-        } else if (productsRes.data && productsRes.data.products) {
-          productsCount = productsRes.data.products.length;
-        }
-      } catch (err) {
-        console.log('Products API error:', err.message);
+      if (data.success && data.stats) {
+        setStats({
+          totalUsers: data.stats.totalUsers || 0,
+          totalProducts: data.stats.totalProducts || 0,
+          totalOrders: data.stats.totalOrders || 0,
+          totalRevenue: data.stats.totalRevenue || 0,
+          totalMessages: data.stats.totalMessages || 0,
+          unreadMessages: data.stats.unreadMessages || 0
+        });
       }
-
-      // Fetch orders
-      let ordersCount = 0;
-      let totalRevenue = 0;
-      try {
-        const ordersRes = await axios.get(`${API_URL}/api/orders`, { headers });
-        if (ordersRes.data.success && ordersRes.data.orders) {
-          ordersCount = ordersRes.data.orders.length;
-          totalRevenue = ordersRes.data.orders.reduce((sum, order) => sum + (order.totalAmount || order.total || 0), 0);
-        }
-      } catch (err) {
-        console.log('Orders API not available');
-      }
-
-      // Fetch messages count
-      let messagesCount = 0;
-      let unreadCount = 0;
-      try {
-        const messagesRes = await axios.get(`${API_URL}/api/contact/messages`, { headers });
-        if (messagesRes.data.success && messagesRes.data.messages) {
-          messagesCount = messagesRes.data.messages.length;
-          unreadCount = messagesRes.data.messages.filter(m => m.status === 'unread').length;
-        }
-      } catch (err) {
-        console.log('Messages API error:', err.message);
-      }
-
-      setStats({
-        totalUsers: usersCount,
-        totalProducts: productsCount,
-        totalOrders: ordersCount,
-        totalRevenue: totalRevenue,
-        totalMessages: messagesCount,
-        unreadMessages: unreadCount
-      });
       
       setLastUpdated(new Date().toLocaleTimeString());
       
