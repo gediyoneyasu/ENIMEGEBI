@@ -126,12 +126,29 @@ function Products() {
 
       <div className="ae-category-nav">
         <div className="ae-container">
-          <div className="ae-category-list">
-            {categories.map((cat) => (
-              <button key={cat} type="button" className={`ae-cat-btn ${selectedCategory === cat ? 'active' : ''}`} onClick={() => handleCategoryChange(cat)}>
-                {cat === 'all' ? t.allCategories : cat}
-              </button>
-            ))}
+          <div className="ae-category-nav-inner">
+            <div className="ae-search-container ae-category-search">
+              <i className="ri-search-line ae-search-icon"></i>
+              <input
+                type="text"
+                placeholder={t.search}
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="ae-search-input"
+              />
+              {searchTerm && (
+                <button type="button" className="ae-clear-search" onClick={() => setSearchTerm('')}>
+                  <i className="ri-close-line"></i>
+                </button>
+              )}
+            </div>
+            <div className="ae-category-list">
+              {categories.map((cat) => (
+                <button key={cat} type="button" className={`ae-cat-btn ${selectedCategory === cat ? 'active' : ''}`} onClick={() => handleCategoryChange(cat)}>
+                  {cat === 'all' ? t.allCategories : cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -159,15 +176,6 @@ function Products() {
           <div className="ae-main-content">
             <div className="ae-sort-bar">
               <div className="ae-sort-left">
-                <div className="ae-search-container">
-                  <i className="ri-search-line ae-search-icon"></i>
-                  <input type="text" placeholder={t.search} value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="ae-search-input" />
-                  {searchTerm && (
-                    <button type="button" className="ae-clear-search" onClick={() => setSearchTerm('')}>
-                      <i className="ri-close-line"></i>
-                    </button>
-                  )}
-                </div>
                 <span className="ae-result-count">{total} {t.results}</span>
               </div>
               <div className="ae-sort-right">
@@ -228,29 +236,80 @@ function Products() {
         </div>
       </div>
 
-      {previewProduct && (
-        <div className="ae-quickview-modal" onClick={() => setPreviewProduct(null)} role="presentation">
-          <div className="ae-quickview-content" onClick={(e) => e.stopPropagation()} role="dialog">
-            <button type="button" className="ae-quickview-close" onClick={() => setPreviewProduct(null)}>
-              <i className="ri-close-line"></i>
-            </button>
-            <div className="ae-quickview-body">
-              <div className="ae-quickview-gallery">
-                <img src={getProductImages(previewProduct)[currentImageIndex]} alt={previewProduct.name} />
-              </div>
-              <div className="ae-quickview-info">
-                <h2>{previewProduct.name}</h2>
-                <div className="ae-quickview-price">{t.price} {previewProduct.price?.toLocaleString()}</div>
-                <p>{previewProduct.description || `${previewProduct.name} - premium quality product.`}</p>
-                <Link to={`/product/${previewProduct._id}`} className="ae-quickview-link">View full details →</Link>
-                <button type="button" className="ae-quickview-addcart" onClick={(e) => handleAddToCart(previewProduct, e)}>
-                  <i className="ri-shopping-cart-line"></i> {t.addToCart}
-                </button>
+      {previewProduct && (() => {
+        const previewImages = getProductImages(previewProduct);
+        const hasMultiple = previewImages.length > 1;
+        return (
+          <div className="ae-quickview-modal" onClick={() => setPreviewProduct(null)} role="presentation">
+            <div className="ae-quickview-content" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={previewProduct.name}>
+              <button type="button" className="ae-quickview-close" onClick={() => setPreviewProduct(null)} aria-label={t.close}>
+                <i className="ri-close-line"></i>
+              </button>
+              <div className="ae-quickview-body">
+                <div className="ae-quickview-gallery">
+                  <div className="ae-quickview-main-image">
+                    <img src={previewImages[currentImageIndex]} alt={previewProduct.name} />
+                    {hasMultiple && (
+                      <>
+                        <span className="ae-quickview-counter">{currentImageIndex + 1} / {previewImages.length}</span>
+                        <button
+                          type="button"
+                          className="ae-quickview-nav prev"
+                          onClick={() => setCurrentImageIndex((i) => (i === 0 ? previewImages.length - 1 : i - 1))}
+                          aria-label="Previous image"
+                        >
+                          ‹
+                        </button>
+                        <button
+                          type="button"
+                          className="ae-quickview-nav next"
+                          onClick={() => setCurrentImageIndex((i) => (i === previewImages.length - 1 ? 0 : i + 1))}
+                          aria-label="Next image"
+                        >
+                          ›
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {hasMultiple && (
+                    <div className="ae-quickview-thumbs">
+                      {previewImages.map((img, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className={`ae-quickview-thumb ${currentImageIndex === idx ? 'active' : ''}`}
+                          onClick={() => setCurrentImageIndex(idx)}
+                          aria-label={`Image ${idx + 1}`}
+                        >
+                          <img src={img} alt="" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="ae-quickview-info">
+                  <h2 className="ae-quickview-title">{previewProduct.name}</h2>
+                  <div className="ae-quickview-price">
+                    <span className="current">{t.price} {previewProduct.price?.toLocaleString()}</span>
+                  </div>
+                  <div className="ae-quickview-description">
+                    <h4>{t.description}</h4>
+                    <p>{previewProduct.description || `${previewProduct.name} - premium quality product.`}</p>
+                  </div>
+                  <div className="ae-quickview-actions">
+                    <Link to={`/product/${previewProduct._id}`} className="ae-quickview-link" onClick={() => setPreviewProduct(null)}>
+                      View full details →
+                    </Link>
+                    <button type="button" className="ae-quickview-addcart" onClick={(e) => handleAddToCart(previewProduct, e)}>
+                      <i className="ri-shopping-cart-line"></i> {t.addToCart}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
