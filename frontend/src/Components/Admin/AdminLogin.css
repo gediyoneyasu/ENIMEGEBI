@@ -1,130 +1,223 @@
+/* ============================================
+   E-MARKATO ADMIN LOGIN - PREMIUM STYLE
+   Colors: Navy #032B67 | Orange #FF7A00
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .admin-login-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #032B67 0%, #021a3f 50%, #FF7A00 100%);
+  padding: 20px;
   position: relative;
   overflow: hidden;
 }
 
-.admin-login-bg {
+/* Animated background effect */
+.admin-login-container::before {
+  content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle, rgba(255,122,0,0.1) 0%, transparent 70%);
+  animation: rotateBg 20s linear infinite;
 }
 
-.admin-login-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+@keyframes rotateBg {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
+/* Login Box */
 .admin-login-box {
   position: relative;
-  z-index: 1;
+  z-index: 10;
   width: 450px;
-  max-width: 90%;
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  max-width: 100%;
+  background: white;
+  border-radius: 28px;
+  padding: 48px 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  animation: fadeInUp 0.5s ease;
 }
 
-.admin-login-header {
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Title */
+.admin-login-box h2 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #032B67;
   text-align: center;
-  margin-bottom: 35px;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
 }
 
-.admin-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 10px;
+.admin-login-box h2::before {
+  content: '🔐 ';
+  font-size: 32px;
 }
 
-.admin-logo i {
-  font-size: 48px;
-  color: #667eea;
+.admin-login-box p {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 32px;
 }
 
-.admin-logo h2 {
-  font-size: 28px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
+/* Error Message */
 .admin-error {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-  color: white;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 25px;
-  text-align: center;
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  margin-bottom: 24px;
+  border-left: 4px solid #dc2626;
+  font-weight: 500;
+  animation: shake 0.4s ease;
 }
 
-.input-group {
-  position: relative;
-  margin-bottom: 20px;
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
-.input-group i {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-}
-
-.input-group input {
+/* Form Inputs */
+.admin-login-box form input {
   width: 100%;
-  padding: 15px 15px 15px 45px;
-  border: 2px solid #e1e5e9;
-  border-radius: 12px;
-  font-size: 16px;
-  box-sizing: border-box;
+  padding: 16px 18px;
+  border: 2px solid #e5e5e5;
+  border-radius: 16px;
+  font-size: 15px;
+  transition: all 0.3s;
+  margin-bottom: 18px;
+  outline: none;
+  background: white;
 }
 
-.admin-login-btn {
+.admin-login-box form input:focus {
+  border-color: #FF7A00;
+  box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.1);
+}
+
+.admin-login-box form input:hover {
+  border-color: #FF7A00;
+}
+
+/* Login Button */
+.admin-login-box form button {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px;
+  background: linear-gradient(135deg, #032B67, #FF7A00);
   color: white;
   border: none;
-  padding: 15px;
-  border-radius: 12px;
+  border-radius: 50px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
 }
 
-.admin-login-footer {
-  margin-top: 30px;
+.admin-login-box form button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.admin-login-box form button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 122, 0, 0.3);
+}
+
+.admin-login-box form button:hover::before {
+  left: 100%;
+}
+
+.admin-login-box form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Back Link */
+.admin-login-box > a {
+  display: block;
   text-align: center;
-}
-
-.admin-login-footer a {
-  color: #667eea;
-  text-decoration: none;
-}.admin-demo {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f5f5f5;
-  border-radius: 8px;
-  font-size: 12px;
-}
-
-.admin-demo p {
-  margin: 5px 0;
+  margin-top: 28px;
   color: #666;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.3s;
 }
 
-.admin-demo strong {
+.admin-login-box > a:hover {
   color: #FF7A00;
+}
+
+/* Responsive */
+@media (max-width: 550px) {
+  .admin-login-box {
+    padding: 32px 24px;
+  }
+  
+  .admin-login-box h2 {
+    font-size: 26px;
+  }
+  
+  .admin-login-box form input {
+    padding: 14px 16px;
+    font-size: 14px;
+  }
+  
+  .admin-login-box form button {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
+
+/* Loading animation on button */
+.admin-login-box form button:disabled::after {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 10px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
