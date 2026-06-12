@@ -183,6 +183,36 @@
   color: #FF7A00;
 }
 
+.admin-credentials {
+  margin-top: 28px;
+  padding: 16px 18px;
+  background: #f0f4f8;
+  border-radius: 14px;
+  border-left: 4px solid #032B67;
+}
+
+.admin-credentials-title {
+  font-weight: 700;
+  color: #032B67 !important;
+  margin-bottom: 10px !important;
+  text-align: left !important;
+}
+
+.admin-credentials p {
+  text-align: left !important;
+  margin-bottom: 6px !important;
+  font-size: 13px !important;
+  color: #444 !important;
+}
+
+.admin-credentials p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.admin-credentials strong {
+  color: #032B67;
+}
+
 /* Responsive */
 @media (max-width: 550px) {
   .admin-login-box {

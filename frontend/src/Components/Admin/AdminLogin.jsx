@@ -5,8 +5,8 @@ import { API_URL } from '../../apiConfig';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState('admin@enimegebi.com');
-  const [password, setPassword] = useState('enimegebi');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -76,12 +76,8 @@ const AdminLogin = () => {
         </form>
 
         <a href="/auth">Back to User Login</a>
-        
-        <div className="admin-demo">
-          <p>Admin Credentials:</p>
-          <p>Email: <strong>admin@enimegebi.com</strong></p>
-          <p>Password: <strong>enimegebi</strong></p>
-        </div>
+
+      
       </div>
     </div>
   );
