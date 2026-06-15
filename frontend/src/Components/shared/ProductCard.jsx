@@ -2,6 +2,7 @@ import React, { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getProductImage } from '../../utils/imageHelper';
 import { getProductMeta } from '../../utils/productMeta';
+import { getProductName } from '../../utils/productText';
 import './ae-shared.css';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300x300?text=Product';
@@ -9,6 +10,7 @@ const PLACEHOLDER = 'https://via.placeholder.com/300x300?text=Product';
 const ProductCard = memo(({
   product,
   variant = 'grid',
+  language = 'en',
   onAddToCart,
   labels = {},
   showWishlist = true,
@@ -19,6 +21,7 @@ const ProductCard = memo(({
   const originalPrice = Math.round(product.price * (1 + meta.discount / 100));
   const imgSrc = getImageUrl(getProductImage(product), PLACEHOLDER);
   const priceWhole = Math.floor(product.price || 0);
+  const displayName = getProductName(product, language);
 
   const toggleWishlist = (e) => {
     e.preventDefault();
@@ -38,7 +41,7 @@ const ProductCard = memo(({
         <div className="ae-card__img-wrap">
           <img
             src={imgSrc}
-            alt={product.name}
+            alt={displayName}
             loading="lazy"
             decoding="async"
             onError={(e) => { e.target.src = PLACEHOLDER; }}
@@ -62,7 +65,7 @@ const ProductCard = memo(({
           )}
         </div>
         <div className="ae-card__body">
-          <h3 className="ae-card__title">{product.name}</h3>
+          <h3 className="ae-card__title">{displayName}</h3>
           <div className="ae-card__price-row">
             <span className="ae-card__price">
               <small>ETB</small> {priceWhole.toLocaleString()}

@@ -8,7 +8,10 @@ const LanguageContext = React.createContext();
 const CartContext = React.createContext();
 
 const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = React.useState('en');
+  const [language, setLanguage] = React.useState(() => {
+    const saved = localStorage.getItem('enimegebiLanguage');
+    return saved === 'am' || saved === 'en' ? saved : 'en';
+  });
   const changeLanguage = (lang) => {
     setLanguage(lang);
     localStorage.setItem('enimegebiLanguage', lang);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../main';
 import { useCart } from '../../main';
@@ -13,9 +13,27 @@ import { fetchHomeData } from '../../utils/productApi';
 
 const staticBrandData = {
   banners: [
-    { id: 1, image: 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg', title: 'Super Sale!', subtitle: 'Up to 70% Off on Electronics', btnText: 'Shop Now' },
-    { id: 2, image: 'https://images.pexels.com/photos/4482900/pexels-photo-4482900.jpeg', title: 'Fashion Week', subtitle: 'Get 50% Off on Latest Collection', btnText: 'Explore' },
-    { id: 3, image: 'https://images.pexels.com/photos/4397842/pexels-photo-4397842.jpeg', title: 'Free Delivery', subtitle: 'On orders over ETB 1000', btnText: 'Order Now' }
+    {
+      id: 1,
+      image: 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg',
+      title: { en: 'Super Sale!', am: 'ሱፐር ሽያጭ!' },
+      subtitle: { en: 'Up to 70% Off on Electronics', am: 'በኤሌክትሮኒክስ ላይ እስከ 70% ቅናሽ' },
+      btnText: { en: 'Shop Now', am: 'አሁን ይግዙ' }
+    },
+    {
+      id: 2,
+      image: 'https://images.pexels.com/photos/4482900/pexels-photo-4482900.jpeg',
+      title: { en: 'Fashion Week', am: 'የፋሽን ሳምንት' },
+      subtitle: { en: 'Get 50% Off on Latest Collection', am: 'በአዲሱ ስብስብ ላይ 50% ቅናሽ ያግኙ' },
+      btnText: { en: 'Explore', am: 'ያስሱ' }
+    },
+    {
+      id: 3,
+      image: 'https://images.pexels.com/photos/4397842/pexels-photo-4397842.jpeg',
+      title: { en: 'Free Delivery', am: 'ነጻ አቅርቦት' },
+      subtitle: { en: 'On orders over ETB 1000', am: 'ከ 1000 ብር በላይ ትዕዛዞች' },
+      btnText: { en: 'Order Now', am: 'አሁን ይዘዙ' }
+    }
   ],
   categoriesList: [
     { name: 'ELECTRONICS', icon: 'ri-smartphone-line', color: '#FF4747' },
@@ -57,6 +75,12 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 });
   const [activeDealTab, setActiveDealTab] = useState('flash');
+  const flashScrollRef = useRef(null);
+
+  const scrollFlashDeals = (direction) => {
+    const el = flashScrollRef.current;
+    if (el) el.scrollBy({ left: direction * 220, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -122,12 +146,12 @@ function Home() {
             {staticBrandData.banners.map((banner) => (
               <SwiperSlide key={banner.id}>
                 <div className="ae-banner-slide">
-                  <img src={banner.image} alt={banner.title} className="ae-banner-img" loading="eager" decoding="async" />
+                  <img src={banner.image} alt={banner.title[language]} className="ae-banner-img" loading="eager" decoding="async" />
                   <div className="ae-banner-content">
                     <span className="ae-banner-badge">HOT</span>
-                    <h2>{banner.title}</h2>
-                    <p>{banner.subtitle}</p>
-                    <Link to="/products" className="ae-banner-btn">{banner.btnText}</Link>
+                    <h2>{banner.title[language]}</h2>
+                    <p>{banner.subtitle[language]}</p>
+                    <Link to="/products" className="ae-banner-btn">{banner.btnText[language]}</Link>
                   </div>
                 </div>
               </SwiperSlide>
@@ -168,22 +192,42 @@ function Home() {
               <span className="ae-timer-sep">:</span>
               <div className="ae-timer-box"><span className="ae-timer-num">{String(timeLeft.seconds).padStart(2, '0')}</span><span className="ae-timer-unit">s</span></div>
             </div>
-            <Link to="/products" className="ae-view-all">{t.viewAll} <i className="ri-arrow-right-s-line"></i></Link>
+            <div className="ae-flash-header-actions">
+              <button
+                type="button"
+                className="ae-flash-more-arrow"
+                onClick={() => scrollFlashDeals(1)}
+                aria-label={language === 'en' ? 'See more deals' : 'ተጨማሪ ሽያጮች'}
+              >
+                <i className="ri-arrow-right-s-line"></i>
+              </button>
+              <Link to="/products" className="ae-view-all">{t.viewAll} <i className="ri-arrow-right-s-line"></i></Link>
+            </div>
           </div>
           {loading ? (
-            <div className="ae-flash-scroll">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="ae-skeleton-card ae-card--flash">
-                  <div className="ae-skeleton-img" />
-                  <div className="ae-skeleton-line medium" />
-                </div>
-              ))}
+            <div className="ae-flash-scroll-wrap">
+              <div className="ae-flash-scroll">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="ae-skeleton-card ae-card--flash">
+                    <div className="ae-skeleton-img" />
+                    <div className="ae-skeleton-line medium" />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="ae-flash-scroll">
-              {(activeDealTab === 'flash' ? flashDeals : bestSellers).map((product) => (
-                <ProductCard key={product._id} product={product} variant="flash" onAddToCart={handleAddToCart} labels={cardLabels} />
-              ))}
+            <div className="ae-flash-scroll-wrap">
+              <button type="button" className="ae-flash-nav ae-flash-nav--prev" onClick={() => scrollFlashDeals(-1)} aria-label="Previous">
+                <i className="ri-arrow-left-s-line"></i>
+              </button>
+              <div className="ae-flash-scroll" ref={flashScrollRef}>
+                {(activeDealTab === 'flash' ? flashDeals : bestSellers).map((product) => (
+                  <ProductCard key={product._id} product={product} variant="flash" language={language} onAddToCart={handleAddToCart} labels={cardLabels} />
+                ))}
+              </div>
+              <button type="button" className="ae-flash-nav ae-flash-nav--next" onClick={() => scrollFlashDeals(1)} aria-label="Next">
+                <i className="ri-arrow-right-s-line"></i>
+              </button>
             </div>
           )}
         </div>
@@ -214,7 +258,7 @@ function Home() {
           {loading ? <SkeletonGrid count={6} /> : (
             <div className="ae-products-grid ae-grid-v2">
               {bestSellers.slice(0, 6).map((product) => (
-                <ProductCard key={product._id} product={product} onAddToCart={handleAddToCart} labels={cardLabels} />
+                <ProductCard key={product._id} product={product} language={language} onAddToCart={handleAddToCart} labels={cardLabels} />
               ))}
             </div>
           )}
@@ -237,7 +281,7 @@ function Home() {
           {loading ? <SkeletonGrid count={8} /> : (
             <div className="ae-products-grid ae-grid-v2">
               {featuredProducts.slice(0, 12).map((product) => (
-                <ProductCard key={product._id} product={product} onAddToCart={handleAddToCart} labels={cardLabels} />
+                <ProductCard key={product._id} product={product} language={language} onAddToCart={handleAddToCart} labels={cardLabels} />
               ))}
             </div>
           )}

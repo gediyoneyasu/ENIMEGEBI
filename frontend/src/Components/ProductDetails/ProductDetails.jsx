@@ -4,6 +4,7 @@ import { useLanguage, useCart } from '../../main';
 import './ProductDetails.css';
 import { getImageUrl, getProductImages } from '../../utils/imageHelper';
 import { fetchProductById } from '../../utils/productApi';
+import { getProductName, getProductDescription } from '../../utils/productText';
 
 const PLACEHOLDER = 'https://via.placeholder.com/600x600?text=No+Image';
 
@@ -186,6 +187,15 @@ function ProductDetails() {
     );
   }
 
+  const displayName = getProductName(product, language);
+  const displayDescription = getProductDescription(
+    product,
+    language,
+    language === 'en'
+      ? `Experience the best quality with ${displayName}. This premium product is designed to meet your needs with exceptional performance and durability.`
+      : `በ${displayName} ጥራት ያለው ምርት። ይህ ፕሪሚየም ምርት በብጡ አፈጻጸም እና ዘላቀኝነት የተሰራ ነው።`
+  );
+
   return (
     <div className="pd-page">
       <div className="pd-container">
@@ -196,7 +206,7 @@ function ProductDetails() {
           <i className="ri-arrow-right-s-line"></i>
           <span>{product.category}</span>
           <i className="ri-arrow-right-s-line"></i>
-          <span className="active">{product.name}</span>
+          <span className="active">{displayName}</span>
         </div>
 
         <div className="pd-main">
@@ -210,7 +220,7 @@ function ProductDetails() {
               >
                 <img 
                   src={productImages[currentImageIndex]} 
-                  alt={product.name}
+                  alt={displayName}
                   onClick={() => openLightbox(currentImageIndex)}
                 />
                 {isZooming && (
@@ -256,7 +266,7 @@ function ProductDetails() {
           </div>
 
           <div className="pd-info">
-            <h1 className="pd-title">{product.name}</h1>
+            <h1 className="pd-title">{displayName}</h1>
             
             <div className="pd-rating-section">
               <div className="pd-stars">
@@ -379,13 +389,24 @@ function ProductDetails() {
           <div className="pd-tab-content">
             {activeTab === 'description' && (
               <div className="pd-description">
-                <p>{product.description || `Experience the best quality with ${product.name}. This premium product is designed to meet your needs with exceptional performance and durability.`}</p>
-                <h4>Key Features:</h4>
+                <p>{displayDescription}</p>
+                <h4>{language === 'en' ? 'Key Features:' : 'ዋና መለኪያዎች:'}</h4>
                 <ul>
-                  <li>✓ Premium quality materials</li>
-                  <li>✓ 1 year warranty included</li>
-                  <li>✓ Free shipping across Ethiopia</li>
-                  <li>✓ 30-day money-back guarantee</li>
+                  {language === 'en' ? (
+                    <>
+                      <li>✓ Premium quality materials</li>
+                      <li>✓ 1 year warranty included</li>
+                      <li>✓ Free shipping across Ethiopia</li>
+                      <li>✓ 30-day money-back guarantee</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>✓ ፕሪሚየም ጥራት ያላቸው መረቶች</li>
+                      <li>✓ 1 አመት ዋስትና ይካተታል</li>
+                      <li>✓ በኢትዮጵያ ሁሉ ነጻ አቅርቦት</li>
+                      <li>✓ በ30 ቀናት ገንዘብ መመለስ ዋስትና</li>
+                    </>
+                  )}
                 </ul>
               </div>
             )}
@@ -394,7 +415,7 @@ function ProductDetails() {
               <div className="pd-specifications">
                 <table>
                   <tbody>
-                    <tr><td>Product Name</td><td>{product.name}</td></tr>
+                    <tr><td>{language === 'en' ? 'Product Name' : 'የምርት ስም'}</td><td>{displayName}</td></tr>
                     <tr><td>Category</td><td>{product.category}</td></tr>
                     <tr><td>Price</td><td>{t.price} {product.price}</td></tr>
                     <tr><td>Stock Status</td><td>{product.stock > 0 ? 'In Stock' : 'Out of Stock'}</td></tr>
@@ -431,8 +452,8 @@ function ProductDetails() {
             <div className="pd-related-grid">
               {relatedProducts.map(related => (
                 <Link to={`/product/${related._id}`} key={related._id} className="pd-related-card">
-                  <img src={getImageUrl(related.images?.[0] || related.image || related.imageUrl, PLACEHOLDER)} alt={related.name} />
-                  <h3>{related.name}</h3>
+                  <img src={getImageUrl(related.images?.[0] || related.image || related.imageUrl, PLACEHOLDER)} alt={getProductName(related, language)} />
+                  <h3>{getProductName(related, language)}</h3>
                   <div className="pd-related-price">{t.price} {related.price.toLocaleString()}</div>
                 </Link>
               ))}
@@ -450,7 +471,7 @@ function ProductDetails() {
             <i className="ri-arrow-left-s-line"></i>
           </button>
           <div className="pd-lightbox-image" onClick={(e) => e.stopPropagation()}>
-            <img src={productImages[lightboxIndex]} alt={product.name} />
+            <img src={productImages[lightboxIndex]} alt={displayName} />
             <div className="pd-lightbox-counter">
               {lightboxIndex + 1} {t.of} {totalImages}
             </div>

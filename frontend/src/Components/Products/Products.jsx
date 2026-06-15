@@ -6,6 +6,7 @@ import './Products.css';
 import ProductCard from '../shared/ProductCard';
 import { fetchProductsPage } from '../../utils/productApi';
 import { getProductImages } from '../../utils/imageHelper';
+import { getProductName, getProductDescription } from '../../utils/productText';
 
 const SkeletonGrid = ({ count = 10 }) => (
   <div className="ae-skeleton-grid ae-skeleton-products">
@@ -203,7 +204,7 @@ function Products() {
                 <div className="ae-products-grid ae-grid-v2">
                   {products.map((product) => (
                     <div key={product._id} className="ae-product-wrap">
-                      <ProductCard product={product} onAddToCart={handleAddToCart} labels={cardLabels} />
+                      <ProductCard product={product} language={language} onAddToCart={handleAddToCart} labels={cardLabels} />
                       <button type="button" className="ae-quick-view-btn" onClick={() => { setPreviewProduct(product); setCurrentImageIndex(0); }}>
                         <i className="ri-eye-line"></i> {t.seePreview}
                       </button>
@@ -239,16 +240,24 @@ function Products() {
       {previewProduct && (() => {
         const previewImages = getProductImages(previewProduct);
         const hasMultiple = previewImages.length > 1;
+        const previewName = getProductName(previewProduct, language);
+        const previewDesc = getProductDescription(
+          previewProduct,
+          language,
+          language === 'en'
+            ? `${previewName} - premium quality product.`
+            : `${previewName} - ፕሪሚየም ጥራት ያለው ምርት።`
+        );
         return (
           <div className="ae-quickview-modal" onClick={() => setPreviewProduct(null)} role="presentation">
-            <div className="ae-quickview-content" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={previewProduct.name}>
+            <div className="ae-quickview-content" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={previewName}>
               <button type="button" className="ae-quickview-close" onClick={() => setPreviewProduct(null)} aria-label={t.close}>
                 <i className="ri-close-line"></i>
               </button>
               <div className="ae-quickview-body">
                 <div className="ae-quickview-gallery">
                   <div className="ae-quickview-main-image">
-                    <img src={previewImages[currentImageIndex]} alt={previewProduct.name} />
+                    <img src={previewImages[currentImageIndex]} alt={previewName} />
                     {hasMultiple && (
                       <>
                         <span className="ae-quickview-counter">{currentImageIndex + 1} / {previewImages.length}</span>
@@ -288,13 +297,13 @@ function Products() {
                   )}
                 </div>
                 <div className="ae-quickview-info">
-                  <h2 className="ae-quickview-title">{previewProduct.name}</h2>
+                  <h2 className="ae-quickview-title">{previewName}</h2>
                   <div className="ae-quickview-price">
                     <span className="current">{t.price} {previewProduct.price?.toLocaleString()}</span>
                   </div>
                   <div className="ae-quickview-description">
                     <h4>{t.description}</h4>
-                    <p>{previewProduct.description || `${previewProduct.name} - premium quality product.`}</p>
+                    <p>{previewDesc}</p>
                   </div>
                   <div className="ae-quickview-actions">
                     <Link to={`/product/${previewProduct._id}`} className="ae-quickview-link" onClick={() => setPreviewProduct(null)}>

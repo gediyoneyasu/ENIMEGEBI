@@ -17,6 +17,7 @@
   background: #032B67;
   z-index: 1000;
   transition: all 0.3s ease;
+  overflow: visible;
 }
 
 .ali-header.scrolled {
@@ -31,6 +32,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  overflow: visible;
 }
 
 /* ========== TOP BAR ========== */
@@ -60,9 +62,16 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   color: #fff;
   cursor: pointer;
+}
+
+.ali-lang-label {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
 }
 
 .ali-lang-dropdown {
@@ -91,6 +100,8 @@
 /* ========== MAIN HEADER ========== */
 .ali-main-header {
   padding: 12px 0;
+  overflow: visible;
+  position: relative;
 }
 
 .ali-header-content {
@@ -98,6 +109,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 15px;
+  overflow: visible;
+}
+
+.ali-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 /* Logo */
@@ -140,31 +160,93 @@
 
 .ali-search-box input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: 15px;
   min-width: 0;
 }
 
 .ali-search-box button {
   background: #FF7A00;
   border: none;
-  padding: 0 16px;
+  padding: 0 20px;
   cursor: pointer;
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-/* Actions */
-.ali-actions {
+/* Mobile search icon button */
+.ali-action-search {
+  display: none;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.ali-action-search:hover,
+.ali-action-search.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ali-action-search i {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Mobile search panel - full width below header row */
+.ali-mobile-search-panel {
+  display: none;
+  width: 100%;
+  padding: 10px 0 4px;
+  box-sizing: border-box;
+}
+
+.ali-mobile-search-panel .ali-mobile-search-box {
+  width: 100%;
+}
+
+/* Mobile search input box */
+.ali-mobile-search-box {
+  display: flex;
+  background: #f8f8f8;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e8e8e8;
+}
+
+.ali-mobile-search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  min-width: 0;
+  background: transparent;
+  color: #333;
+}
+
+.ali-mobile-search-box button {
+  background: #FF7A00;
+  border: none;
+  padding: 0 14px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -175,10 +257,14 @@
   justify-content: center;
   color: #fff;
   text-decoration: none;
-  padding: 6px 12px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
   border-radius: 4px;
   transition: background 0.3s;
   position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .ali-action-notif:hover {
@@ -211,10 +297,14 @@
   color: #fff;
   text-decoration: none;
   padding: 6px 12px;
+  width: auto;
+  height: auto;
   border-radius: 4px;
   transition: background 0.3s;
   cursor: pointer;
   position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .ali-action-cart:hover {
@@ -251,6 +341,8 @@
 .ali-action-user,
 .ali-action-menu,
 .ali-action-lang,
+.ali-action-search,
+.ali-action-notif,
 .ali-action-user-mobile,
 .ali-action-login-mobile {
   display: flex;
@@ -259,29 +351,74 @@
   gap: 4px;
   color: #fff;
   text-decoration: none;
-  padding: 6px 8px;
+  padding: 0;
+  border: none;
+  background: none;
   border-radius: 4px;
   transition: background 0.3s;
   cursor: pointer;
   position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.ali-action-lang {
+  flex-direction: column;
+  gap: 0;
+  padding: 2px 0;
+}
+
+.ali-action-lang .ali-lang-label {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.ali-action-lang .ali-lang-arrow {
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ali-action-login:hover,
 .ali-action-user:hover,
 .ali-action-menu:hover,
 .ali-action-lang:hover,
+.ali-action-lang.active,
+.ali-action-search:hover,
+.ali-action-search.active,
+.ali-action-notif:hover,
 .ali-action-user-mobile:hover,
 .ali-action-login-mobile:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* Desktop login/user - auto width for text labels */
+.ali-action-login,
+.ali-action-user {
+  width: auto;
+  height: auto;
+  padding: 6px 12px;
 }
 
 .ali-action-login i,
 .ali-action-user i,
 .ali-action-menu i,
 .ali-action-lang i,
+.ali-action-search i,
+.ali-action-notif i,
 .ali-action-user-mobile i,
 .ali-action-login-mobile i {
   font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cart-text {
@@ -298,10 +435,10 @@
   margin-top: 8px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  min-width: 110px;
-  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1100;
   overflow: hidden;
+  min-width: 110px;
 }
 
 .ali-mobile-lang-dropdown button,
@@ -493,6 +630,7 @@
   }
   
   .ali-action-lang,
+  .ali-action-search,
   .ali-action-user-mobile,
   .ali-action-login-mobile {
     display: none !important;
@@ -522,6 +660,7 @@
   }
   
   .ali-action-lang,
+  .ali-action-search,
   .ali-action-user-mobile,
   .ali-action-login-mobile {
     display: none !important;
@@ -568,6 +707,9 @@
   
   .ali-action-cart {
     display: flex;
+    width: 34px;
+    height: 34px;
+    padding: 0;
   }
   
   .ali-main-header {
@@ -586,34 +728,54 @@
     font-size: 16px;
   }
   
+  .ali-search-desktop {
+    display: none;
+  }
+
+  .ali-action-search {
+    display: flex !important;
+  }
+
+  .ali-action-notif {
+    display: flex !important;
+  }
+
+  .ali-mobile-search-panel {
+    display: block;
+  }
+  
   .ali-search {
-    flex: 1;
+    flex: 0;
     min-width: 0;
   }
   
-  .ali-search-box input {
-    padding: 8px 10px;
-    font-size: 13px;
-  }
-  
-  .ali-search-box button {
-    padding: 0 12px;
-    font-size: 14px;
-  }
-  
   .ali-actions {
-    gap: 4px;
+    gap: 0px;
+    flex-shrink: 0;
   }
   
   .ali-action-cart,
+  .ali-action-notif,
+  .ali-action-search,
   .ali-action-lang,
   .ali-action-user-mobile,
   .ali-action-login-mobile,
   .ali-action-menu {
-    padding: 5px 6px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .ali-action-lang .ali-lang-label {
+    font-size: 10px;
+  }
+
+  .ali-action-lang .ali-lang-arrow {
+    font-size: 13px;
   }
   
   .ali-action-cart i,
+  .ali-action-notif i,
+  .ali-action-search i,
   .ali-action-lang i,
   .ali-action-user-mobile i,
   .ali-action-login-mobile i,
@@ -631,6 +793,10 @@
   
   .ali-header-spacer {
     height: 80px;
+  }
+
+  .ali-header-spacer.search-open {
+    height: 130px;
   }
 }
 
@@ -663,14 +829,27 @@
   }
   
   .ali-action-cart,
+  .ali-action-notif,
+  .ali-action-search,
   .ali-action-lang,
   .ali-action-user-mobile,
   .ali-action-login-mobile,
   .ali-action-menu {
-    padding: 4px 5px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .ali-action-lang .ali-lang-label {
+    font-size: 9px;
+  }
+
+  .ali-action-lang .ali-lang-arrow {
+    font-size: 12px;
   }
   
   .ali-action-cart i,
+  .ali-action-notif i,
+  .ali-action-search i,
   .ali-action-lang i,
   .ali-action-user-mobile i,
   .ali-action-login-mobile i,
@@ -680,6 +859,10 @@
   
   .ali-header-spacer {
     height: 70px;
+  }
+
+  .ali-header-spacer.search-open {
+    height: 120px;
   }
 }
 
@@ -704,6 +887,8 @@
   }
   
   .ali-action-cart i,
+  .ali-action-notif i,
+  .ali-action-search i,
   .ali-action-lang i,
   .ali-action-user-mobile i,
   .ali-action-login-mobile i,
