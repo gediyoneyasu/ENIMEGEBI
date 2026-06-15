@@ -115,7 +115,7 @@
 .ali-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-shrink: 0;
   overflow: visible;
 }
@@ -359,26 +359,28 @@
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   box-sizing: border-box;
 }
 
 .ali-action-lang {
-  flex-direction: column;
-  gap: 0;
-  padding: 2px 0;
+  flex-direction: row;
+  gap: 1px;
+  padding: 0 4px;
+  width: auto;
+  min-width: 32px;
 }
 
 .ali-action-lang .ali-lang-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.02em;
 }
 
 .ali-action-lang .ali-lang-arrow {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -717,7 +719,7 @@
   }
   
   .ali-header-content {
-    gap: 10px;
+    gap: 6px;
   }
   
   .ali-logo i {
@@ -750,27 +752,34 @@
   }
   
   .ali-actions {
-    gap: 0px;
+    gap: 0;
     flex-shrink: 0;
   }
   
   .ali-action-cart,
   .ali-action-notif,
   .ali-action-search,
-  .ali-action-lang,
   .ali-action-user-mobile,
   .ali-action-login-mobile,
   .ali-action-menu {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .ali-action-lang {
+    width: auto;
+    min-width: 28px;
+    height: 30px;
+    padding: 0 2px;
+    gap: 1px;
   }
 
   .ali-action-lang .ali-lang-label {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .ali-action-lang .ali-lang-arrow {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .ali-action-cart i,
@@ -807,7 +816,7 @@
   }
   
   .ali-header-content {
-    gap: 8px;
+    gap: 4px;
   }
   
   .ali-logo i {
@@ -831,20 +840,26 @@
   .ali-action-cart,
   .ali-action-notif,
   .ali-action-search,
-  .ali-action-lang,
   .ali-action-user-mobile,
   .ali-action-login-mobile,
   .ali-action-menu {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .ali-action-lang {
+    width: auto;
+    min-width: 26px;
+    height: 28px;
+    padding: 0 2px;
   }
 
   .ali-action-lang .ali-lang-label {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .ali-action-lang .ali-lang-arrow {
-    font-size: 12px;
+    font-size: 11px;
   }
   
   .ali-action-cart i,
@@ -874,6 +889,31 @@
   
   .ali-logo-text {
     font-size: 12px;
+  }
+
+  .ali-action-cart,
+  .ali-action-notif,
+  .ali-action-search,
+  .ali-action-user-mobile,
+  .ali-action-login-mobile,
+  .ali-action-menu {
+    width: 26px;
+    height: 26px;
+  }
+
+  .ali-action-lang {
+    width: auto;
+    min-width: 24px;
+    height: 26px;
+    padding: 0 1px;
+  }
+
+  .ali-action-lang .ali-lang-label {
+    font-size: 9px;
+  }
+
+  .ali-action-lang .ali-lang-arrow {
+    font-size: 10px;
   }
   
   .ali-search-box input {
